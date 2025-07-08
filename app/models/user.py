@@ -3,6 +3,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime, timedelta
 from sqlalchemy import func
 import secrets
+import os
 
 class User(db.Model):
     __tablename__ = 'users'
@@ -11,6 +12,14 @@ class User(db.Model):
     username = db.Column(db.String(80), unique=True, nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
     password_hash = db.Column(db.String(255), nullable=False)
+    
+    # ==================== NUOVI CAMPI AGGIUNTI ====================
+    first_name = db.Column(db.String(100), nullable=True)
+    last_name = db.Column(db.String(100), nullable=True)
+    phone = db.Column(db.String(20), nullable=True)
+    profile_image = db.Column(db.String(255), nullable=True)  # Path dell'immagine
+    
+    # ==================== CAMPI ESISTENTI ====================
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     is_active = db.Column(db.Boolean, default=True)
     is_email_confirmed = db.Column(db.Boolean, default=False)
@@ -36,7 +45,52 @@ class User(db.Model):
         """Aggiorna timestamp ultimo login"""
         self.last_login = datetime.utcnow()
     
-    # ==================== GESTIONE RUOLI ====================
+    # ==================== NUOVE PROPRIETÀ PER I CAMPI AGGIUNTI ====================
+    
+    @property
+    def full_name(self):
+        """Restituisce nome completo"""
+        if self.first_name and self.last_name:
+            return f"{self.first_name} {self.last_name}"
+        elif self.first_name:
+            return self.first_name
+        elif self.last_name:
+            return self.last_name
+        else:
+            return self.username
+    
+    @property
+    def initials(self):
+        """Restituisce iniziali per avatar"""
+        if self.first_name and self.last_name:
+            return f"{self.first_name[0]}{self.last_name[0]}".upper()
+        elif self.first_name:
+            return self.first_name[0].upper()
+        elif self.last_name:
+            return self.last_name[0].upper()
+        else:
+            return self.username[0].upper() if self.username else "U"
+    
+    @property
+    def avatar_url(self):
+        """Restituisce URL dell'avatar (immagine o placeholder)"""
+        if self.profile_image:
+            # Controlla se il file esiste
+            static_path = f"app/static/{self.profile_image}"
+            if os.path.exists(static_path):
+                return f"/static/{self.profile_image}"
+        
+        # Genera avatar con iniziali usando servizio esterno
+        return f"https://ui-avatars.com/api/?name={self.initials}&background=random&color=fff&size=128"
+    
+    def set_profile_image(self, filename):
+        """Imposta immagine profilo"""
+        if filename:
+            self.profile_image = f"uploads/avatars/{filename}"
+        else:
+            self.profile_image = None
+    
+    # ==================== GESTIONE RUOLI (ESISTENTE) ====================
     
     def add_role(self, role):
         """Aggiunge un ruolo all'utente"""
@@ -97,7 +151,7 @@ class User(db.Model):
             if default_role:
                 self.add_role(default_role)
     
-    # ==================== TOKEN METHODS ====================
+    # ==================== TOKEN METHODS (ESISTENTI) ====================
     
     def generate_confirmation_token(self):
         """Genera token di conferma email"""
@@ -151,7 +205,7 @@ class User(db.Model):
             return True
         return False
     
-    # ==================== QUERY METHODS ====================
+    # ==================== QUERY METHODS (ESISTENTI + NUOVI) ====================
     
     @classmethod
     def find_by_email_login(cls, email):
@@ -167,6 +221,11 @@ class User(db.Model):
     def find_by_email(cls, email):
         """Trova utente per email (case-insensitive)"""
         return cls.query.filter(func.lower(cls.email) == func.lower(email)).first()
+    
+    @classmethod
+    def find_by_phone(cls, phone):
+        """Trova utente per telefono"""
+        return cls.query.filter_by(phone=phone).first()
     
     @classmethod
     def find_by_confirmation_token(cls, token):
@@ -192,12 +251,22 @@ class User(db.Model):
         """Restituisce tutti gli admin"""
         return cls.get_users_by_role('admin')
     
-    def to_dict(self, include_roles=True):
+    # ==================== SERIALIZZAZIONE AGGIORNATA ====================
+    
+    def to_dict(self, include_roles=True, include_sensitive=False):
+        """Converte utente in dizionario con campi aggiornati"""
         data = {
             'id': self.id,
             'username': self.username,
             'email': self.email,
-            'created_at': self.created_at.isoformat(),
+            'first_name': self.first_name,
+            'last_name': self.last_name,
+            'full_name': self.full_name,
+            'phone': self.phone,
+            'profile_image': self.profile_image,
+            'avatar_url': self.avatar_url,
+            'initials': self.initials,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
             'is_active': self.is_active,
             'is_email_confirmed': self.is_email_confirmed,
             'last_login': self.last_login.isoformat() if self.last_login else None
@@ -208,9 +277,18 @@ class User(db.Model):
             data['role_names'] = self.get_role_names()
             data['highest_role'] = self.get_highest_role()
             data['is_admin'] = self.is_admin()
+            data['is_moderator'] = self.is_moderator()
+            data['can_manage_users'] = self.can_manage_users()
+        
+        if include_sensitive:
+            data['email_confirmation_token'] = self.email_confirmation_token
+            data['password_reset_token'] = self.password_reset_token
+            data['email_confirmation_sent_at'] = self.email_confirmation_sent_at.isoformat() if self.email_confirmation_sent_at else None
+            data['password_reset_sent_at'] = self.password_reset_sent_at.isoformat() if self.password_reset_sent_at else None
         
         return data
     
     def __repr__(self):
         roles = ', '.join(self.get_role_names())
-        return f'<User {self.username} ({self.email}) - Roles: {roles}>'
+        full_name = f" ({self.full_name})" if self.full_name != self.username else ""
+        return f'<User {self.username}{full_name} - {self.email} - Roles: {roles}>'

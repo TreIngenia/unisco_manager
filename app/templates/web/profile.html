@@ -1,0 +1,657 @@
+{% extends 'base.html' %}
+
+{% block title %}Il Mio Profilo{% endblock %}
+
+{% block toolbar %}
+<div class="toolbar-info">
+    <span>Profilo di: <strong>{{ user.full_name }}</strong></span>
+    <span>Registrato il: <strong>{{ user.created_at.strftime('%d/%m/%Y') }}</strong></span>
+</div>
+<div class="toolbar-actions">
+    <button id="edit-profile-btn" type="button" onclick="toggleEditMode()">
+        <i class="fa-solid fa-edit"></i> Modifica Profilo
+    </button>
+    <button id="change-password-btn" type="button" onclick="showPasswordModal()">
+        <i class="fa-solid fa-key"></i> Cambia Password
+    </button>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="profile-container">
+    
+    <!-- Sezione Informazioni Profilo -->
+    <div class="profile-section">
+        <div class="section-header">
+            <h3>Informazioni Profilo</h3>
+            <p>Visualizza e modifica le tue informazioni personali</p>
+        </div>
+        
+        <div class="profile-content">
+            <!-- Modalità Visualizzazione -->
+            <div id="view-mode">
+                <div class="profile-header">
+                    <div class="profile-avatar">
+                        <img src="{{ user.avatar_url }}" alt="{{ user.full_name }}" width="120" height="120">
+                        <div class="avatar-overlay">
+                            <i class="fa-solid fa-camera"></i>
+                        </div>
+                    </div>
+                    <div class="profile-basic-info">
+                        <h2>{{ user.full_name }}</h2>
+                        <p class="username">@{{ user.username }}</p>
+                        <div class="user-badges">
+                            {% for role in user.roles %}
+                                <span class="role-badge role-{{ role.name }}">{{ role.name.title() }}</span>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="profile-grid">
+                    <div class="profile-section-card">
+                        <h4>Dati Personali</h4>
+                        <div class="profile-item">
+                            <label>Nome:</label>
+                            <span>{{ user.first_name or 'Non specificato' }}</span>
+                        </div>
+                        <div class="profile-item">
+                            <label>Cognome:</label>
+                            <span>{{ user.last_name or 'Non specificato' }}</span>
+                        </div>
+                        <div class="profile-item">
+                            <label>Telefono:</label>
+                            <span>
+                                {% if user.phone %}
+                                    <a href="tel:{{ user.phone }}">{{ user.phone }}</a>
+                                {% else %}
+                                    Non specificato
+                                {% endif %}
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <div class="profile-section-card">
+                        <h4>Dati Account</h4>
+                        <div class="profile-item">
+                            <label>ID Utente:</label>
+                            <span>{{ user.id }}</span>
+                        </div>
+                        <div class="profile-item">
+                            <label>Nome Utente:</label>
+                            <span>{{ user.username }}</span>
+                        </div>
+                        <div class="profile-item">
+                            <label>Email:</label>
+                            <span>
+                                {{ user.email }}
+                                {% if user.is_email_confirmed %}
+                                    <span class="status-badge confirmed">
+                                        <i class="fa-solid fa-check-circle"></i> Confermata
+                                    </span>
+                                {% else %}
+                                    <span class="status-badge unconfirmed">
+                                        <i class="fa-solid fa-clock"></i> In attesa di conferma
+                                    </span>
+                                {% endif %}
+                            </span>
+                        </div>
+                        <div class="profile-item">
+                            <label>Stato Account:</label>
+                            <span class="status-badge {% if user.is_active %}active{% else %}inactive{% endif %}">
+                                {% if user.is_active %}
+                                    <i class="fa-solid fa-check"></i> Attivo
+                                {% else %}
+                                    <i class="fa-solid fa-times"></i> Disattivo
+                                {% endif %}
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <div class="profile-section-card">
+                        <h4>Informazioni Temporali</h4>
+                        <div class="profile-item">
+                            <label>Data Registrazione:</label>
+                            <span>{{ user.created_at.strftime('%d/%m/%Y alle %H:%M') }}</span>
+                        </div>
+                        <div class="profile-item">
+                            <label>Ultimo Accesso:</label>
+                            <span>
+                                {% if user.last_login %}
+                                    {{ user.last_login.strftime('%d/%m/%Y alle %H:%M') }}
+                                {% else %}
+                                    Mai
+                                {% endif %}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Modalità Modifica -->
+            <div id="edit-mode" style="display: none;">
+                <form id="profile-form" enctype="multipart/form-data">
+                    <!-- Sezione Avatar -->
+                    <div class="form-section">
+                        <h4>Immagine Profilo</h4>
+                        <div class="avatar-upload">
+                            <div class="current-avatar">
+                                <img id="edit-preview-avatar" src="{{ user.avatar_url }}" alt="Avatar" width="100" height="100">
+                            </div>
+                            <div class="upload-controls">
+                                <input type="file" id="edit-profile-image" name="profile_image" accept="image/*" onchange="previewEditImage(this)">
+                                <button type="button" onclick="removeEditImage()">Rimuovi Immagine</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Dati Personali -->
+                    <div class="form-section">
+                        <h4>Dati Personali</h4>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="edit-first-name">Nome *</label>
+                                <input type="text" id="edit-first-name" name="first_name" value="{{ user.first_name or '' }}" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="edit-last-name">Cognome *</label>
+                                <input type="text" id="edit-last-name" name="last_name" value="{{ user.last_name or '' }}" required>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="edit-phone">Telefono Cellulare</label>
+                                <input type="tel" id="edit-phone" name="phone" value="{{ user.phone or '' }}" placeholder="+39 xxx xxx xxxx">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Dati Account -->
+                    <div class="form-section">
+                        <h4>Dati Account</h4>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="edit-username">Nome Utente *</label>
+                                <input type="text" id="edit-username" name="username" value="{{ user.username }}" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="edit-email">Email *</label>
+                                <input type="email" id="edit-email" name="email" value="{{ user.email }}" required>
+                                <small class="form-help">Cambiando l'email dovrai confermarla nuovamente</small>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button type="button" onclick="cancelEdit()">Annulla</button>
+                        <button type="button" onclick="saveProfile()" class="primary">Salva Modifiche</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Sezione Statistiche Account -->
+    <div class="stats-section">
+        <div class="section-header">
+            <h3>Statistiche Account</h3>
+            <p>Riepilogo delle tue attività</p>
+        </div>
+        
+        <div class="stats-grid">
+            <div class="stat-item">
+                <div class="stat-icon">
+                    <i class="fa-solid fa-calendar-days"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-value" id="account-age">0</div>
+                    <div class="stat-label">Giorni da registrazione</div>
+                </div>
+            </div>
+            
+            <div class="stat-item">
+                <div class="stat-icon">
+                    <i class="fa-solid fa-clock"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-value" id="days-since-login">
+                        {% if user.last_login %}0{% else %}∞{% endif %}
+                    </div>
+                    <div class="stat-label">Giorni dall'ultimo accesso</div>
+                </div>
+            </div>
+            
+            <div class="stat-item">
+                <div class="stat-icon">
+                    <i class="fa-solid fa-shield-halved"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-value">{{ user.roles|length }}</div>
+                    <div class="stat-label">Ruoli assegnati</div>
+                </div>
+            </div>
+            
+            <div class="stat-item">
+                <div class="stat-icon">
+                    <i class="fa-solid fa-envelope"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-value">
+                        {% if user.is_email_confirmed %}
+                            <i class="fa-solid fa-check"></i>
+                        {% else %}
+                            <i class="fa-solid fa-times"></i>
+                        {% endif %}
+                    </div>
+                    <div class="stat-label">Email confermata</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Sezione Azioni Account -->
+    <div class="actions-section">
+        <div class="section-header">
+            <h3>Azioni Account</h3>
+            <p>Gestisci le impostazioni del tuo account</p>
+        </div>
+        
+        <div class="actions-grid">
+            <div class="action-item">
+                <div class="action-icon">
+                    <i class="fa-solid fa-key"></i>
+                </div>
+                <div class="action-content">
+                    <div class="action-title">Cambia Password</div>
+                    <div class="action-description">Modifica la password del tuo account</div>
+                </div>
+                <div class="action-button">
+                    <button onclick="showPasswordModal()">Cambia</button>
+                </div>
+            </div>
+            
+            {% if not user.is_email_confirmed %}
+            <div class="action-item">
+                <div class="action-icon">
+                    <i class="fa-solid fa-envelope"></i>
+                </div>
+                <div class="action-content">
+                    <div class="action-title">Conferma Email</div>
+                    <div class="action-description">Conferma il tuo indirizzo email</div>
+                </div>
+                <div class="action-button">
+                    <button onclick="resendConfirmation()">Invia Email</button>
+                </div>
+            </div>
+            {% endif %}
+            
+            <div class="action-item">
+                <div class="action-icon">
+                    <i class="fa-solid fa-download"></i>
+                </div>
+                <div class="action-content">
+                    <div class="action-title">Esporta Dati</div>
+                    <div class="action-description">Scarica i tuoi dati personali</div>
+                </div>
+                <div class="action-button">
+                    <button onclick="exportUserData()">Esporta</button>
+                </div>
+            </div>
+            
+            <div class="action-item">
+                <div class="action-icon">
+                    <i class="fa-solid fa-image"></i>
+                </div>
+                <div class="action-content">
+                    <div class="action-title">Cambia Avatar</div>
+                    <div class="action-description">Aggiorna la tua immagine profilo</div>
+                </div>
+                <div class="action-button">
+                    <button onclick="triggerAvatarUpload()">Carica</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Cambio Password -->
+<div id="passwordModal" class="modal" style="display: none;">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Cambia Password</h3>
+            <button type="button" class="close-btn" onclick="closePasswordModal()">
+                <i class="fa-solid fa-times"></i>
+            </button>
+        </div>
+        <div class="modal-body">
+            <form id="password-form">
+                <div class="form-group">
+                    <label for="current-password">Password Attuale *</label>
+                    <input type="password" id="current-password" name="current_password" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="new-password">Nuova Password *</label>
+                    <input type="password" id="new-password" name="new_password" required>
+                    <small class="form-help">Minimo 8 caratteri</small>
+                </div>
+                
+                <div class="form-group">
+                    <label for="confirm-password">Conferma Nuova Password *</label>
+                    <input type="password" id="confirm-password" name="confirm_password" required>
+                </div>
+                
+                <div class="password-strength" id="password-strength"></div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button type="button" onclick="closePasswordModal()">Annulla</button>
+            <button type="button" onclick="changePassword()" class="primary">Cambia Password</button>
+        </div>
+    </div>
+</div>
+
+<!-- Input nascosto per upload avatar -->
+<input type="file" id="quick-avatar-upload" style="display: none;" accept="image/*" onchange="quickUploadAvatar(this)">
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Variabili globali
+let isEditMode = false;
+
+// Inizializzazione
+document.addEventListener('DOMContentLoaded', function() {
+    calculateStats();
+    setupPasswordStrength();
+});
+
+// Calcola statistiche temporali
+function calculateStats() {
+    const createdAt = new Date('{{ user.created_at.isoformat() }}');
+    const now = new Date();
+    const accountAge = Math.floor((now - createdAt) / (1000 * 60 * 60 * 24));
+    document.getElementById('account-age').textContent = accountAge;
+    
+    {% if user.last_login %}
+    const lastLogin = new Date('{{ user.last_login.isoformat() }}');
+    const daysSinceLogin = Math.floor((now - lastLogin) / (1000 * 60 * 60 * 24));
+    document.getElementById('days-since-login').textContent = daysSinceLogin;
+    {% endif %}
+}
+
+// Funzioni per la modalità modifica
+function toggleEditMode() {
+    isEditMode = !isEditMode;
+    
+    if (isEditMode) {
+        document.getElementById('view-mode').style.display = 'none';
+        document.getElementById('edit-mode').style.display = 'block';
+        document.getElementById('edit-profile-btn').innerHTML = '<i class="fa-solid fa-times"></i> Annulla';
+    } else {
+        document.getElementById('view-mode').style.display = 'block';
+        document.getElementById('edit-mode').style.display = 'none';
+        document.getElementById('edit-profile-btn').innerHTML = '<i class="fa-solid fa-edit"></i> Modifica Profilo';
+    }
+}
+
+function cancelEdit() {
+    // Ripristina i valori originali
+    document.getElementById('edit-first-name').value = '{{ user.first_name or "" }}';
+    document.getElementById('edit-last-name').value = '{{ user.last_name or "" }}';
+    document.getElementById('edit-phone').value = '{{ user.phone or "" }}';
+    document.getElementById('edit-username').value = '{{ user.username }}';
+    document.getElementById('edit-email').value = '{{ user.email }}';
+    document.getElementById('edit-preview-avatar').src = '{{ user.avatar_url }}';
+    document.getElementById('edit-profile-image').value = '';
+    
+    toggleEditMode();
+}
+
+function saveProfile() {
+    const form = document.getElementById('profile-form');
+    const formData = new FormData(form);
+    
+    // Validazione
+    const firstName = formData.get('first_name');
+    const lastName = formData.get('last_name');
+    const username = formData.get('username');
+    const email = formData.get('email');
+    
+    if (!firstName || !lastName || !username || !email) {
+        alert('Nome, cognome, username e email sono obbligatori');
+        return;
+    }
+    
+    // Validazione telefono
+    const phone = formData.get('phone');
+    if (phone && !/^[\+]?[0-9\s\-\(\)]{8,}$/.test(phone)) {
+        alert('Formato telefono non valido');
+        return;
+    }
+    
+    // Invia richiesta
+    fetch('/profile/data', {
+        method: 'POST',
+        body: formData  // Usa FormData per gestire file upload
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            alert(data.message);
+            location.reload(); // Ricarica la pagina per mostrare i nuovi dati
+        } else {
+            alert(data.message || 'Errore nell\'aggiornamento');
+        }
+    })
+    .catch(error => {
+        console.error('Errore:', error);
+        alert('Errore nell\'aggiornamento profilo');
+    });
+}
+
+// Funzioni per upload immagini
+function previewEditImage(input) {
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            document.getElementById('edit-preview-avatar').src = e.target.result;
+        };
+        reader.readAsDataURL(input.files[0]);
+    }
+}
+
+function removeEditImage() {
+    document.getElementById('edit-profile-image').value = '';
+    document.getElementById('edit-preview-avatar').src = '{{ user.avatar_url }}';
+}
+
+function triggerAvatarUpload() {
+    document.getElementById('quick-avatar-upload').click();
+}
+
+function quickUploadAvatar(input) {
+    if (input.files && input.files[0]) {
+        const formData = new FormData();
+        formData.append('profile_image', input.files[0]);
+        
+        fetch('/profile/data', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                alert('Avatar aggiornato con successo');
+                location.reload();
+            } else {
+                alert(data.message || 'Errore nell\'aggiornamento avatar');
+            }
+        })
+        .catch(error => {
+            console.error('Errore:', error);
+            alert('Errore nell\'upload avatar');
+        });
+    }
+}
+
+// Funzioni per il cambio password
+function showPasswordModal() {
+    document.getElementById('passwordModal').style.display = 'block';
+}
+
+function closePasswordModal() {
+    document.getElementById('passwordModal').style.display = 'none';
+    document.getElementById('password-form').reset();
+    document.getElementById('password-strength').innerHTML = '';
+}
+
+function changePassword() {
+    const form = document.getElementById('password-form');
+    const formData = new FormData(form);
+    const data = Object.fromEntries(formData.entries());
+    
+    // Validazione
+    if (!data.current_password || !data.new_password || !data.confirm_password) {
+        alert('Tutti i campi sono obbligatori');
+        return;
+    }
+    
+    if (data.new_password !== data.confirm_password) {
+        alert('Le nuove password non coincidono');
+        return;
+    }
+    
+    if (data.new_password.length < 8) {
+        alert('La nuova password deve essere di almeno 8 caratteri');
+        return;
+    }
+    
+    // Invia richiesta
+    fetch('/profile/password', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            alert(data.message);
+            closePasswordModal();
+        } else {
+            alert(data.message || 'Errore nel cambio password');
+        }
+    })
+    .catch(error => {
+        console.error('Errore:', error);
+        alert('Errore nel cambio password');
+    });
+}
+
+// Controllo forza password
+function setupPasswordStrength() {
+    const newPasswordField = document.getElementById('new-password');
+    const strengthIndicator = document.getElementById('password-strength');
+    
+    if (newPasswordField) {
+        newPasswordField.addEventListener('input', function() {
+            const password = this.value;
+            const strength = checkPasswordStrength(password);
+            
+            strengthIndicator.innerHTML = `
+                <div class="strength-bar">
+                    <div class="strength-fill strength-${strength.level}"></div>
+                </div>
+                <div class="strength-text">${strength.text}</div>
+            `;
+        });
+    }
+}
+
+function checkPasswordStrength(password) {
+    let score = 0;
+    let text = '';
+    
+    if (password.length >= 8) score += 1;
+    if (/[a-z]/.test(password)) score += 1;
+    if (/[A-Z]/.test(password)) score += 1;
+    if (/[0-9]/.test(password)) score += 1;
+    if (/[^A-Za-z0-9]/.test(password)) score += 1;
+    
+    switch (score) {
+        case 0:
+        case 1:
+            return { level: 'weak', text: 'Password debole' };
+        case 2:
+            return { level: 'fair', text: 'Password accettabile' };
+        case 3:
+            return { level: 'good', text: 'Password buona' };
+        case 4:
+        case 5:
+            return { level: 'strong', text: 'Password forte' };
+        default:
+            return { level: 'weak', text: 'Password debole' };
+    }
+}
+
+// Funzioni per le azioni account
+function resendConfirmation() {
+    if (confirm('Inviare nuovamente l\'email di conferma?')) {
+        fetch('/api/resend-confirmation', {
+            method: 'POST'
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                alert('Email di conferma inviata con successo');
+            } else {
+                alert(data.message || 'Errore nell\'invio email');
+            }
+        })
+        .catch(error => {
+            console.error('Errore:', error);
+            alert('Errore nell\'invio email di conferma');
+        });
+    }
+}
+
+function exportUserData() {
+    if (confirm('Scaricare i tuoi dati personali?')) {
+        fetch('/api/export-user-data', {
+            method: 'POST'
+        })
+        .then(response => {
+            if (response.ok) {
+                return response.blob();
+            }
+            throw new Error('Errore nell\'esportazione');
+        })
+        .then(blob => {
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'i_miei_dati.json';
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+        })
+        .catch(error => {
+            console.error('Errore:', error);
+            alert('Errore nell\'esportazione dati');
+        });
+    }
+}
+
+// Chiudi modal cliccando fuori
+window.onclick = function(event) {
+    const modal = document.getElementById('passwordModal');
+    if (event.target === modal) {
+        closePasswordModal();
+    }
+}
+</script>
+{% endblock %}

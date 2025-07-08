@@ -60,6 +60,16 @@ def create_app(config_name=None):
             get_children_menu=get_children_menu
         )
     
+    @app.context_processor
+    def inject_datetime():
+        from datetime import datetime
+        return dict(
+            now=datetime.now,
+            datetime=datetime,
+            utcnow=datetime.utcnow,         #Modificato
+            current_time=datetime.now()     #Modificato
+        )
+    
     # Middleware per caricare utente da sessione
     @app.before_request
     def load_user():

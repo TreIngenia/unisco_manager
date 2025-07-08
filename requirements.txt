@@ -7,3 +7,5 @@ Werkzeug
 python-dotenv
 flask-login
 tzdata
+Pillow
+uuid  

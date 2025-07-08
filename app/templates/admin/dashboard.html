@@ -1,0 +1,460 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard Amministratore{% endblock %}
+
+{% block toolbar %}
+<div class="toolbar-info">
+    <span>Benvenuto, <strong>{{ g.user.username }}</strong></span>
+    <span>Dashboard amministratore</span>
+</div>
+<div class="toolbar-actions">
+    <button type="button" onclick="refreshStats()">
+        <i class="fa-solid fa-arrows-rotate"></i> Aggiorna Statistiche
+    </button>
+    <a href="{{ url_for('admin.manage_users') }}">
+        <i class="fa-solid fa-users"></i> Gestisci Utenti
+    </a>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="admin-dashboard">
+    
+    <!-- Statistiche Principali -->
+    <div class="stats-overview">
+        <div class="section-header">
+            <h3>Statistiche Utenti</h3>
+            <p>Panoramica generale degli utenti del sistema</p>
+        </div>
+        
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fa-solid fa-users"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-number">{{ stats.total_users }}</div>
+                    <div class="stat-label">Utenti Totali</div>
+                </div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fa-solid fa-user-check"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-number">{{ stats.active_users }}</div>
+                    <div class="stat-label">Utenti Attivi</div>
+                </div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fa-solid fa-envelope-circle-check"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-number">{{ stats.confirmed_users }}</div>
+                    <div class="stat-label">Email Confermate</div>
+                </div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fa-solid fa-clock"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-number">{{ stats.pending_confirmation }}</div>
+                    <div class="stat-label">In Attesa Conferma</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Utenti Recenti -->
+    <div class="recent-users">
+        <div class="section-header">
+            <h3>Utenti Recenti</h3>
+            <p>Ultimi {{ recent_users|length }} utenti registrati</p>
+        </div>
+        
+        <div class="users-table-container">
+            <table class="simple-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Nome Utente</th>
+                        <th>Email</th>
+                        <th>Ruoli</th>
+                        <th>Status</th>
+                        <th>Data Registrazione</th>
+                        <th>Azioni</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for user in recent_users %}
+                    <tr>
+                        <td>{{ user.id }}</td>
+                        <td>
+                            <strong>{{ user.username }}</strong>
+                            {% if user.is_admin() %}
+                                <span class="admin-badge">Admin</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ user.email }}</td>
+                        <td>
+                            {% for role in user.roles %}
+                                <span class="role-badge role-{{ role.name }}">{{ role.name.title() }}</span>
+                            {% endfor %}
+                        </td>
+                        <td>
+                            <span class="status-badge {% if user.is_active %}active{% else %}inactive{% endif %}">
+                                {% if user.is_active %}Attivo{% else %}Disattivo{% endif %}
+                            </span>
+                        </td>
+                        <td>{{ user.created_at.strftime('%d/%m/%Y %H:%M') }}</td>
+                        <td>
+                            <div class="action-buttons">
+                                <button class="action-btn" onclick="viewUser({{ user.id }})" title="Visualizza">
+                                    <i class="fa-solid fa-eye"></i>
+                                </button>
+                                <button class="action-btn" onclick="editUser({{ user.id }})" title="Modifica">
+                                    <i class="fa-solid fa-edit"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    
+    <!-- Statistiche per Ruolo -->
+    <div class="role-stats">
+        <div class="section-header">
+            <h3>Distribuzione Ruoli</h3>
+            <p>Numero di utenti per ogni ruolo</p>
+        </div>
+        
+        <div class="role-cards">
+            {% for role in roles %}
+            <div class="role-card">
+                <div class="role-header">
+                    <h4>{{ role.name.title() }}</h4>
+                    <span class="role-count">{{ role.users|length }}</span>
+                </div>
+                <div class="role-description">
+                    {{ role.description }}
+                </div>
+                <div class="role-actions">
+                    <button onclick="showRoleUsers('{{ role.name }}')">
+                        <i class="fa-solid fa-users"></i> Vedi Utenti
+                    </button>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    
+    <!-- Azioni Rapide -->
+    <div class="quick-actions">
+        <div class="section-header">
+            <h3>Azioni Rapide</h3>
+            <p>Operazioni frequenti per gli amministratori</p>
+        </div>
+        
+        <div class="actions-grid">
+            <div class="action-card">
+                <div class="action-icon">
+                    <i class="fa-solid fa-user-plus"></i>
+                </div>
+                <div class="action-content">
+                    <h4>Aggiungi Utente</h4>
+                    <p>Crea un nuovo account utente</p>
+                </div>
+                <div class="action-button">
+                    <button onclick="showAddUserModal()">Aggiungi</button>
+                </div>
+            </div>
+            
+            <div class="action-card">
+                <div class="action-icon">
+                    <i class="fa-solid fa-users-cog"></i>
+                </div>
+                <div class="action-content">
+                    <h4>Gestisci Utenti</h4>
+                    <p>Visualizza e modifica tutti gli utenti</p>
+                </div>
+                <div class="action-button">
+                    <a href="{{ url_for('admin.manage_users') }}">Gestisci</a>
+                </div>
+            </div>
+            
+            <div class="action-card">
+                <div class="action-icon">
+                    <i class="fa-solid fa-shield-halved"></i>
+                </div>
+                <div class="action-content">
+                    <h4>Gestisci Ruoli</h4>
+                    <p>Configura ruoli e permessi</p>
+                </div>
+                <div class="action-button">
+                    <a href="{{ url_for('admin.manage_roles') }}">Gestisci</a>
+                </div>
+            </div>
+            
+            <div class="action-card">
+                <div class="action-icon">
+                    <i class="fa-solid fa-file-export"></i>
+                </div>
+                <div class="action-content">
+                    <h4>Esporta Dati</h4>
+                    <p>Esporta lista utenti in CSV</p>
+                </div>
+                <div class="action-button">
+                    <button onclick="exportAllUsers()">Esporta</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Grafico Registrazioni (Placeholder) -->
+    <div class="registrations-chart">
+        <div class="section-header">
+            <h3>Registrazioni negli Ultimi 30 Giorni</h3>
+            <p>Tendenza delle nuove registrazioni</p>
+        </div>
+        
+        <div class="chart-container">
+            <canvas id="registrationsChart" width="400" height="200"></canvas>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Aggiungi Utente Rapido -->
+<div id="quickAddUserModal" class="modal" style="display: none;">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Aggiungi Utente Rapido</h3>
+            <button type="button" class="close-btn" onclick="closeQuickAddModal()">
+                <i class="fa-solid fa-times"></i>
+            </button>
+        </div>
+        <div class="modal-body">
+            <form id="quickAddForm">
+                <div class="form-group">
+                    <label for="quick-username">Nome Utente *</label>
+                    <input type="text" id="quick-username" name="username" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="quick-email">Email *</label>
+                    <input type="email" id="quick-email" name="email" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="quick-password">Password *</label>
+                    <input type="password" id="quick-password" name="password" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="quick-role">Ruolo</label>
+                    <select id="quick-role" name="role">
+                        <option value="user">Utente</option>
+                        <option value="moderator">Moderatore</option>
+                        <option value="admin">Amministratore</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" id="quick-active" name="is_active" checked>
+                        Utente attivo
+                    </label>
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button type="button" onclick="closeQuickAddModal()">Annulla</button>
+            <button type="button" onclick="quickAddUser()" class="primary">Crea Utente</button>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Funzioni per la dashboard admin
+function refreshStats() {
+    location.reload();
+}
+
+function viewUser(userId) {
+    window.location.href = `/admin/users/${userId}`;
+}
+
+function editUser(userId) {
+    window.location.href = `/admin/users/${userId}`;
+}
+
+function showRoleUsers(roleName) {
+    window.location.href = `/admin/users?role=${roleName}`;
+}
+
+function showAddUserModal() {
+    document.getElementById('quickAddUserModal').style.display = 'block';
+}
+
+function closeQuickAddModal() {
+    document.getElementById('quickAddUserModal').style.display = 'none';
+    document.getElementById('quickAddForm').reset();
+}
+
+function quickAddUser() {
+    const form = document.getElementById('quickAddForm');
+    const formData = new FormData(form);
+    const data = Object.fromEntries(formData.entries());
+    
+    // Validazione
+    if (!data.username || !data.email || !data.password) {
+        alert('Tutti i campi obbligatori devono essere compilati');
+        return;
+    }
+    
+    // Prepara dati per l'API
+    const requestData = {
+        username: data.username,
+        email: data.email,
+        password: data.password,
+        is_active: data.is_active === 'on',
+        roles: [data.role] // Assumendo che i ruoli siano identificati per nome
+    };
+    
+    fetch('/admin/api/users', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            alert('Utente creato con successo');
+            closeQuickAddModal();
+            refreshStats();
+        } else {
+            alert(data.message || 'Errore nella creazione utente');
+        }
+    })
+    .catch(error => {
+        console.error('Errore:', error);
+        alert('Errore nella creazione utente');
+    });
+}
+
+function exportAllUsers() {
+    window.open('/admin/api/users/export', '_blank');
+}
+
+// Inizializzazione grafico (se Chart.js è disponibile)
+document.addEventListener('DOMContentLoaded', function() {
+    if (typeof Chart !== 'undefined') {
+        initRegistrationsChart();
+    }
+});
+
+function initRegistrationsChart() {
+    const ctx = document.getElementById('registrationsChart').getContext('2d');
+    
+    // Dati di esempio - in produzione questi dovrebbero venire dall'API
+    const chartData = {
+        labels: generateLast30Days(),
+        datasets: [{
+            label: 'Nuove Registrazioni',
+            data: generateRandomData(30),
+            borderColor: '#3498db',
+            backgroundColor: 'rgba(52, 152, 219, 0.1)',
+            tension: 0.1
+        }]
+    };
+    
+    new Chart(ctx, {
+        type: 'line',
+        data: chartData,
+        options: {
+            responsive: true,
+            plugins: {
+                title: {
+                    display: true,
+                    text: 'Registrazioni Utenti - Ultimi 30 Giorni'
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        stepSize: 1
+                    }
+                }
+            }
+        }
+    });
+}
+
+function generateLast30Days() {
+    const days = [];
+    const today = new Date();
+    
+    for (let i = 29; i >= 0; i--) {
+        const date = new Date(today);
+        date.setDate(today.getDate() - i);
+        days.push(date.toLocaleDateString('it-IT', { 
+            month: 'short', 
+            day: 'numeric' 
+        }));
+    }
+    
+    return days;
+}
+
+function generateRandomData(length) {
+    return Array.from({ length }, () => Math.floor(Math.random() * 10));
+}
+
+// Chiudi modal cliccando fuori
+window.onclick = function(event) {
+    const modal = document.getElementById('quickAddUserModal');
+    if (event.target === modal) {
+        closeQuickAddModal();
+    }
+}
+
+// Funzioni per statistiche real-time (opzionali)
+function loadRealtimeStats() {
+    fetch('/admin/api/users/stats')
+        .then(response => response.json())
+        .then(data => {
+            updateStatsDisplay(data);
+        })
+        .catch(error => {
+            console.error('Errore nel caricamento statistiche:', error);
+        });
+}
+
+function updateStatsDisplay(stats) {
+    // Aggiorna i numeri nelle card statistiche
+    const statCards = document.querySelectorAll('.stat-number');
+    if (statCards.length >= 4) {
+        statCards[0].textContent = stats.total_users;
+        statCards[1].textContent = stats.active_users;
+        statCards[2].textContent = stats.confirmed_users;
+        statCards[3].textContent = stats.pending_confirmation;
+    }
+}
+
+// Auto-refresh statistiche ogni 5 minuti (opzionale)
+setInterval(loadRealtimeStats, 5 * 60 * 1000);
+</script>
+{% endblock %}
