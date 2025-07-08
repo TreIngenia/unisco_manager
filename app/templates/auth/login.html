@@ -1,0 +1,399 @@
+{% extends "base_auth.html" %}
+
+{% block title %}Login{% endblock %}
+
+{% block content %}
+<form id="login" method="post" class="form w-100" novalidate="novalidate" action="">
+    <div class="text-center mb-11">
+        <div class="logo_fregio">
+            <img class="theme-dark-show mx-auto mw-100 w-150px w-lg-100px" src="assets/media/logos/unisco_solo_fregio.svg" alt="">
+        </div>
+    </div>
+    <div class="text-center mb-11">
+        <h1 class="text-gray-900 fw-bolder mb-3">Esegui l'accesso</h1>
+        <div class="text-gray-500 fw-semibold fs-6">Con un provider esterno</div>
+    </div>
+    <div class="row g-3 mb-9">
+        <div class="col-md-6">
+            <a href="#" class="btn btn-flex btn-outline btn-text-gray-700 btn-active-color-primary bg-state-light flex-center text-nowrap w-100">
+            <img alt="Logo" src="assets/media/svg/brand-logos/google-icon.svg" class="h-15px me-3" />Sign in with Google</a>
+        </div>
+        <div class="col-md-6">
+            <a href="#" class="btn btn-flex btn-outline btn-text-gray-700 btn-active-color-primary bg-state-light flex-center text-nowrap w-100">
+            <img alt="Logo" src="assets/media/svg/brand-logos/apple-black.svg" class="theme-light-show h-15px me-3" />
+            <img alt="Logo" src="assets/media/svg/brand-logos/apple-black-dark.svg" class="theme-dark-show h-15px me-3" />Sign in with Apple</a>
+        </div>
+    </div>
+    <div class="separator separator-content my-14">
+        <span class="w-125px text-gray-500 fw-semibold fs-7">o usando la tua E-Mail</span>
+    </div>
+    <div class="fv-row mb-8">
+        <input required type="text" placeholder="E-Mail" name="username" autocomplete="off" class="form-control bg-transparent" autofocus />
+    </div>
+    <div class="fv-row mb-3">
+        <input required type="password" placeholder="Password" name="password" autocomplete="off" class="form-control bg-transparent" />
+    </div>
+    <div class="d-flex flex-stack flex-wrap gap-3 fs-base fw-semibold mb-8">
+        <div></div>
+        <a href="{{ url_for('auth.forgot_password') }}" class="link-primary">Password dimenticata?</a>
+    </div>
+    <div class="d-grid mb-10">
+        <button type="submit" id="login_submit" class="btn btn-primary">
+            <span class="indicator-label">Accedi</span>
+            <span class="indicator-progress">Attendere... 
+            <span class="spinner-border spinner-border-sm align-middle ms-2"></span></span>
+        </button>
+    </div>
+    <div class="text-gray-500 text-center fw-semibold fs-6">Non hai un account? 
+    <a href="{{ url_for('auth.web_register') }}" class="link-primary">Registrati</a></div>
+</form>
+{% endblock %}
+{%block scripts %}
+
+<script type="text/javascript">
+    {% if msg %}
+        const msg = {{ msg | tojson }};
+        if(msg.action_url){
+            Swal.fire({
+                title: msg.title,
+                html: msg.message,
+                icon: msg.status,
+                showCancelButton: true,
+                confirmButtonText: msg.action_text,
+                cancelButtonText: "Chiudi",
+                buttonsStyling: false,
+                customClass: {
+                    confirmButton: "btn btn-primary",
+                    cancelButton: "btn btn-light"
+                }
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // Reindirizza all'action_url
+                    window.location.href = msg.action_url;
+                }
+            });
+        }else{console.log(msg)
+            Swal.fire({
+                title:msg.title,
+                html: msg.message ,
+                icon: msg.status,
+                buttonsStyling: false,
+                confirmButtonText: "Ok, riprovo!",
+                customClass: {
+                    confirmButton: "btn btn-primary"
+                }
+            })
+        }
+
+        
+   {% endif %}
+
+    "use strict";
+
+    var KTSigninGeneral = (function () {
+        var formElement, submitButton, validator;
+
+        return {
+            init: function () {
+                formElement = document.querySelector("#login");
+                submitButton = document.querySelector("#login_submit");
+
+                // Inizializza validazione form
+                validator = FormValidation.formValidation(formElement, {
+                    fields: {
+                        username: {
+                            validators: {
+                                regexp: {
+                                    regexp: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+                                    message: "Inserisci un indirizzo mail valido"
+                                },
+                                notEmpty: {
+                                    message: "L'indirizzo E-Mail è obbligatorio"
+                                }
+                            }
+                        },
+                        password: {
+                            validators: {
+                                notEmpty: {
+                                    message: "La password è obbligatoria"
+                                }
+                            }
+                        }
+                    },
+                    plugins: {
+                        trigger: new FormValidation.plugins.Trigger(),
+                        bootstrap: new FormValidation.plugins.Bootstrap5({
+                            rowSelector: ".fv-row",
+                            eleInvalidClass: "",
+                            eleValidClass: ""
+                        })
+                    }
+                });
+
+                // Verifica se l'attributo action è un URL valido
+                var isValidURL = function (url) {
+                    try {
+                        new URL(url);
+                        return true;
+                    } catch (e) {
+                        return false;
+                    }
+                };
+
+                // Se action non è un URL valido, usa validazione semplice con timeout finto
+                if (!isValidURL(submitButton.closest("form").getAttribute("action"))) {
+                    submitButton.addEventListener("click", function (event) {
+                        event.preventDefault();
+                        validator.validate().then(function (status) {
+                            if (status === "Valid") {
+                                submitButton.setAttribute("data-kt-indicator", "on");
+                                submitButton.disabled = true;
+
+                                
+                                formElement.submit();
+                                // setTimeout(function () {
+                                //     submitButton.removeAttribute("data-kt-indicator");
+                                //     submitButton.disabled = false;
+
+                                //     Swal.fire({
+                                //         text: "You have successfully logged in!",
+                                //         icon: "success",
+                                //         buttonsStyling: false,
+                                //         confirmButtonText: "Ok, riprovo!",
+                                //         customClass: {
+                                //             confirmButton: "btn btn-primary"
+                                //         }
+                                //     }).then(function (result) {
+                                //         if (result.isConfirmed) {
+                                //             formElement.querySelector('[name="email"]').value = "";
+                                //             formElement.querySelector('[name="password"]').value = "";
+
+                                //             var redirectUrl = formElement.getAttribute("data-kt-redirect-url");
+                                //             if (redirectUrl) {
+                                //                 location.href = redirectUrl;
+                                //             }
+                                //         }
+                                //     });
+                                // }, 2000);
+                            } else {
+                                Swal.fire({
+                                    title: "Errore nel login!",
+                                    text: "Attenzione è stato riscontrato un errore, verifica e riprova.",
+                                    icon: "error",
+                                    buttonsStyling: false,
+                                    confirmButtonText: "Ok, riprovo!",
+                                    customClass: {
+                                        confirmButton: "btn btn-primary"
+                                    }
+                                });
+                            }
+                        });
+                    });
+
+                } else {
+                    // const formData = new FormData(formElement);
+                    //             const data = {
+                    //                 username: formData.get('username'),
+                    //                 password: formData.get('password')
+                    //             };
+                    //             fetch('/auth/api/login', {
+                    //                 method: 'POST',
+                    //                 headers: {
+                    //                     'Content-Type': 'application/json'
+                    //                 },
+                    //                 body: JSON.stringify(data)
+                    //             })
+                    //             .then(response => response.json())
+                    //             .then(result => {
+                    //                 console.log('Risposta:', result);
+
+                    //                 if (result.status=='success') {
+                    //                     alert('Login riuscito!');
+                    //                     submitButton.removeAttribute("data-kt-indicator");
+                    //                     submitButton.disabled = false;
+                    //                 } else if (result.status=='error') {
+                    //                     alert('Errore: ' + result);
+                    //                     Swal.fire({
+                    //                         title: result.title,
+                    //                         text: result.message,
+                    //                         icon: "error",
+                    //                         buttonsStyling: false,
+                    //                         confirmButtonText: "Ok, riprovo!",
+                    //                         customClass: {
+                    //                             confirmButton: "btn btn-primary"
+                    //                         }
+                    //                     }).then(function (result) {
+                    //                         if (result.isConfirmed) {
+                    //                             formElement.querySelector('[name="email"]').value = "";
+                    //                             formElement.querySelector('[name="password"]').value = "";
+
+                    //                             var redirectUrl = formElement.getAttribute("data-kt-redirect-url");
+                    //                             if (redirectUrl) {
+                    //                                 location.href = redirectUrl;
+                    //                             }
+                    //                         }
+                    //                     });
+                    //                     submitButton.removeAttribute("data-kt-indicator");
+                    //                     submitButton.disabled = false;
+                    //                 }
+                    //             })
+                    //             .catch(error => {
+                    //                 console.error('Errore nella richiesta:', error);
+                    //                 alert('Errore di rete o server');
+                    //             });
+                    // Altrimenti esegui submit con Axios
+                    submitButton.addEventListener("click", function (event) {
+                        event.preventDefault();
+                        validator.validate().then(function (status) {
+                            if (status === "Valid") {
+                                submitButton.setAttribute("data-kt-indicator", "on");
+                                submitButton.disabled = true;
+
+                                axios.post(
+                                    submitButton.closest("form").getAttribute("action"),
+                                    new FormData(formElement)
+                                )
+                                .then(function (response) {
+                                    if (response) {
+                                        formElement.reset();
+                                        Swal.fire({
+                                            text: "You have successfully logged in!",
+                                            icon: "success",
+                                            buttonsStyling: false,
+                                            confirmButtonText: "Ok, got it!",
+                                            customClass: {
+                                                confirmButton: "btn btn-primary"
+                                            }
+                                        });
+
+                                        const redirectUrl = formElement.getAttribute("data-kt-redirect-url");
+                                        if (redirectUrl) {
+                                            location.href = redirectUrl;
+                                        }
+                                    } else {
+                                        Swal.fire({
+                                            text: "Sorry, the email or password is incorrect, please try again.",
+                                            icon: "error",
+                                            buttonsStyling: false,
+                                            confirmButtonText: "Ok, got it!",
+                                            customClass: {
+                                                confirmButton: "btn btn-primary"
+                                            }
+                                        });
+                                    }
+                                })
+                                .catch(function (error) {
+                                    Swal.fire({
+                                        text: "Sorry, looks like there are some errors detected, please try again.",
+                                        icon: "error",
+                                        buttonsStyling: false,
+                                        confirmButtonText: "Ok, got it!",
+                                        customClass: {
+                                            confirmButton: "btn btn-primary"
+                                        }
+                                    });
+                                })
+                                .then(() => {
+                                    submitButton.removeAttribute("data-kt-indicator");
+                                    submitButton.disabled = false;
+                                });
+
+                            } else {
+                                Swal.fire({
+                                    text: "Sorry, looks like there are some errors detected, please try again.",
+                                    icon: "error",
+                                    buttonsStyling: false,
+                                    confirmButtonText: "Ok, got it!",
+                                    customClass: {
+                                        confirmButton: "btn btn-primary"
+                                    }
+                                });
+                            }
+                        });
+                    });
+                }
+            }
+        };
+    })();
+
+    // Inizializzazione dopo caricamento DOM
+    KTUtil.onDOMContentLoaded(function () {
+        KTSigninGeneral.init();
+    });
+
+        // // Define form element
+        // const login_form = document.getElementById('login');
+
+        // // Init form validation rules. For more info check the FormValidation plugin's official documentation:https://formvalidation.io/
+        // var validator = FormValidation.formValidation(
+        //     login_form,
+        //     {
+        //         fields: {
+        //             'username': {
+        //                 validators: {
+        //                     emailAddress: {
+        //                         message: 'Inserisci un indirizzo mail valido'
+        //                     },
+        //                     notEmpty: {
+        //                         message: 'Indirizzo E-Mail obbligatorio'
+        //                     }
+        //                 }
+        //             },
+        //         },
+
+        //         plugins: {
+        //             trigger: new FormValidation.plugins.Trigger(),
+        //             bootstrap: new FormValidation.plugins.Bootstrap5({
+        //                 rowSelector: '.fv-row',
+        //                 eleInvalidClass: '',
+        //                 eleValidClass: ''
+        //             })
+        //         }
+        //     }
+        // );
+
+        // // Submit button handler
+        // const submitButton = document.getElementById('login_submit');
+        // submitButton.addEventListener('click', function (e) {
+        //     // Prevent default button action
+        //     e.preventDefault();
+
+        //     // Validate form before submit
+        //     if (validator) {
+        //         validator.validate().then(function (status) {
+        //             console.log('validated!');
+
+        //             if (status == 'Valid') {
+        //                 // Show loading indication
+        //                 submitButton.setAttribute('data-kt-indicator', 'on');
+
+        //                 // Disable button to avoid multiple click
+        //                 submitButton.disabled = true;
+
+        //                 // Simulate form submission. For more info check the plugin's official documentation: https://sweetalert2.github.io/
+        //                 setTimeout(function () {
+        //                     // Remove loading indication
+        //                     submitButton.removeAttribute('data-kt-indicator');
+
+        //                     // Enable button
+        //                     submitButton.disabled = false;
+
+        //                     // Show popup confirmation
+        //                     Swal.fire({
+        //                         text: "Form has been successfully submitted!",
+        //                         icon: "success",
+        //                         buttonsStyling: false,
+        //                         confirmButtonText: "Ok, got it!",
+        //                         customClass: {
+        //                             confirmButton: "btn btn-primary"
+        //                         }
+        //                     });
+
+        //                     //form.submit(); // Submit form
+        //                 }, 2000);
+        //             }
+        //         });
+        //     }
+        // });
+</script>
+{% endblock %}       

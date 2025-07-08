@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+
+{% block title %}Home{% endblock %}
+
+{% block content %}
+<h1>Benvenuto</h1>
+{{request.args.get('logout')}}
+<p><a href="{{ url_for('auth.web_login') }}">Login</a></p>
+<p><a href="{{ url_for('auth.web_register') }}">Registrati</a></p>
+{% endblock %}
+{% block scripts %}
+{% if request.args.get('logout') == 'true' %}
+<script>
+    localStorage.removeItem('access_token');
+    history.replaceState(null, "", window.location.pathname);
+</script>
+{% endif %}
+{% endblock %}

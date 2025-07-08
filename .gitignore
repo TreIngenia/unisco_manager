@@ -1,0 +1,7 @@
+*copy*
+venv
+migrations
+Da eliminare
+__pycache__
+**/__pycache__
+static
