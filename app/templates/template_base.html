@@ -1,13 +1,15 @@
 {% extends 'base.html' %}
 
 <!-- Inserimento Titolo -->
-{% block title %}>
-Gestione Contratti CDR
+{#
+{% block title %}
 {% endblock %}
+#}
 
 <!-- Inserimento ToolBar -->
+{#
 {% block toolbar %}
-<!-- <div class=" align-items-center gap-2">
+<div class=" align-items-center gap-2">
     <div class="text-gray-700">Totale contratti: <span class="text-white" id="total-contracts">0</span></div>
     <div class="text-gray-700">Ultimo aggiornamento: <span class="text-white" id="last-updated">-</span></div>
 </div>
@@ -20,8 +22,9 @@ Gestione Contratti CDR
         <button id="save_all" type="button" class="btn btn-sm btn-warning disabled" onclick="saveAllContracts()"><i class="fa-solid fa-floppy-disk me-2 fs-3"></i>Salva Tutti i Contratti</button>
         <button id="reload" type="button" class="btn btn-sm btn-info" onclick="loadContracts('load')"><i class="fa-solid fa-arrows-rotate me-2 fs-3"></i>Ricarica Dati</button>
     </div>
-</div> -->
-{% endblock %}     
+</div>
+{% endblock %}   
+#}  
 
 <!-- Inserimento contenuto Pagina -->
 {% block content %}

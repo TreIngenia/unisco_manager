@@ -4,22 +4,20 @@ from datetime import datetime, timedelta
 from sqlalchemy import func
 import secrets
 import os
+import uuid
 
 class User(db.Model):
     __tablename__ = 'users'
     
     id = db.Column(db.Integer, primary_key=True)
+    uid = db.Column(db.String(255), unique=True, nullable=False, default=lambda: str(uuid.uuid4()))
     username = db.Column(db.String(80), unique=True, nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
     password_hash = db.Column(db.String(255), nullable=False)
-    
-    # ==================== NUOVI CAMPI AGGIUNTI ====================
     first_name = db.Column(db.String(100), nullable=True)
     last_name = db.Column(db.String(100), nullable=True)
     phone = db.Column(db.String(20), nullable=True)
     profile_image = db.Column(db.String(255), nullable=True)  # Path dell'immagine
-    
-    # ==================== CAMPI ESISTENTI ====================
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     is_active = db.Column(db.Boolean, default=True)
     is_email_confirmed = db.Column(db.Boolean, default=False)
@@ -28,12 +26,14 @@ class User(db.Model):
     password_reset_token = db.Column(db.String(255), nullable=True)
     password_reset_sent_at = db.Column(db.DateTime, nullable=True)
     last_login = db.Column(db.DateTime, nullable=True)
+    qrcode_image = db.Column(db.String(255), nullable=True)
+    qrcode_value = db.Column(db.String(255), nullable=True)
     
     # Relazione many-to-many con Role - specificando foreign_keys per evitare ambiguità
     roles = db.relationship('Role', 
                           secondary='user_roles', 
                           back_populates='users',
-                          foreign_keys='[user_roles.c.user_id, user_roles.c.role_id]')
+                          foreign_keys='[user_roles.c.user_uid, user_roles.c.role_id]')
     
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
@@ -251,12 +251,42 @@ class User(db.Model):
         """Restituisce tutti gli admin"""
         return cls.get_users_by_role('admin')
     
+    @classmethod
+    def find_by_uid(cls, uid):
+        """Trova utente per UID"""
+        return cls.query.filter_by(uid=uid).first()
+    
+    @classmethod
+    def get_by_uid(cls, uid):
+        """Ottiene utente per UID (con eccezione se non trovato)"""
+        return cls.query.filter_by(uid=uid).first_or_404()
+
+    @classmethod
+    def find_by_id(cls, id):
+        """Trova utente per ID"""
+        return cls.query.filter_by(id=id).first()
+    
+    @classmethod
+    def find_by_uid_or_id(cls, identifier):
+        """Trova utente per UID o ID"""
+        # Prova prima con UID
+        user = cls.query.filter_by(uid=identifier).first()
+        if not user:
+            # Prova con ID se è un numero
+            try:
+                user_uid = int(identifier)
+                user = cls.query.filter_by(id=user_uid).first()
+            except ValueError:
+                pass
+        return user
+    
     # ==================== SERIALIZZAZIONE AGGIORNATA ====================
     
     def to_dict(self, include_roles=True, include_sensitive=False):
         """Converte utente in dizionario con campi aggiornati"""
         data = {
             'id': self.id,
+            'uid': self.uid,
             'username': self.username,
             'email': self.email,
             'first_name': self.first_name,
@@ -269,7 +299,9 @@ class User(db.Model):
             'created_at': self.created_at.isoformat() if self.created_at else None,
             'is_active': self.is_active,
             'is_email_confirmed': self.is_email_confirmed,
-            'last_login': self.last_login.isoformat() if self.last_login else None
+            'last_login': self.last_login.isoformat() if self.last_login else None,
+            'qrcode_image': self.qrcode_image,
+            'qrcode_value': self.qrcode_value
         }
         
         if include_roles:
@@ -292,3 +324,91 @@ class User(db.Model):
         roles = ', '.join(self.get_role_names())
         full_name = f" ({self.full_name})" if self.full_name != self.username else ""
         return f'<User {self.username}{full_name} - {self.email} - Roles: {roles}>'
+    
+
+    @staticmethod
+    def generate_uid():
+        """Genera un UID univoco per l'utente"""
+        import uuid
+        return str(uuid.uuid4())
+
+    def __init__(self, **kwargs):
+        """Inizializza l'utente con UID automatico"""
+        super().__init__(**kwargs)
+        if not self.uid:
+            self.uid = self.generate_uid()
+
+
+    #"""Genera un QR code per l'utente"""
+    def generate_qr_code(self, value=None):
+        import qrcode
+        import io
+        import base64
+        from PIL import Image
+        
+        if not value:
+            value = self.uid
+        
+        # Genera QR code
+        qr = qrcode.QRCode(
+            version=1,
+            error_correction=qrcode.constants.ERROR_CORRECT_L,
+            box_size=10,
+            border=4,
+        )
+        qr.add_data(value)
+        qr.make(fit=True)
+        
+        # Crea l'immagine
+        img = qr.make_image(fill_color="black", back_color="white")
+        
+        # Converti in base64
+        buffer = io.BytesIO()
+        img.save(buffer, format='PNG')
+        img_str = base64.b64encode(buffer.getvalue()).decode()
+        
+        # Salva nel database
+        self.qrcode_value = value
+        self.qrcode_image = f"data:image/png;base64,{img_str}"
+        
+        return self.qrcode_image
+
+    def get_qr_code_image_path(self):
+        """Ritorna il path dell'immagine QR code"""
+        return self.qrcode_image
+
+    @property
+    def qr_code_data(self):
+        """Restituisce i dati del QR code"""
+        return {
+            'value': self.qrcode_value,
+            'image': self.qrcode_image
+        }
+    
+
+    ##Gestisce i gruppi
+    def add_to_group(self, group_name):
+        """Aggiunge l'utente a un gruppo"""
+        if not self.groups:
+            self.groups = group_name
+        else:
+            groups_list = self.groups.split(',')
+            if group_name not in groups_list:
+                groups_list.append(group_name)
+                self.groups = ','.join(groups_list)
+
+    def remove_from_group(self, group_name):
+        """Rimuove l'utente da un gruppo"""
+        if self.groups:
+            groups_list = self.groups.split(',')
+            if group_name in groups_list:
+                groups_list.remove(group_name)
+                self.groups = ','.join(groups_list) if groups_list else None
+
+    def get_groups_list(self):
+        """Restituisce la lista dei gruppi"""
+        return self.groups.split(',') if self.groups else []
+
+    def is_in_group(self, group_name):
+        """Controlla se l'utente appartiene a un gruppo"""
+        return group_name in self.get_groups_list()

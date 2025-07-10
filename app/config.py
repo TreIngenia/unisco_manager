@@ -9,6 +9,21 @@ class Config:
     JWT_ACCESS_TOKEN_EXPIRES = timedelta(hours=1)
     JWT_REFRESH_TOKEN_EXPIRES = timedelta(days=30)
 
+    # ==================== NUOVE CONFIGURAZIONI JWT COOKIES ====================
+    # Supporta sia headers che cookies
+    JWT_TOKEN_LOCATION = ['headers', 'cookies']
+    
+    # Configurazioni Cookie httpOnly
+    JWT_COOKIE_SECURE = False          # True in produzione con HTTPS
+    JWT_COOKIE_CSRF_PROTECT = False    # False per semplicità iniziale
+    JWT_ACCESS_COOKIE_NAME = 'access_token_cookie'
+    JWT_COOKIE_SAMESITE = 'Lax'
+    JWT_COOKIE_DOMAIN = None           # None = stesso dominio
+    JWT_COOKIE_PATH = '/'              # Disponibile su tutto il sito
+    
+    # Opzionale: Cookie per refresh token
+    JWT_REFRESH_COOKIE_NAME = 'refresh_token_cookie'
+
 class DevelopmentConfig(Config):
     DEBUG = True
     SQLALCHEMY_DATABASE_URI = os.environ.get('DEV_DATABASE_URL') or 'postgresql://unisco_admin:ZfbOpFTR7wjqz1NtDCnf@192.168.3.107:5432/unisco-manager'

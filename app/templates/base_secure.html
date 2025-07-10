@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<!--
+Author: Keenthemes
+Product Name: MetronicProduct Version: 8.3.0
+Purchase: https://themeforest.net/item/metronic-responsive-admin-dashboard-template/4021469?irgwc=1&clickid=Qb1XFm3dIxyIUCez3ZXf1X0mUks0kb3cC2sEUQ0&iradid=275988&irpid=1330466&iradtype=ONLINE_TRACKING_LINK&irmptype=mediapartner&mp_value1=&utm_campaign=af_impact_radius_1330466&utm_medium=affiliate&utm_source=impact_radius
+Website: http://www.keenthemes.com
+Contact: support@keenthemes.com
+Follow: www.twitter.com/keenthemes
+Dribbble: www.dribbble.com/keenthemes
+Like: www.facebook.com/keenthemes
+License: For each use you must have a valid license purchased only from above link in order to legally use the theme for your project.
+-->
+<html lang="IT" >
+    <head><base href="{{ url_for('static', filename='') }}">
+        <title>Unisco Manager | 
+            {% block title %}
+
+            {% set page_title = namespace(value='') %}
+            {% for item in get_menu() %}
+                {% if request.endpoint == item.endpoint and not page_title.value %}
+                    {% set page_title.value = item.title %}
+                {% endif %}
+            {% endfor %}
+            
+            {% if page_title.value %}
+                {{ page_title.value }}
+            {% endif %}
+
+            {% endblock %}
+        </title>
+        <meta charset="utf-8"/>
+        <meta name="description" content="
+     
+        "/>
+        <meta name="keywords" content="
+         
+        "/>
+        <meta name="viewport" content="width=device-width, initial-scale=1"/>
+        
+        <meta property="og:locale" content="it_IT" />
+        <meta property="og:type" content="application" />
+        <meta property="og:title" content="Unisco Manager" />
+        <meta property="og:url" content="https://www.unisco.pro"/>
+        <meta property="og:site_name" content="Unisco Manager" />
+        <link rel="canonical" href="http://unisco.pro"/>
+        <link rel="shortcut icon" href="assets/media/logos/favicon.ico"/>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inter:300,400,500,600,700"/>        <!--end::Fonts-->
+        <link href="assets/plugins/custom/fullcalendar/fullcalendar.bundle.css" rel="stylesheet" type="text/css"/>
+        <link href="assets/plugins/custom/datatables/datatables.bundle.css" rel="stylesheet" type="text/css"/>
+        <link href="assets/plugins/global/plugins.bundle.css" rel="stylesheet" type="text/css"/>
+        <link href="assets/css/style.bundle.css" rel="stylesheet" type="text/css"/>
+        <link href="assets/treingenia/css/style.css" rel="stylesheet" type="text/css"/>
+        
+        <script>
+            // Frame-busting to prevent site from being loaded within a frame without permission (click-jacking)
+            if (window.top != window.self) {
+                window.top.location.replace(window.self.location.href);
+            }
+        </script>
+    </head>
+    <!--end::Head-->
+    <!--begin::Body-->
+    <body  id="kt_app_body" data-kt-app-page-loading-enabled="true" data-kt-app-page-loading="on" data-kt-app-layout="dark-sidebar" data-kt-app-header-fixed="true" data-kt-app-sidebar-enabled="true" data-kt-app-sidebar-fixed="true" data-kt-app-sidebar-hoverable="true" data-kt-app-sidebar-push-header="true" data-kt-app-sidebar-push-toolbar="true" data-kt-app-sidebar-push-footer="true" data-kt-app-footer-fixed="true" data-kt-app-toolbar-fixed="{{ 'true' if self.toolbar()|trim else 'false' }}" class="app-default" >
+        {% include 'partials/theme-mode/_init.html' %}
+        {% include 'layout/partials/_page-loader.html' %}
+        
+        <!--begin::CONTENITORE PAGINE _DEFAULT.HTML-->
+            <div class="d-flex flex-column flex-root app-root" id="kt_app_root">
+                <div class="app-page  flex-column flex-column-fluid " id="kt_app_page">
+                    {% include 'layout/partials/_header.html' %}
+                    <div class="app-wrapper  flex-column flex-row-fluid " id="kt_app_wrapper">
+                        {% include 'layout/partials/_sidebar.html' %}
+                        <div class="app-main flex-column flex-row-fluid " id="kt_app_main">
+                            <div class="d-flex flex-column flex-column-fluid">
+                                {% if self.toolbar()|trim %}
+                                <div id="kt_app_toolbar" class="app-toolbar py-3 border-0 shadow-sm">
+                                    <div id="kt_app_toolbar_container" class="app-container container-fluid d-flex flex-stack ">
+                                        {% block toolbar %}{% endblock %}
+                                    </div>
+                                </div>
+                                {% endif %}
+                                <!-- {% include 'layout/partials/_toolbar.html' %} -->
+                                <!--begin::CONTENUTO DINAMICO PAGINA-->
+                                {% block content %}{% endblock %}
+                                <!--end::FINE CONTENUTO DINAMICO PAGINA-->
+                            </div>
+                            {% include 'layout/partials/_footer.html' %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% include 'partials/_drawers.html' %}
+        <!--end::FINE CONTENITORE PAGINE-->
+
+        {% include 'partials/_scrolltop.html' %}
+
+        <!--begin::Modals-->
+        {% include 'partials/modals/_upgrade-plan.html' %}
+        {% include 'partials/modals/_view-users.html' %}
+        {% include 'partials/modals/users-search/_main.html' %}
+        {% include 'partials/modals/_invite-friends.html' %}
+        <!--layout-partial:partials/modals/_upgrade-plan.html-->
+        <!--layout-partial:partials/modals/_view-users.html-->
+        <!--layout-partial:partials/modals/users-search/_main.html-->
+        <!--layout-partial:partials/modals/_invite-friends.html-->
+            <!--end::Modals-->
+        <script>
+            var hostUrl = "assets/"; 
+        </script>
+        <script src="assets/plugins/global/plugins.bundle.js"></script>
+        <script src="assets/js/scripts.bundle.js"></script>
+        <script src="assets/treingenia/js/scripts.js"></script>
+        <script>
+            // ===============================
+            // CONFIGURAZIONE GLOBALE PER API
+            // ===============================
+
+            // Configurazione di base per le chiamate API
+            const API_CONFIG = {
+                baseURL: '/admin/api',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            };
+
+            // Wrapper per fetch con gestione errori unificata e JWT cookies
+            // async function apiCall(url, options = {}) {
+            //     try {
+            //         const defaultConfig = {
+            //             credentials: 'include', // IMPORTANTE: Include sempre i cookies JWT
+            //             headers: {
+            //                 ...API_CONFIG.headers,
+            //                 ...options.headers
+            //             },
+            //             ...options
+            //         };
+
+            //         // Per FormData (upload immagini), rimuovi Content-Type
+            //         if (options.body instanceof FormData) {
+            //             delete defaultConfig.headers['Content-Type'];
+            //         }
+
+            //         const response = await fetch(url, defaultConfig);
+
+            //         // Gestione errori di autenticazione
+            //         if (response.status === 401) {
+            //             handleAuthError();
+            //             throw new Error('Sessione scaduta. Effettua nuovamente il login.');
+            //         }
+
+            //         if (response.status === 403) {
+            //             throw new Error('Non hai i permessi per questa operazione.');
+            //         }
+
+            //         if (!response.ok) {
+            //             const errorData = await response.json().catch(() => ({}));
+            //             throw new Error(errorData.message || `Errore HTTP: ${response.status}`);
+            //         }
+
+            //         return await response.json();
+            //     } catch (error) {
+            //         console.error('API Error:', error);
+            //         throw error;
+            //     }
+            // }
+            async function apiCall(url, options = {}) {
+                try {
+                    const defaultConfig = {
+                        credentials: 'include', // Include i cookies JWT
+                        headers: {
+                            ...API_CONFIG.headers,
+                            ...options.headers
+                        },
+                        ...options
+                    };
+
+                    if (options.body instanceof FormData) {
+                        delete defaultConfig.headers['Content-Type'];
+                    }
+
+                    const response = await fetch(url, defaultConfig);
+
+                    let data;
+                    try {
+                        data = await response.json();
+                    } catch {
+                        data = {};
+                    }
+
+                    if (response.status === 401) {
+                        handleAuthError();
+                        return {
+                            status: 'error',
+                            message: 'Sessione scaduta. Effettua nuovamente il login.',
+                            raw: data
+                        };
+                    }
+
+                    if (response.status === 403) {
+                        return {
+                            status: 'error',
+                            message: 'Non hai i permessi per questa operazione.',
+                            raw: data
+                        };
+                    }
+
+                    if (!response.ok) {
+                        return {
+                            status: 'error',
+                            message: data.message || `Errore HTTP: ${response.status}`,
+                            raw: data
+                        };
+                    }
+
+                    return {
+                        status: 'success',
+                        ...data
+                    };
+                } catch (error) {
+                    console.error('API Error:', error);
+                    return {
+                        status: 'error',
+                        message: error.message || 'Errore di rete',
+                        raw: error
+                    };
+                }
+            }
+
+            // Gestione errori di autenticazione
+            function handleAuthError() {
+                alert('La tua sessione è scaduta. Verrai reindirizzato alla pagina di login.');
+                setTimeout(() => {
+                    window.location.href = '/auth/login';
+                }, 1500);
+            }
+        </script>
+        {%block scripts %}{% endblock %}        
+        <script>
+            /** 
+             *  Configurazione di Toastr per le notifiche 
+             * */
+            toastr.options = {
+                "closeButton": false,
+                "debug": false,
+                "newestOnTop": false,
+                "progressBar": true,
+                "positionClass": "toastr-top-right",
+                "preventDuplicates": false,
+                "onclick": null,
+                "showDuration": "300",
+                "hideDuration": "1000",
+                "timeOut": "5000",
+                "extendedTimeOut": "1000",
+                "showEasing": "swing",
+                "hideEasing": "linear",
+                "showMethod": "fadeIn",
+                "hideMethod": "fadeOut"
+            };
+            
+            function formatEuro(value) {
+                return value.toFixed(4).replace('.', ',');
+            }
+
+            function applyMarkup(price, markupPercent) {
+                if (isNaN(price) || isNaN(markupPercent)) {
+                    throw new Error("Prezzo o markup non valido");
+                }
+                return price * (1 + markupPercent / 100);
+            }
+            function reinitTooltips(scope = document) {
+                const tooltipTriggerList = [].slice.call(scope.querySelectorAll('[data-bs-toggle="tooltip"]'));
+                tooltipTriggerList.map(el => new bootstrap.Tooltip(el));
+            }
+        </script>
+    </body>
+</html>
+
+

@@ -28,9 +28,9 @@ def register_web_routes(web_bp):
     @login_required
     def edit_profile():
         if request.method == 'POST':
-            username = request.form.get('username')
+            username = request.form.get('email')
             email = request.form.get('email')
-            
+           
             if username and username != g.user.username:
                 # Controllo case-insensitive per username
                 if User.find_by_username(username):
@@ -45,6 +45,7 @@ def register_web_routes(web_bp):
                     return render_template('web/edit_profile.html', user=g.user)
                 g.user.email = email
             
+
             from app import db
             db.session.commit()
             flash('Profilo aggiornato con successo')
@@ -147,7 +148,14 @@ def register_web_routes(web_bp):
                     
                     g.user.email = data['email']
                     g.user.is_email_confirmed = False  # Richiede nuova conferma
-                
+
+                first_name = data['first_name']
+                last_name = data['last_name']
+                phone = data['phone']
+                g.user.first_name = first_name
+                g.user.last_name = last_name
+                g.user.phone = phone
+
                 db.session.commit()
                 
                 if request.is_json:
@@ -184,8 +192,8 @@ def register_web_routes(web_bp):
         if request.method == 'POST':
             data = request.get_json() if request.is_json else request.form
             
-            current_password = data.get('current_password')
-            new_password = data.get('new_password')
+            current_password = data.get('actual_password')
+            new_password = data.get('password')
             confirm_password = data.get('confirm_password')
             
             # Validazione

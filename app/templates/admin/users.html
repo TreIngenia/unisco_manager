@@ -250,7 +250,7 @@
         </div>
         <div class="modal-body">
             <form id="userForm" enctype="multipart/form-data">
-                <input type="hidden" id="user-id" name="user_id">
+                <input type="hidden" id="user-id" name="user_uid">
                 
                 <!-- Sezione Immagine Profilo -->
                 <div class="form-section">
@@ -395,12 +395,78 @@
 
 {% block scripts %}
 <script>
-// Variabili globali
+// ===============================
+// CONFIGURAZIONE GLOBALE PER API
+// ===============================
+
+// Configurazione di base per le chiamate API
+const API_CONFIG = {
+    baseURL: '/admin/api',
+    headers: {
+        'Content-Type': 'application/json',
+        'X-Requested-With': 'XMLHttpRequest'
+    }
+};
+
+// Wrapper per fetch con gestione errori unificata e JWT cookies
+async function apiCall(url, options = {}) {
+    try {
+        const defaultConfig = {
+            credentials: 'include', // IMPORTANTE: Include sempre i cookies JWT
+            headers: {
+                ...API_CONFIG.headers,
+                ...options.headers
+            },
+            ...options
+        };
+
+        // Per FormData (upload immagini), rimuovi Content-Type
+        if (options.body instanceof FormData) {
+            delete defaultConfig.headers['Content-Type'];
+        }
+
+        const response = await fetch(url, defaultConfig);
+
+        // Gestione errori di autenticazione
+        if (response.status === 401) {
+            handleAuthError();
+            throw new Error('Sessione scaduta. Effettua nuovamente il login.');
+        }
+
+        if (response.status === 403) {
+            throw new Error('Non hai i permessi per questa operazione.');
+        }
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.message || `Errore HTTP: ${response.status}`);
+        }
+
+        return await response.json();
+    } catch (error) {
+        console.error('API Error:', error);
+        throw error;
+    }
+}
+
+// Gestione errori di autenticazione
+function handleAuthError() {
+    alert('La tua sessione è scaduta. Verrai reindirizzato alla pagina di login.');
+    setTimeout(() => {
+        window.location.href = '/auth/login';
+    }, 1500);
+}
+
+// ===============================
+// VARIABILI GLOBALI
+// ===============================
 let selectedUsers = [];
 let currentEditingUser = null;
 let userToDelete = null;
 
-// Inizializzazione
+// ===============================
+// INIZIALIZZAZIONE
+// ===============================
 document.addEventListener('DOMContentLoaded', function() {
     initializeTable();
     setupEventListeners();
@@ -428,6 +494,355 @@ function setupEventListeners() {
     document.getElementById('search-filter').addEventListener('input', debounce(applyFilters, 500));
     document.getElementById('search-users').addEventListener('input', debounce(searchUsers, 300));
 }
+
+// ===============================
+// FUNZIONI UPLOAD IMMAGINI
+// ===============================
+
+// Funzione per upload immagine separato
+async function uploadUserImage(userId, imageFile) {
+    if (!imageFile) return null;
+    
+    const formData = new FormData();
+    formData.append('profile_image', imageFile);
+    
+    try {
+        const data = await apiCall(`${API_CONFIG.baseURL}/users/${userId}/avatar`, {
+            method: 'POST',
+            body: formData  // FormData per upload
+        });
+        
+        return data.avatar_url;
+    } catch (error) {
+        console.error('Errore upload immagine:', error);
+        // Non bloccare il salvataggio per errori di upload
+        return null;
+    }
+}
+
+// ===============================
+// FUNZIONI UTENTI - VERSIONE JSON
+// ===============================
+
+// Funzione viewUser aggiornata
+async function viewUser(userId) {
+    try {
+        const user = await apiCall(`${API_CONFIG.baseURL}/users/${userId}`);
+        
+        const detailsHtml = `
+            <div class="user-detail-grid">
+                <div class="user-avatar-section">
+                    <img src="${user.avatar_url}" alt="${user.full_name}" width="100" height="100">
+                    <h4>${user.full_name}</h4>
+                    <p>${user.username}</p>
+                </div>
+                <div class="user-info-section">
+                    <div class="detail-item">
+                        <label>ID:</label>
+                        <span>${user.id}</span>
+                    </div>
+                    <div class="detail-item">
+                        <label>Nome:</label>
+                        <span>${user.first_name || 'N/A'}</span>
+                    </div>
+                    <div class="detail-item">
+                        <label>Cognome:</label>
+                        <span>${user.last_name || 'N/A'}</span>
+                    </div>
+                    <div class="detail-item">
+                        <label>Nome Utente:</label>
+                        <span>${user.username}</span>
+                    </div>
+                    <div class="detail-item">
+                        <label>Email:</label>
+                        <span>${user.email}</span>
+                    </div>
+                    <div class="detail-item">
+                        <label>Telefono:</label>
+                        <span>${user.phone || 'N/A'}</span>
+                    </div>
+                    <div class="detail-item">
+                        <label>Ruoli:</label>
+                        <span>${user.roles ? user.roles.map(role => role.name).join(', ') : 'Nessuno'}</span>
+                    </div>
+                    <div class="detail-item">
+                        <label>Status:</label>
+                        <span>${user.is_active ? 'Attivo' : 'Disattivo'}</span>
+                    </div>
+                    <div class="detail-item">
+                        <label>Email Confermata:</label>
+                        <span>${user.is_email_confirmed ? 'Sì' : 'No'}</span>
+                    </div>
+                    <div class="detail-item">
+                        <label>Data Registrazione:</label>
+                        <span>${new Date(user.created_at).toLocaleDateString('it-IT')}</span>
+                    </div>
+                    <div class="detail-item">
+                        <label>Ultimo Accesso:</label>
+                        <span>${user.last_login ? new Date(user.last_login).toLocaleDateString('it-IT') : 'Mai'}</span>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        document.getElementById('user-details').innerHTML = detailsHtml;
+        document.getElementById('viewUserModal').style.display = 'block';
+    } catch (error) {
+        alert(error.message);
+    }
+}
+
+// Funzione editUser aggiornata
+async function editUser(userId) {
+    try {
+        const user = await apiCall(`${API_CONFIG.baseURL}/users/${userId}`);
+        
+        currentEditingUser = userId;
+        document.getElementById('modal-title').textContent = 'Modifica Utente';
+        document.getElementById('user-id').value = user.id;
+        document.getElementById('first-name').value = user.first_name || '';
+        document.getElementById('last-name').value = user.last_name || '';
+        document.getElementById('phone').value = user.phone || '';
+        document.getElementById('username').value = user.username;
+        document.getElementById('email').value = user.email;
+        document.getElementById('is_active').checked = user.is_active;
+        document.getElementById('is_email_confirmed').checked = user.is_email_confirmed;
+        
+        // Mostra avatar corrente
+        document.getElementById('preview-avatar').src = user.avatar_url;
+        
+        // Nascondi sezione password per la modifica
+        document.getElementById('password-section').style.display = 'none';
+        document.getElementById('password').required = false;
+        document.getElementById('confirm_password').required = false;
+        
+        // Seleziona ruoli
+        const roleSelect = document.getElementById('user_roles');
+        Array.from(roleSelect.options).forEach(option => {
+            option.selected = user.roles ? user.roles.some(role => role.id == option.value) : false;
+        });
+        
+        document.getElementById('userModal').style.display = 'block';
+    } catch (error) {
+        alert(error.message);
+    }
+}
+
+// Funzione saveUser - VERSIONE JSON CON JWT
+async function saveUser() {
+    const form = document.getElementById('userForm');
+    const formData = new FormData(form);
+    
+    // Validazione
+    const firstName = formData.get('first_name');
+    const lastName = formData.get('last_name');
+    const username = formData.get('username');
+    const email = formData.get('email');
+    const password = formData.get('password');
+    const confirmPassword = formData.get('confirm_password');
+    
+    if (!firstName || !lastName || !username || !email) {
+        alert('Nome, cognome, username e email sono obbligatori');
+        return;
+    }
+    
+    if (!currentEditingUser) {
+        if (!password || !confirmPassword) {
+            alert('Password obbligatoria per nuovo utente');
+            return;
+        }
+        if (password !== confirmPassword) {
+            alert('Le password non coincidono');
+            return;
+        }
+    }
+    
+    const phone = formData.get('phone');
+    if (phone && !/^[\+]?[0-9\s\-\(\)]{8,}$/.test(phone)) {
+        alert('Formato telefono non valido');
+        return;
+    }
+    
+    // Converti FormData in oggetto JSON
+    const jsonData = {
+        first_name: firstName,
+        last_name: lastName,
+        username: username,
+        email: email,
+        phone: phone || null,
+        is_active: formData.get('is_active') === 'on',
+        is_email_confirmed: formData.get('is_email_confirmed') === 'on',
+        roles: Array.from(document.getElementById('user_roles').selectedOptions).map(option => parseInt(option.value))
+    };
+    
+    // Aggiungi password solo se presente
+    if (password) {
+        jsonData.password = password;
+    }
+    
+    try {
+        const url = currentEditingUser ? 
+            `${API_CONFIG.baseURL}/users/${currentEditingUser}` : 
+            `${API_CONFIG.baseURL}/users`;
+        
+        const method = currentEditingUser ? 'PUT' : 'POST';
+        
+        // 1. Salva i dati utente (JSON con JWT cookies)
+        const data = await apiCall(url, {
+            method: method,
+            body: JSON.stringify(jsonData)  // ✅ JSON invece di FormData
+        });
+        
+        if (data.status === 'success') {
+            let userId = currentEditingUser || data.user.id;
+            
+            // 2. Upload immagine se presente (FormData separato)
+            const imageFile = document.getElementById('profile-image').files[0];
+            if (imageFile) {
+                const avatarUrl = await uploadUserImage(userId, imageFile);
+                if (avatarUrl) {
+                    console.log('Immagine caricata:', avatarUrl);
+                }
+            }
+            
+            alert(data.message);
+            closeUserModal();
+            reloadUsers();
+        } else {
+            alert(data.message || 'Errore nel salvataggio');
+        }
+    } catch (error) {
+        alert(error.message);
+    }
+}
+
+// Funzione toggleUserStatus aggiornata
+async function toggleUserStatus(userId) {
+    if (confirm('Sei sicuro di voler cambiare lo stato di questo utente?')) {
+        try {
+            const data = await apiCall(`${API_CONFIG.baseURL}/users/${userId}/toggle-status`, {
+                method: 'POST'
+            });
+            
+            if (data.status === 'success') {
+                alert(data.message);
+                reloadUsers();
+            } else {
+                alert(data.message || 'Errore nel cambiamento stato');
+            }
+        } catch (error) {
+            alert(error.message);
+        }
+    }
+}
+
+// Funzione deleteUser aggiornata
+async function deleteUser(userId) {
+    userToDelete = userId;
+    
+    try {
+        const user = await apiCall(`${API_CONFIG.baseURL}/users/${userId}`);
+        
+        document.getElementById('delete-user-info').innerHTML = `
+            <div class="user-to-delete">
+                <img src="${user.avatar_url}" alt="${user.full_name}" width="50" height="50">
+                <div>
+                    <strong>Nome:</strong> ${user.full_name}<br>
+                    <strong>Username:</strong> ${user.username}<br>
+                    <strong>Email:</strong> ${user.email}
+                </div>
+            </div>
+        `;
+        document.getElementById('deleteModal').style.display = 'block';
+    } catch (error) {
+        alert(error.message);
+    }
+}
+
+// Funzione confirmDelete aggiornata
+async function confirmDelete() {
+    if (userToDelete) {
+        try {
+            const data = await apiCall(`${API_CONFIG.baseURL}/users/${userToDelete}`, {
+                method: 'DELETE'
+            });
+            
+            if (data.status === 'success') {
+                alert(data.message);
+                closeDeleteModal();
+                reloadUsers();
+            } else {
+                alert(data.message || 'Errore nella eliminazione');
+            }
+        } catch (error) {
+            alert(error.message);
+        }
+    }
+}
+
+// ===============================
+// FUNZIONI BULK OPERATIONS
+// ===============================
+async function bulkToggleStatus() {
+    if (selectedUsers.length === 0) {
+        alert('Seleziona almeno un utente');
+        return;
+    }
+    
+    if (confirm(`Cambiare lo stato di ${selectedUsers.length} utenti selezionati?`)) {
+        try {
+            await Promise.all(selectedUsers.map(userId => 
+                apiCall(`${API_CONFIG.baseURL}/users/${userId}/toggle-status`, { method: 'POST' })
+            ));
+            
+            alert('Stato utenti aggiornato');
+            reloadUsers();
+        } catch (error) {
+            alert(error.message);
+        }
+    }
+}
+
+async function bulkDelete() {
+    if (selectedUsers.length === 0) {
+        alert('Seleziona almeno un utente');
+        return;
+    }
+    
+    if (confirm(`Eliminare definitivamente ${selectedUsers.length} utenti selezionati?`)) {
+        try {
+            await Promise.all(selectedUsers.map(userId => 
+                apiCall(`${API_CONFIG.baseURL}/users/${userId}`, { method: 'DELETE' })
+            ));
+            
+            alert('Utenti eliminati');
+            reloadUsers();
+        } catch (error) {
+            alert(error.message);
+        }
+    }
+}
+
+function bulkExport() {
+    if (selectedUsers.length === 0) {
+        alert('Seleziona almeno un utente');
+        return;
+    }
+    
+    const params = new URLSearchParams();
+    selectedUsers.forEach(id => params.append('user_uids', id));
+    
+    // I cookies JWT vengono inclusi automaticamente
+    window.open(`${API_CONFIG.baseURL}/users/export?${params.toString()}`, '_blank');
+}
+
+function exportUsers() {
+    window.open(`${API_CONFIG.baseURL}/users/export`, '_blank');
+}
+
+// ===============================
+// FUNZIONI ORIGINALI (mantieni queste)
+// ===============================
 
 // Funzione per preview immagine
 function previewImage(input) {
@@ -514,113 +929,6 @@ function updateSelectedCount() {
     document.getElementById('bulk-actions').style.display = count > 0 ? 'block' : 'none';
 }
 
-// Funzioni per la gestione utenti
-function viewUser(userId) {
-    fetch(`/admin/api/users/${userId}`)
-        .then(response => response.json())
-        .then(user => {
-            const detailsHtml = `
-                <div class="user-detail-grid">
-                    <div class="user-avatar-section">
-                        <img src="${user.avatar_url}" alt="${user.full_name}" width="100" height="100">
-                        <h4>${user.full_name}</h4>
-                        <p>${user.username}</p>
-                    </div>
-                    <div class="user-info-section">
-                        <div class="detail-item">
-                            <label>ID:</label>
-                            <span>${user.id}</span>
-                        </div>
-                        <div class="detail-item">
-                            <label>Nome:</label>
-                            <span>${user.first_name || 'N/A'}</span>
-                        </div>
-                        <div class="detail-item">
-                            <label>Cognome:</label>
-                            <span>${user.last_name || 'N/A'}</span>
-                        </div>
-                        <div class="detail-item">
-                            <label>Nome Utente:</label>
-                            <span>${user.username}</span>
-                        </div>
-                        <div class="detail-item">
-                            <label>Email:</label>
-                            <span>${user.email}</span>
-                        </div>
-                        <div class="detail-item">
-                            <label>Telefono:</label>
-                            <span>${user.phone || 'N/A'}</span>
-                        </div>
-                        <div class="detail-item">
-                            <label>Ruoli:</label>
-                            <span>${user.roles ? user.roles.map(role => role.name).join(', ') : 'Nessuno'}</span>
-                        </div>
-                        <div class="detail-item">
-                            <label>Status:</label>
-                            <span>${user.is_active ? 'Attivo' : 'Disattivo'}</span>
-                        </div>
-                        <div class="detail-item">
-                            <label>Email Confermata:</label>
-                            <span>${user.is_email_confirmed ? 'Sì' : 'No'}</span>
-                        </div>
-                        <div class="detail-item">
-                            <label>Data Registrazione:</label>
-                            <span>${new Date(user.created_at).toLocaleDateString('it-IT')}</span>
-                        </div>
-                        <div class="detail-item">
-                            <label>Ultimo Accesso:</label>
-                            <span>${user.last_login ? new Date(user.last_login).toLocaleDateString('it-IT') : 'Mai'}</span>
-                        </div>
-                    </div>
-                </div>
-            `;
-            
-            document.getElementById('user-details').innerHTML = detailsHtml;
-            document.getElementById('viewUserModal').style.display = 'block';
-        })
-        .catch(error => {
-            console.error('Errore nel caricamento utente:', error);
-            alert('Errore nel caricamento dei dettagli utente');
-        });
-}
-
-function editUser(userId) {
-    fetch(`/admin/api/users/${userId}`)
-        .then(response => response.json())
-        .then(user => {
-            currentEditingUser = userId;
-            document.getElementById('modal-title').textContent = 'Modifica Utente';
-            document.getElementById('user-id').value = user.id;
-            document.getElementById('first-name').value = user.first_name || '';
-            document.getElementById('last-name').value = user.last_name || '';
-            document.getElementById('phone').value = user.phone || '';
-            document.getElementById('username').value = user.username;
-            document.getElementById('email').value = user.email;
-            document.getElementById('is_active').checked = user.is_active;
-            document.getElementById('is_email_confirmed').checked = user.is_email_confirmed;
-            
-            // Mostra avatar corrente
-            document.getElementById('preview-avatar').src = user.avatar_url;
-            
-            // Nascondi sezione password per la modifica
-            document.getElementById('password-section').style.display = 'none';
-            document.getElementById('password').required = false;
-            document.getElementById('confirm_password').required = false;
-            
-            // Seleziona ruoli
-            const roleSelect = document.getElementById('user_roles');
-            Array.from(roleSelect.options).forEach(option => {
-                option.selected = user.roles ? user.roles.some(role => role.id == option.value) : false;
-            });
-            
-            document.getElementById('userModal').style.display = 'block';
-        })
-        .catch(error => {
-            console.error('Errore nel caricamento utente:', error);
-            alert('Errore nel caricamento utente');
-        });
-}
-
 function showAddUserModal() {
     currentEditingUser = null;
     document.getElementById('modal-title').textContent = 'Aggiungi Nuovo Utente';
@@ -630,131 +938,6 @@ function showAddUserModal() {
     document.getElementById('password').required = true;
     document.getElementById('confirm_password').required = true;
     document.getElementById('userModal').style.display = 'block';
-}
-
-function saveUser() {
-    const form = document.getElementById('userForm');
-    const formData = new FormData(form);
-    
-    // Validazione
-    const firstName = formData.get('first_name');
-    const lastName = formData.get('last_name');
-    const username = formData.get('username');
-    const email = formData.get('email');
-    const password = formData.get('password');
-    const confirmPassword = formData.get('confirm_password');
-    
-    if (!firstName || !lastName || !username || !email) {
-        alert('Nome, cognome, username e email sono obbligatori');
-        return;
-    }
-    
-    if (!currentEditingUser) {
-        if (!password || !confirmPassword) {
-            alert('Password obbligatoria per nuovo utente');
-            return;
-        }
-        if (password !== confirmPassword) {
-            alert('Le password non coincidono');
-            return;
-        }
-    }
-    
-    // Validazione telefono (opzionale ma se presente deve essere valido)
-    const phone = formData.get('phone');
-    if (phone && !/^[\+]?[0-9\s\-\(\)]{8,}$/.test(phone)) {
-        alert('Formato telefono non valido');
-        return;
-    }
-    
-    const url = currentEditingUser ? `/admin/api/users/${currentEditingUser}` : '/admin/api/users';
-    const method = currentEditingUser ? 'PUT' : 'POST';
-    
-    fetch(url, {
-        method: method,
-        body: formData  // Invia FormData per gestire file upload
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.status === 'success') {
-            alert(data.message);
-            closeUserModal();
-            reloadUsers();
-        } else {
-            alert(data.message || 'Errore nel salvataggio');
-        }
-    })
-    .catch(error => {
-        console.error('Errore:', error);
-        alert('Errore nel salvataggio utente');
-    });
-}
-
-function toggleUserStatus(userId) {
-    if (confirm('Sei sicuro di voler cambiare lo stato di questo utente?')) {
-        fetch(`/admin/api/users/${userId}/toggle-status`, {
-            method: 'POST'
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.status === 'success') {
-                alert(data.message);
-                reloadUsers();
-            } else {
-                alert(data.message || 'Errore nel cambiamento stato');
-            }
-        })
-        .catch(error => {
-            console.error('Errore:', error);
-            alert('Errore nel cambiamento stato utente');
-        });
-    }
-}
-
-function deleteUser(userId) {
-    userToDelete = userId;
-    
-    fetch(`/admin/api/users/${userId}`)
-        .then(response => response.json())
-        .then(user => {
-            document.getElementById('delete-user-info').innerHTML = `
-                <div class="user-to-delete">
-                    <img src="${user.avatar_url}" alt="${user.full_name}" width="50" height="50">
-                    <div>
-                        <strong>Nome:</strong> ${user.full_name}<br>
-                        <strong>Username:</strong> ${user.username}<br>
-                        <strong>Email:</strong> ${user.email}
-                    </div>
-                </div>
-            `;
-            document.getElementById('deleteModal').style.display = 'block';
-        })
-        .catch(error => {
-            console.error('Errore nel caricamento utente:', error);
-            alert('Errore nel caricamento utente');
-        });
-}
-
-function confirmDelete() {
-    if (userToDelete) {
-        fetch(`/admin/api/users/${userToDelete}`, {
-            method: 'DELETE'
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.status === 'success') {
-                alert(data.message);
-                closeDeleteModal();
-                reloadUsers();
-            } else {
-                alert(data.message || 'Errore nella eliminazione');
-            }
-        })
-        .catch(error => {
-            console.error('Errore:', error);
-            alert('Errore nella eliminazione utente');
-        });
-    }
 }
 
 // Funzioni per i modal
@@ -772,68 +955,9 @@ function closeDeleteModal() {
     userToDelete = null;
 }
 
-// Funzioni per azioni multiple
-function bulkToggleStatus() {
-    if (selectedUsers.length === 0) {
-        alert('Seleziona almeno un utente');
-        return;
-    }
-    
-    if (confirm(`Cambiare lo stato di ${selectedUsers.length} utenti selezionati?`)) {
-        Promise.all(selectedUsers.map(userId => 
-            fetch(`/admin/api/users/${userId}/toggle-status`, { method: 'POST' })
-        ))
-        .then(() => {
-            alert('Stato utenti aggiornato');
-            reloadUsers();
-        })
-        .catch(error => {
-            console.error('Errore:', error);
-            alert('Errore nell\'aggiornamento');
-        });
-    }
-}
-
-function bulkExport() {
-    if (selectedUsers.length === 0) {
-        alert('Seleziona almeno un utente');
-        return;
-    }
-    
-    const params = new URLSearchParams();
-    selectedUsers.forEach(id => params.append('user_ids', id));
-    
-    window.open(`/admin/api/users/export?${params.toString()}`, '_blank');
-}
-
-function bulkDelete() {
-    if (selectedUsers.length === 0) {
-        alert('Seleziona almeno un utente');
-        return;
-    }
-    
-    if (confirm(`Eliminare definitivamente ${selectedUsers.length} utenti selezionati?`)) {
-        Promise.all(selectedUsers.map(userId => 
-            fetch(`/admin/api/users/${userId}`, { method: 'DELETE' })
-        ))
-        .then(() => {
-            alert('Utenti eliminati');
-            reloadUsers();
-        })
-        .catch(error => {
-            console.error('Errore:', error);
-            alert('Errore nell\'eliminazione');
-        });
-    }
-}
-
 // Funzioni utility
 function reloadUsers() {
     window.location.reload();
-}
-
-function exportUsers() {
-    window.open('/admin/api/users/export', '_blank');
 }
 
 function debounce(func, wait) {

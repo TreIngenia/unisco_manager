@@ -1,4 +1,4 @@
-from flask import Flask, g
+from flask import Flask, g, session
 from flask_sqlalchemy import SQLAlchemy
 from flask_jwt_extended import JWTManager
 from flask_migrate import Migrate
@@ -73,9 +73,39 @@ def create_app(config_name=None):
     # Middleware per caricare utente da sessione
     @app.before_request
     def load_user():
-        from app.auth.utils import load_logged_in_user
-        load_logged_in_user()
+        from app.auth.jwt_session import load_unified_user
+        load_unified_user()
     
+    # @app.before_request
+    # def load_user():
+    #     from app.auth.jwt_session import unified_login_required
+    #     from flask_jwt_extended import verify_jwt_in_request, get_jwt_identity
+        
+    #     # Prima prova JWT cookie
+    #     try:
+    #         verify_jwt_in_request(optional=True)
+    #         user_uid = get_jwt_identity()
+    #         if user_uid:
+    #             user = User.query.get(user_uid)
+    #             if user and user.is_active:
+    #                 g.user = user
+    #                 return
+    #     except Exception:
+    #         pass
+        
+    #     # Fallback su sessione esistente
+    #     user_uid = session.get('user_uid')
+    #     if user_uid:
+    #         user = User.query.get(user_uid)
+    #         if user and user.is_active and not user.is_active:
+    #             g.user = None
+    #             session.clear()
+    #         else:
+    #             g.user = user
+    #     else:
+    #         g.user = None
+
+
     # ==================== COMANDI CLI ====================
     
     @app.cli.command()

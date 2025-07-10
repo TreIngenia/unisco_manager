@@ -1,6 +1,8 @@
 # ===============================================
 # COMANDI FLASK CLI PER GESTIONE ADMIN
 # ===============================================
+# 🆕 CREARE NUOVO ADMIN (se non esiste)
+flask create-admin admin@example.com password123
 
 # 🔴 RENDERE UTENTE ESISTENTE ADMIN
 flask make-admin user@example.com

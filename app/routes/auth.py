@@ -1,9 +1,12 @@
-from flask import request, jsonify, render_template, redirect, url_for, flash, session
+from flask import request, jsonify, render_template, redirect, url_for, flash, session, make_response
 from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
 from app.models.user import User
 from app.auth.utils import login_user, logout_user
 from app.services.email import EmailService
 from app import db
+from app.auth.jwt_session import unified_login_user, unified_logout_user
+from flask_jwt_extended import set_access_cookies, unset_jwt_cookies
+from datetime import datetime, timedelta
 
 def register_auth_routes(auth_bp):
     
@@ -28,7 +31,7 @@ def register_auth_routes(auth_bp):
                     'message': 'Devi confermare la tua email prima di accedere. Controlla la tua casella di posta.'
                 }), 403
             
-            access_token = create_access_token(identity=user.id)
+            access_token = create_access_token(identity=user.uid)
             return jsonify({
                 'access_token': access_token,
                 'user': user.to_dict()
@@ -89,8 +92,8 @@ def register_auth_routes(auth_bp):
     @auth_bp.route('/api/verify', methods=['GET'])
     @jwt_required()
     def verify_token():
-        current_user_id = get_jwt_identity()
-        user = User.query.get(current_user_id)
+        current_user_uid = get_jwt_identity()
+        user = User.query.get(current_user_uid)
         
         if user and user.is_active and user.is_email_confirmed:
             return jsonify({'valid': True, 'user': user.to_dict()})
@@ -98,51 +101,80 @@ def register_auth_routes(auth_bp):
         return jsonify({'valid': False}), 401
     
 
-    # Route WEB per login
+    
+
     @auth_bp.route('/login', methods=['GET', 'POST'])
     def web_login():
-        if request.method == 'POST':
-            user_input = request.form.get('username')
-            password = request.form.get('password')
-            
-            if not user_input or not password:
-                return render_template('auth/login.html', 
-                                       msg={'status': 'error',
-                                        'response': 'credenziali_richieste', 
-                                        'title': 'Credenziali richieste!',
-                                        'message': 'La username o la password devono essere obbligatoriamente inserite. Riprova.'
-                                        })
-            
-            # Ricerca per username (che corrisponde all'email)
-            user = User.find_by_username(user_input)
-            
-            if user and user.check_password(password) and user.is_active:
-                # Controlla se l'email è confermata
-                if not user.is_email_confirmed:
-                    return render_template('auth/login.html',
-                                            msg={'status': 'warning',
-                                                'response': 'email_non_confermata', 
-                                                'title': 'Email non confermata!',
-                                                'message': 'Devi confermare la tua email prima di accedere. Controlla la tua casella di posta.',
-                                                'action_url': url_for('auth.resend_confirmation', email=user.email),
-                                                'action_text': 'Reinvia email di conferma'
-                                            })
-                
-                login_user(user)
-                flash('Login effettuato con successo')
-                access_token = create_access_token(identity=str(user.id))
-                # Redirect alla pagina richiesta o dashboard
-                next_page = request.args.get('next')
-                return redirect(next_page) if next_page else redirect(url_for('web.dashboard', access_token=access_token))
-            
+        if request.method == 'GET':
+            return render_template('auth/login.html')
+        
+        # POST - Elabora il login
+        user_input = request.form.get('username')
+        password = request.form.get('password')
+        
+        if not user_input or not password:
             return render_template('auth/login.html', 
-                                    msg={'status': 'error',
-                                        'response': 'credenziali_errate', 
-                                        'title': 'Credenziali non valide!',
-                                        'message': 'La username o la password inserite non sono valide. Riprova.'
+                                   msg={'status': 'error',
+                                    'response': 'credenziali_richieste', 
+                                    'title': 'Credenziali richieste!',
+                                    'message': 'La username o la password devono essere obbligatoriamente inserite. Riprova.'
                                     })
         
-        return render_template('auth/login.html')
+        # Ricerca per username (che corrisponde all'email)
+        user = User.find_by_username(user_input)
+        
+        if user and user.check_password(password) and user.is_active:
+            # Controlla se l'email è confermata
+            if not user.is_email_confirmed:
+                return render_template('auth/login.html',
+                                        msg={'status': 'warning',
+                                            'response': 'email_non_confermata', 
+                                            'title': 'Email non confermata!',
+                                            'message': 'Devi confermare la tua email prima di accedere. Controlla la tua casella di posta.',
+                                            'action_url': url_for('auth.resend_confirmation', email=user.email),
+                                            'action_text': 'Reinvia email di conferma'
+                                        })
+            
+            # === LOGIN RIUSCITO CON JWT + SESSIONE ===
+            
+            # Sistema esistente (manteniamo per compatibilità)
+            login_user(user)
+            
+            # NUOVO: Crea JWT token
+            # access_token = create_access_token(identity=user.id)
+            access_token = create_access_token(identity=str(user.uid))
+            
+            # Aggiorna last_login
+            user.last_login = datetime.utcnow() 
+            db.session.commit()
+            
+            flash('Login effettuato con successo')
+            
+            # Redirect con JWT cookie sicuro
+            next_page = request.args.get('next')
+            response = redirect(next_page) if next_page else redirect(url_for('web.dashboard'))
+            
+            # CRITICO: Imposta JWT come httpOnly cookie
+            set_access_cookies(response, access_token)
+            
+            return response
+        
+        # === LOGIN FALLITO ===
+        return render_template('auth/login.html', 
+                                msg={'status': 'error',
+                                    'response': 'credenziali_errate', 
+                                    'title': 'Credenziali non valide!',
+                                    'message': 'La username o la password inserite non sono valide. Riprova.'
+                                })
+        
+        # === LOGIN FALLITO ===
+        return render_template('auth/login.html', 
+                                msg={'status': 'error',
+                                    'response': 'credenziali_errate', 
+                                    'title': 'Credenziali non valide!',
+                                    'message': 'La username o la password inserite non sono valide. Riprova.'
+                                })
+
 
     # Route WEB per registrazione
     @auth_bp.route('/register', methods=['GET', 'POST'])
@@ -289,12 +321,22 @@ def register_auth_routes(auth_bp):
     # Route WEB per logout              # 
     # ################################# #
     @auth_bp.route('/logout')
-    def web_logout():
-        logout_user()
-        # flash('Logout effettuato con successo')
-        return render_template('auth/logout.html', logout=True)
-        return redirect(url_for('web.index', logout=True))
+    # def web_logout():
+    #     logout_user()
+    #     # flash('Logout effettuato con successo')
+    #     return render_template('auth/logout.html', logout=True)
+    #     return redirect(url_for('web.index', logout=True))
     
+    @auth_bp.route('/logout')
+    def web_logout():
+        logout_user()  # Rimuove la sessione
+        
+        # Crea response che rimuove anche il JWT cookie
+        response = redirect(url_for('auth.web_login'))
+        unset_jwt_cookies(response)
+        
+        flash('Logout effettuato con successo')
+        return response
     
     # ################################# #
     # Route per il reset della password # 
@@ -409,5 +451,56 @@ def register_auth_routes(auth_bp):
                     })
         
         return render_template('auth/reset_password.html', token=token)
+    
+    @auth_bp.route('/debug/jwt-config')
+    def debug_jwt_config():
+        """Mostra le configurazioni JWT"""
+        from flask import current_app
+        
+        jwt_config = {
+            'JWT_TOKEN_LOCATION': current_app.config.get('JWT_TOKEN_LOCATION'),
+            'JWT_COOKIE_SECURE': current_app.config.get('JWT_COOKIE_SECURE'),
+            'JWT_COOKIE_CSRF_PROTECT': current_app.config.get('JWT_COOKIE_CSRF_PROTECT'),
+            'JWT_ACCESS_COOKIE_NAME': current_app.config.get('JWT_ACCESS_COOKIE_NAME'),
+            'JWT_COOKIE_SAMESITE': current_app.config.get('JWT_COOKIE_SAMESITE'),
+        }
+        
+        return jsonify(jwt_config)
+
+    @auth_bp.route('/debug/cookies')
+    def debug_cookies():
+        """Mostra tutti i cookies ricevuti"""
+        return jsonify({
+            'cookies': dict(request.cookies),
+            'headers': dict(request.headers),
+            'has_jwt_cookie': 'access_token_cookie' in request.cookies,
+            'cookie_names': list(request.cookies.keys())
+        })
+
+    @auth_bp.route('/debug/test-jwt')
+    def debug_test_jwt():
+        """Test JWT dal cookie"""
+        from flask_jwt_extended import verify_jwt_in_request, get_jwt_identity
+        
+        result = {
+            'timestamp': datetime.utcnow().isoformat(),
+            'cookies': dict(request.cookies),
+            'jwt_status': 'unknown'
+        }
+        
+        try:
+            verify_jwt_in_request(optional=True)
+            user_uid = get_jwt_identity()
+            result['jwt_status'] = 'valid' if user_uid else 'no_token'
+            result['jwt_user_uid'] = user_uid
+            
+            if user_uid:
+                user = User.query.get(user_uid)
+                result['user_info'] = user.username if user else 'User not found'
+                
+        except Exception as e:
+            result['jwt_status'] = f'error: {str(e)}'
+        
+        return jsonify(result)
 
 

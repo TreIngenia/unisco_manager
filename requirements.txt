@@ -7,5 +7,6 @@ Werkzeug
 python-dotenv
 flask-login
 tzdata
+qrcode[pil]
 Pillow
 uuid  
