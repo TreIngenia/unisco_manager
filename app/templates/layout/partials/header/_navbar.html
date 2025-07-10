@@ -54,7 +54,7 @@
             data-kt-menu-trigger="{default: 'click', lg: 'hover'}"
             data-kt-menu-attach="parent"
             data-kt-menu-placement="bottom-end">
-            <img src="assets/media/avatars/300-3.jpg" class="rounded-3" alt="user"/>
+            <img src="{# {{ user.avatar_url }} #}" alt="{#{{ user.full_name }}#}">
         </div>
         {% include 'partials/menus/_user-account-menu.html' %}
 <!--layout-partial:partials/menus/_user-account-menu.html-->

@@ -5,6 +5,7 @@ from flask_migrate import Migrate
 from app.config import config
 import os
 import click
+from app.error_handlers import register_error_handlers
 
 # Inizializzazione estensioni
 db = SQLAlchemy()
@@ -33,6 +34,9 @@ def create_app(config_name=None):
     app.register_blueprint(web_bp)
     app.register_blueprint(api_bp)
     app.register_blueprint(admin_bp)
+    
+    #reindirizza le pagine di errore
+    # register_error_handlers(app)
     
     # Importazione modelli per le migrazioni
     from app.models import User, Role

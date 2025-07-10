@@ -321,24 +321,6 @@ def register_auth_routes(auth_bp):
     # Route WEB per logout              # 
     # ################################# #
     @auth_bp.route('/logout')
-    # def web_logout():
-    #     logout_user()
-    #     # flash('Logout effettuato con successo')
-    #     return render_template('auth/logout.html', logout=True)
-    #     return redirect(url_for('web.index', logout=True))
-    
-    # @auth_bp.route('/logout')
-    # def web_logout():
-    #     logout_user()  # Rimuove la sessione
-        
-    #     # Crea response che rimuove anche il JWT cookie
-    #     response = redirect(url_for('auth.web_login'))
-    #     unset_jwt_cookies(response)
-        
-    #     flash('Logout effettuato con successo')
-    #     return response
-
-    @auth_bp.route('/logout')
     def web_logout():
         """Logout migliorato con pulizia cache"""
         from app.auth.utils import logout_user

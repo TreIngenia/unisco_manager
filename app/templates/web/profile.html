@@ -649,23 +649,7 @@
         <div class="profile-content">
             <!-- Modalità Visualizzazione -->
             <div id="view-mode">
-                <div class="profile-header">
-                    <div class="profile-avatar">
-                        <img src="{{ user.avatar_url }}" alt="{{ user.full_name }}" width="120" height="120">
-                        <div class="avatar-overlay">
-                            <i class="fa-solid fa-camera"></i>
-                        </div>
-                    </div>
-                    <div class="profile-basic-info">
-                        <h2>{{ user.full_name }}</h2>
-                        <p class="username">@{{ user.username }}</p>
-                        <div class="user-badges">
-                            {% for role in user.roles %}
-                                <span class="role-badge role-{{ role.name }}">{{ role.name.title() }}</span>
-                            {% endfor %}
-                        </div>
-                    </div>
-                </div>
+                
                 <div class="profile-grid">
                     <div class="profile-section-card">
                         <h4>Dati Personali</h4>

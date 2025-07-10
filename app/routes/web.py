@@ -294,7 +294,7 @@ def register_web_routes(web_bp):
         try:
             user_data = {
                 'account_info': {
-                    'id': g.user.id,
+                    'id': g.user.uid,
                     'username': g.user.username,
                     'email': g.user.email,
                     'is_active': g.user.is_active,

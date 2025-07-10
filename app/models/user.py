@@ -80,7 +80,7 @@ class User(db.Model):
                 return f"/static/{self.profile_image}"
         
         # Genera avatar con iniziali usando servizio esterno
-        return f"https://ui-avatars.com/api/?name={self.initials}&background=random&color=fff&size=128"
+        return f"https://ui-avatars.com/api/?name={self.initials}&background=30a257&color=fff&size=128"
     
     def set_profile_image(self, filename):
         """Imposta immagine profilo"""

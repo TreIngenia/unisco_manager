@@ -34,7 +34,8 @@ def register_admin_routes(admin_bp):
                             roles=roles)  # ← ASSICURATI CHE SIA QUI
     
     @admin_bp.route('/users')
-    @moderator_required
+    @admin_required
+    # @moderator_required
     def manage_users():
         """Gestione utenti"""
         page = request.args.get('page', 1, type=int)
