@@ -21,10 +21,22 @@ def load_logged_in_user():
     if user_uid is None:
         g.user = None
     else:
-        g.user = User.query.get(user_uid)
+        g.user = User.find_by_uid(user_uid)  # ← CAMBIATO
         if g.user and not g.user.is_active:
             g.user = None
             session.clear()
+            
+# def load_logged_in_user():
+#     """Carica l'utente loggato nella sessione"""
+#     user_uid = session.get('user_uid')
+    
+#     if user_uid is None:
+#         g.user = None
+#     else:
+#         g.user = User.query.get(user_uid)
+#         if g.user and not g.user.is_active:
+#             g.user = None
+#             session.clear()
 
 def login_user(user):
     """Effettua il login dell'utente nella sessione"""

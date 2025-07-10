@@ -31,9 +31,8 @@ class User(db.Model):
     
     # Relazione many-to-many con Role - specificando foreign_keys per evitare ambiguità
     roles = db.relationship('Role', 
-                          secondary='user_roles', 
-                          back_populates='users',
-                          foreign_keys='[user_roles.c.user_uid, user_roles.c.role_id]')
+                      secondary='user_roles', 
+                      back_populates='users')
     
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)

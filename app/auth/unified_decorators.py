@@ -14,8 +14,9 @@ def unified_api_login_required(f):
             verify_jwt_in_request(optional=True)
             user_uid_str = get_jwt_identity()
             if user_uid_str:
-                user_uid = int(user_uid_str)
-                user = User.query.get(user_uid)
+                # user_uid = int(user_uid_str)
+                # user = User.query.get(user_uid)
+                user = User.find_by_uid(user_uid_str) 
                 if user and user.is_active and user.is_email_confirmed:
                     g.current_user = user
                     return f(*args, **kwargs)
@@ -25,7 +26,8 @@ def unified_api_login_required(f):
         # Fallback su sessione Flask
         user_uid = session.get('user_uid')
         if user_uid:
-            user = User.query.get(user_uid)
+            # user = User.query.get(user_uid)
+            user = User.find_by_uid(user_uid) 
             if user and user.is_active and user.is_email_confirmed:
                 g.current_user = user
                 return f(*args, **kwargs)

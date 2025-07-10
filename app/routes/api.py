@@ -9,7 +9,8 @@ def register_api_routes(api_bp):
     @jwt_required()
     def get_users():
         current_user_uid = get_jwt_identity()
-        current_user = User.query.get(current_user_uid)
+        current_user = User.find_by_uid(current_user_uid) 
+        # current_user = User.query.get(current_user_uid)
         
         if not current_user or not current_user.is_active:
             return jsonify({'error': 'Utente non autorizzato'}), 401
