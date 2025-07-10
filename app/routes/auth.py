@@ -327,16 +327,63 @@ def register_auth_routes(auth_bp):
     #     return render_template('auth/logout.html', logout=True)
     #     return redirect(url_for('web.index', logout=True))
     
+    # @auth_bp.route('/logout')
+    # def web_logout():
+    #     logout_user()  # Rimuove la sessione
+        
+    #     # Crea response che rimuove anche il JWT cookie
+    #     response = redirect(url_for('auth.web_login'))
+    #     unset_jwt_cookies(response)
+        
+    #     flash('Logout effettuato con successo')
+    #     return response
+
     @auth_bp.route('/logout')
     def web_logout():
+        """Logout migliorato con pulizia cache"""
+        from app.auth.utils import logout_user
+        from flask_jwt_extended import unset_jwt_cookies
+        
         logout_user()  # Rimuove la sessione
         
         # Crea response che rimuove anche il JWT cookie
-        response = redirect(url_for('auth.web_login'))
+        response = make_response(redirect(url_for('auth.web_login')))
         unset_jwt_cookies(response)
+        
+        # Aggiungi header per prevenire cache
+        response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+        response.headers['Pragma'] = 'no-cache'
+        response.headers['Expires'] = '0'
         
         flash('Logout effettuato con successo')
         return response
+    
+    # ################################# #
+    # Route controllo autenticazione    # 
+    # ################################# #
+    @auth_bp.route('/api/auth/check', methods=['GET'])
+    def check_auth():
+        """Endpoint per controllare lo stato di autenticazione"""
+        # Prima prova JWT cookie
+        try:
+            from flask_jwt_extended import verify_jwt_in_request, get_jwt_identity
+            verify_jwt_in_request(optional=True)
+            user_uid = get_jwt_identity()
+            if user_uid:
+                user = User.find_by_uid(user_uid)
+                if user and user.is_active:
+                    return jsonify({'authenticated': True, 'user': user.to_dict()})
+        except:
+            pass
+        
+        # Fallback su sessione
+        user_uid = session.get('user_uid')
+        if user_uid:
+            user = User.find_by_uid(user_uid)
+            if user and user.is_active:
+                return jsonify({'authenticated': True, 'user': user.to_dict()})
+        
+        return jsonify({'authenticated': False}), 401
     
     # ################################# #
     # Route per il reset della password # 

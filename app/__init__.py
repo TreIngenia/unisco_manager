@@ -1,4 +1,4 @@
-from flask import Flask, g, session
+from flask import Flask, g, session, request
 from flask_sqlalchemy import SQLAlchemy
 from flask_jwt_extended import JWTManager
 from flask_migrate import Migrate
@@ -75,6 +75,19 @@ def create_app(config_name=None):
     def load_user():
         from app.auth.jwt_session import load_unified_user
         load_unified_user()
+    
+    # Blocca la cache delle pagine html
+    @app.after_request
+    def add_security_headers(response):
+        """Aggiunge header di sicurezza per prevenire cache su pagine protette"""
+        # Controlla se la richiesta è per una pagina protetta
+        if request.endpoint and not request.endpoint.startswith('auth.'):
+            # Impedisce cache del browser
+            response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+            response.headers['Pragma'] = 'no-cache'
+            response.headers['Expires'] = '0'
+        
+        return response
     
     # @app.before_request
     # def load_user():

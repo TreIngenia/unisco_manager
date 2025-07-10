@@ -41,3 +41,6 @@
 {% block scripts %}
 
 {% endblock scripts %}
+{% if current_user %}
+{% include 'partials/auth_check.html' %}
+{% endif %}
