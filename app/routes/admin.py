@@ -95,11 +95,11 @@ def register_admin_routes(admin_bp):
                                 'search': search
                             })
     
-    @admin_bp.route('/users/<int:user_uid>')
+    @admin_bp.route('/users/<string:user_uid>')
     @moderator_required
     def user_detail(user_uid):
         """Dettaglio utente"""
-        user = User.query.get_or_404(user_uid)
+        user = User.query.filter_by(uid=user_uid).first_or_404()
         all_roles = Role.query.filter_by(is_active=True).all()
         
         return render_template('admin/user_detail.html', user=user, all_roles=all_roles)
@@ -115,11 +115,11 @@ def register_admin_routes(admin_bp):
     # ################## ROUTE API ADMIN ########################## #
     # ############################################################# #
     
-    @admin_bp.route('/api/users/<int:user_uid>/toggle-status', methods=['POST'])
+    @admin_bp.route('/api/users/<string:user_uid>/toggle-status', methods=['POST'])
     @api_admin_required
     def toggle_user_status(user_uid):
         """Attiva/Disattiva utente"""
-        user = User.query.get_or_404(user_uid)
+        user = User.query.filter_by(uid=user_uid).first_or_404()
         
         # Non permettere di disattivare se stesso
         if user.uid == g.current_user.uid:
@@ -137,11 +137,11 @@ def register_admin_routes(admin_bp):
             'is_active': user.is_active
         })
     
-    @admin_bp.route('/api/users/<int:user_uid>/roles', methods=['POST'])
+    @admin_bp.route('/api/users/<string:user_uid>/roles', methods=['POST'])
     @api_admin_required
     def update_user_roles(user_uid):
         """Aggiorna ruoli utente"""
-        user = User.query.get_or_404(user_uid)
+        user = User.query.filter_by(uid=user_uid).first_or_404()
         data = request.get_json()
         
         if not data or 'role_ids' not in data:
@@ -177,11 +177,11 @@ def register_admin_routes(admin_bp):
             'user': user.to_dict(include_roles=True)
         })
     
-    @admin_bp.route('/api/users/<int:user_uid>/add-role', methods=['POST'])
+    @admin_bp.route('/api/users/<string:user_uid>/add-role', methods=['POST'])
     @api_admin_required
     def add_user_role(user_uid):
         """Aggiunge ruolo a utente"""
-        user = User.query.get_or_404(user_uid)
+        user = User.query.filter_by(uid=user_uid).first_or_404()
         data = request.get_json()
         
         if not data or 'role_id' not in data:
@@ -211,7 +211,7 @@ def register_admin_routes(admin_bp):
     @api_admin_required
     def remove_user_role(user_uid):
         """Rimuove ruolo da utente"""
-        user = User.query.get_or_404(user_uid)
+        user = User.query.filter_by(uid=user_uid).first_or_404()
         data = request.get_json()
         
         if not data or 'role_id' not in data:
@@ -403,18 +403,27 @@ def register_admin_routes(admin_bp):
                 'message': f'Errore nella creazione: {str(e)}'
             }), 500
 
-    @admin_bp.route('/api/users/<int:user_uid>', methods=['GET'])
+    @admin_bp.route('/api/users/<string:user_uid>', methods=['GET'])
     @api_admin_required
     def get_user_api(user_uid):
         """Ottieni dettagli utente"""
-        user = User.query.get_or_404(user_uid)
+        user = User.query.filter_by(uid=user_uid).first_or_404()
         return jsonify(user.to_dict(include_roles=True))
+    
+    @admin_bp.route('/api/users', methods=['GET'])
+    # @unified_api_admin_required
+    @api_admin_required
+    def get_users_api():
+        """Ottieni dettagli utente"""
+        users = User.query.all()
+        return jsonify([user.to_dict(include_roles=True) for user in users])
 
-    @admin_bp.route('/api/users/<int:user_uid>', methods=['PUT'])
+
+    @admin_bp.route('/api/users/<string:user_uid>', methods=['PUT'])
     @unified_api_admin_required  # Usa il decoratore unificato
     def update_user(user_uid):
         """Aggiorna utente - VERSIONE COMPLETA"""
-        user = User.query.get_or_404(user_uid)
+        user = User.query.filter_by(uid=user_uid).first_or_404()
         data = request.get_json()
         
         if not data:
@@ -526,11 +535,11 @@ def register_admin_routes(admin_bp):
                 'message': f'Errore nell\'aggiornamento: {str(e)}'
             }), 500
 
-    @admin_bp.route('/api/users/<int:user_uid>', methods=['DELETE'])
+    @admin_bp.route('/api/users/<string:user_uid>', methods=['DELETE'])
     @api_admin_required
     def delete_user(user_uid):
         """Elimina utente"""
-        user = User.query.get_or_404(user_uid)
+        user = User.query.filter_by(uid=user_uid).first_or_404()
         
         # Non permettere di eliminare se stesso
         if user.uid == g.user.uid:
@@ -743,11 +752,11 @@ def register_admin_routes(admin_bp):
                 'message': f'Errore nell\'azione: {str(e)}'
             }), 500
 
-    @admin_bp.route('/api/users/<int:user_uid>/reset-password', methods=['POST'])
+    @admin_bp.route('/api/users/<string:user_uid>/reset-password', methods=['POST'])
     @api_admin_required
     def reset_user_password(user_uid):
         """Reset password utente (solo admin)"""
-        user = User.query.get_or_404(user_uid)
+        user = User.query.filter_by(uid=user_uid).first_or_404()
         data = request.get_json()
         
         if not data or not data.get('new_password'):
@@ -780,11 +789,11 @@ def register_admin_routes(admin_bp):
                 'message': f'Errore nel reset password: {str(e)}'
             }), 500
 
-    @admin_bp.route('/api/users/<int:user_uid>/send-welcome', methods=['POST'])
+    @admin_bp.route('/api/users/<string:user_uid>/send-welcome', methods=['POST'])
     @api_admin_required
     def send_welcome_email(user_uid):
         """Invia email di benvenuto"""
-        user = User.query.get_or_404(user_uid)
+        user = User.query.filter_by(uid=user_uid).first_or_404()
         
         try:
             # Qui dovresti implementare l'invio dell'email di benvenuto

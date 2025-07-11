@@ -16,7 +16,7 @@ window.addEventListener('focus', function() {
 setInterval(checkAuthStatus, 30000); // Ogni 30 secondi
 
 function checkAuthStatus() {
-    fetch('/api/auth/check', {
+    fetch('auth/api/check', {
         method: 'GET',
         credentials: 'include'
     })

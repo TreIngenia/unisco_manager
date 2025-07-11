@@ -39,7 +39,7 @@ Gestione Contratti CDR
 <script>
     localStorage.setItem("access_token", "{{ request.args.get('access_token') }}");
 
-    fetch("/auth/api/verify", {
+fetch("/auth/api/verify", {
     method: "GET",
     headers: {
         "Authorization": "Bearer " + localStorage.getItem("access_token"),

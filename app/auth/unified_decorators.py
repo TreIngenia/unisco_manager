@@ -15,7 +15,7 @@ def unified_api_login_required(f):
             user_uid_str = get_jwt_identity()
             if user_uid_str:
                 # user_uid = int(user_uid_str)
-                # user = User.query.get(user_uid)
+                # user = User.query.filter_by(uid=user_uid).first()
                 user = User.find_by_uid(user_uid_str) 
                 if user and user.is_active and user.is_email_confirmed:
                     g.current_user = user
@@ -26,7 +26,7 @@ def unified_api_login_required(f):
         # Fallback su sessione Flask
         user_uid = session.get('user_uid')
         if user_uid:
-            # user = User.query.get(user_uid)
+            # user = User.query.filter_by(uid=user_uid).first()
             user = User.find_by_uid(user_uid) 
             if user and user.is_active and user.is_email_confirmed:
                 g.current_user = user
@@ -53,8 +53,9 @@ def unified_api_admin_required(f):
             verify_jwt_in_request(optional=True)
             user_uid_str = get_jwt_identity()
             if user_uid_str:
-                user_uid = int(user_uid_str)
-                user = User.query.get(user_uid)
+                # user_uid = int(user_uid_str)
+                # user = User.query.filter_by(uid=user_uid).first()
+                user = User.find_by_uid(user_uid_str) 
                 if user and user.is_active and user.is_email_confirmed and user.is_admin():
                     g.current_user = user
                     return f(*args, **kwargs)
@@ -64,7 +65,8 @@ def unified_api_admin_required(f):
         # Fallback su sessione Flask
         user_uid = session.get('user_uid')
         if user_uid:
-            user = User.query.get(user_uid)
+            # user = User.query.filter_by(uid=user_uid).first()
+            user = User.find_by_uid(user_uid_str) 
             if user and user.is_active and user.is_email_confirmed and user.is_admin():
                 g.current_user = user
                 return f(*args, **kwargs)
@@ -100,8 +102,9 @@ def unified_api_moderator_required(f):
             verify_jwt_in_request(optional=True)
             user_uid_str = get_jwt_identity()
             if user_uid_str:
-                user_uid = int(user_uid_str)
-                user = User.query.get(user_uid)
+                # user_uid = int(user_uid_str)
+                # user = User.query.filter_by(uid=user_uid).first()
+                user = User.find_by_uid(user_uid_str) 
                 if user and user.is_active and user.is_email_confirmed and user.can_manage_users():
                     g.current_user = user
                     return f(*args, **kwargs)
@@ -111,7 +114,7 @@ def unified_api_moderator_required(f):
         # Fallback su sessione Flask
         user_uid = session.get('user_uid')
         if user_uid:
-            user = User.query.get(user_uid)
+            user = User.query.filter_by(uid=user_uid).first()
             if user and user.is_active and user.is_email_confirmed and user.can_manage_users():
                 g.current_user = user
                 return f(*args, **kwargs)

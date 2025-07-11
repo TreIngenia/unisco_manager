@@ -26,8 +26,12 @@
 {% endblock %}
 
 {% block content %}
+<div class="table-responsive">
+	<table id="users_tables" class="table table-striped table-row-bordered gy-5 gs-7">
+		
+	</table>
+</div>
 <div class="user-management-container">
-    
     <!-- Sezione Filtri -->
     <div class="filters-section">
         <h3>Filtri</h3>
@@ -395,68 +399,70 @@
 {% endblock %}
 
 {% block scripts %}
+<link href="assets/plugins/custom/datatables/datatables.bundle.css" rel="stylesheet" type="text/css"/>
+<script src="assets/plugins/custom/datatables/datatables.bundle.js"></script>
 <script>
 // ===============================
 // CONFIGURAZIONE GLOBALE PER API
 // ===============================
 
-// Configurazione di base per le chiamate API
-const API_CONFIG = {
-    baseURL: '/admin/api',
-    headers: {
-        'Content-Type': 'application/json',
-        'X-Requested-With': 'XMLHttpRequest'
-    }
-};
+// // Configurazione di base per le chiamate API
+// const API_CONFIG = {
+//     baseURL: '/admin/api',
+//     headers: {
+//         'Content-Type': 'application/json',
+//         'X-Requested-With': 'XMLHttpRequest'
+//     }
+// };
 
-// Wrapper per fetch con gestione errori unificata e JWT cookies
-async function apiCall(url, options = {}) {
-    try {
-        const defaultConfig = {
-            credentials: 'include', // IMPORTANTE: Include sempre i cookies JWT
-            headers: {
-                ...API_CONFIG.headers,
-                ...options.headers
-            },
-            ...options
-        };
+// // Wrapper per fetch con gestione errori unificata e JWT cookies
+// async function apiCall(url, options = {}) {
+//     try {
+//         const defaultConfig = {
+//             credentials: 'include', // IMPORTANTE: Include sempre i cookies JWT
+//             headers: {
+//                 ...API_CONFIG.headers,
+//                 ...options.headers
+//             },
+//             ...options
+//         };
 
-        // Per FormData (upload immagini), rimuovi Content-Type
-        if (options.body instanceof FormData) {
-            delete defaultConfig.headers['Content-Type'];
-        }
+//         // Per FormData (upload immagini), rimuovi Content-Type
+//         if (options.body instanceof FormData) {
+//             delete defaultConfig.headers['Content-Type'];
+//         }
 
-        const response = await fetch(url, defaultConfig);
+//         const response = await fetch(url, defaultConfig);
 
-        // Gestione errori di autenticazione
-        if (response.status === 401) {
-            handleAuthError();
-            throw new Error('Sessione scaduta. Effettua nuovamente il login.');
-        }
+//         // Gestione errori di autenticazione
+//         if (response.status === 401) {
+//             handleAuthError();
+//             throw new Error('Sessione scaduta. Effettua nuovamente il login.');
+//         }
 
-        if (response.status === 403) {
-            throw new Error('Non hai i permessi per questa operazione.');
-        }
+//         if (response.status === 403) {
+//             throw new Error('Non hai i permessi per questa operazione.');
+//         }
 
-        if (!response.ok) {
-            const errorData = await response.json().catch(() => ({}));
-            throw new Error(errorData.message || `Errore HTTP: ${response.status}`);
-        }
+//         if (!response.ok) {
+//             const errorData = await response.json().catch(() => ({}));
+//             throw new Error(errorData.message || `Errore HTTP: ${response.status}`);
+//         }
 
-        return await response.json();
-    } catch (error) {
-        console.error('API Error:', error);
-        throw error;
-    }
-}
+//         return await response.json();
+//     } catch (error) {
+//         console.error('API Error:', error);
+//         throw error;
+//     }
+// }
 
-// Gestione errori di autenticazione
-function handleAuthError() {
-    alert('La tua sessione è scaduta. Verrai reindirizzato alla pagina di login.');
-    setTimeout(() => {
-        window.location.href = '/auth/login';
-    }, 1500);
-}
+// // Gestione errori di autenticazione
+// function handleAuthError() {
+//     alert('La tua sessione è scaduta. Verrai reindirizzato alla pagina di login.');
+//     setTimeout(() => {
+//         window.location.href = '/auth/login';
+//     }, 1500);
+// }
 
 // ===============================
 // VARIABILI GLOBALI
@@ -982,5 +988,294 @@ window.onclick = function(event) {
         }
     });
 }
+
+
+
+
+
+
+
+/**
+ * Attivo lordinamento per questo formato di data
+ */
+// $.fn.dataTable.moment( 'DD/MM/YYYY - HH:mm' );
+// $.fn.dataTable.moment( 'DD/MM/YYYY' );
+/*
+* Genero la datatables
+*/
+fetch("/admin/api/users", {
+    method: "GET",
+    headers: {
+        "Authorization": "Bearer " + localStorage.getItem("access_token"),
+        "Content-Type": "application/json"
+    }
+})
+.then(response => response.json())
+.then(data => {
+    if (data.valid) {
+        console.log("Utente loggato:", data.user);
+        // document.getElementById("username").innerText = data.user.username;
+    } else {
+        // window.location.href = "/auth/login";
+    }
+});
+user_tables = $("#kt_datatable_vertical_scroll").DataTable({
+    // "dom": "<'row '<'#toolbar.col-md-10 col-sm-12 mb-2'T><'#toolbar3.col-md-2 col-sm-12 text-right'B><'col-md-12 col-sm-12'<'#filters.form-row'>>r>t<'row mt-2'<'col-md-4 col-sm-12'i><'col-md-4 col-sm-12 text-center' l><'col-md-4 col-sm-12'p>>",
+    //Personalizzazione colonne
+    
+    "columnDefs": [
+        { width: "1%",  orderable: false, searchable: false, visible: true, className: "align-middle px-3", responsivePriority: 1, targets: 0},
+        { width: "25%", orderable: true, searchable: true, visible: true, className: "align-middle", responsivePriority: 1, targets: 1 },
+        { width: "25%",  orderable: true, searchable: true, visible: true, className: "align-middle", responsivePriority: 10001, targets: 2 },
+        { width: "20%",  orderable: true, searchable: true, visible: true, className: "align-middle", responsivePriority: 10001, targets: 3 },
+        { width: "28%", orderable: true, searchable: true, visible: true, className: "align-middle", responsivePriority: 1, targets: 4 },
+        { width: "1%", orderable: false, searchable: false, visible: true, className: "align-middle px-2", responsivePriority: 1, targets: 5 },
+    ],
+    //Ordine Colonne
+    "columns": [
+        {   
+            "data": "uid", 
+            "render": function ( data, type, row, index ) {
+                return `<div class="form-check form-check-sm form-check-custom form-check-solid">
+                            <input class="form-check-input checkbox_single" type="checkbox" value="${data}" />
+                        </div>`
+                        
+            }
+        },
+        {   
+            "data": "name_surname", 
+            "render": function ( data, type, row ) {
+                var x = row['active'];
+                var y = row['main_company']
+                var status = row['status']
+                
+                if(status == 'ONLINE'){
+                    var online='<div class="badge mr-1 help" data-bs-toggle="tooltip" data-placement="top" title="ONLINE"><i class="fa fa-circle text-success"></i></div>';
+                }else{
+                    var online='<div class="badge mr-1 help " data-bs-toggle="tooltip" data-placement="top" title="OFFLINE"><i class="fa fa-circle text-danger"></i></div>';
+                }
+            
+                if(x === 'TRUE'){
+                    var active='';
+                }
+                // else if (row['data_check'] === 'off')
+                else 
+                {
+                    var active='<div class="badge help todo-tasklist-badge badge badge-danger badge-roundless align-self-end ms-2" data-bs-toggle="tooltip" data-placement="top" title="DISABILITATO"><i class="fa-solid fa-user-xmark text-white"></i></div>'
+                }
+                if(y === 'on'){
+                    var type_user='';
+                }
+                // else if (row['data_check'] === 'off')
+                else 
+                {
+                    var type_user='<div class="badge help todo-tasklist-badge badge badge-info badge-roundless align-self-end" data-bs-toggle="tooltip" data-placement="top" title="ESTERNO"><i class="fa-solid fa-user-tag text-white"></i></div>'
+                }
+                //return '<a href="gestione_utente.php?id='+row[4]+'"><button id="Modifica" data-bs-toggle="tooltip" data-placement="top" data-original-title="Modifica" title="Modifica" class="btn btn-success btn-circle mr-1"><i class="fa fa-cog"></i></button></a> '+data+ active;
+                return '<div class="link_in_tabella font-weight-bold d-flex align-items-center mr-auto " href="user_manager.php?manage_user=yes&uid='+row['uid']+'"> ' + online + '<div class="me-auto">'+data+'</div>' + type_user + active+'</div>';
+
+            },
+        },
+        {   
+            "data": "company_name",
+            "render": function ( data, type, row ) {
+                return data;
+            },
+        },
+        {   
+            "data": "mobile",
+            "render": function ( data, type, row ) {
+                // return remove_char(data, '');
+                return data;
+            },
+        },
+        {   
+            "data": "e_mail",
+            "render": function ( data, type, row ) {
+                // var date_db = moment(data).format("DD/MM/YYYY - HH:mm");
+                return data;
+            },
+        },
+        {   
+            "data": "uid", 
+            "render": function ( data, type, row ) {
+                var uid_rif = row['uid'];
+                //    return "<button class='text-white btn btn-block btn-secondary btn-xs' data-toggle='modal' data-link='dettagli.php?destinazione=utente&id_rif="+row[4]+"' data-id='" + row[4] +"' data-target='#ajax' >DETTAGLI</button>";
+                //    return "<a data-toggle='modal' data-link='dettagli.php?destinazione=utente&id_rif="+row[4]+"' data-id='" + row[4] +"' data-target='#ajax' ><i role='button' class='cursor-pointer fas  fa-search-plus' data-toggle='tooltip' title='Dettagli' ></i></a>";
+                return   `<div class="btn-group btn-group-sm">
+                                <button data-toggle='edit' data-id="${uid_rif}" id="edit" type="button" data-bs-toggle="tooltip" title="${text('MODIFICA')}" class="w-25px h-25px btn-icon btn btn-sm btn-warning float-right text-uppercase">
+                                    <i class="fas fa-pencil-alt text-light-warning"></i>
+                                </button>
+                                <button data-toggle='modal' data-link='' data-id="${uid_rif}" data-target='' id="change_user" type="button" data-bs-toggle="tooltip" title="${text('IMPERSONA UTENTE')}"class="w-25px h-25px btn-icon btn btn-sm btn-primary float-right text-uppercase">
+                                        <i class="fas fa-user-gear"></i>
+                                </button>
+                            </div>`  ;
+            }  
+        },
+    ],
+    //Ordina i record in modo crescente in base alla colonna 1
+    "order": [
+        [1, 'asc']
+    ],   
+    select: {
+        style: 'multi',
+        selector: 'td:first-child input[type="checkbox"]',
+        className: 'row-selected'
+    },
+    processing: true,
+    // serverSide: true,
+    // Personalizzazioni richieste al db
+    "ajax":{
+    type: "POST",
+    url: "api.php",    
+    data: function ( d ) {
+                d.class = 'user'
+                d.function = 'read';
+                d.source = 'data_tables';
+                d.active = obj_cards.find('#disabilitati').attr('stato');
+                d.operatori = obj_cards.find('#esterni').attr('stato');
+                // d.certificato = $('#card_acceptance_form_list').find('#toolbar').find('#certificato').val();
+                // d.main_acceptance_form = $('#card_acceptance_form_list').find('#toolbar').find('#main_acceptance_form').val();
+                // d.request_state = return_filter_request($('#card_acceptance_form_list').find('#filters').find('#stato_richiesta').select2('data'));
+                // d.diagnosis = return_filter_request($('#card_acceptance_form_list').find('#filters').find('#diagnosi').select2('data'));
+                // d.age_min = return_filter_request($('#card_acceptance_form_list').find('#filters').find('#age_min').select2('data'));
+                // d.age_max = return_filter_request($('#card_acceptance_form_list').find('#filters').find('#age_max').select2('data'));
+                // d.rif_form_cliente_id= $_GET('form_cliente_id');
+            } 
+    },
+    
+    "initComplete": function(settings, json){
+        // generate_toolbar_row();
+        // insert_button_group();
+        // select_richiesta();
+        // diagnosi();
+        // age();
+
+        $start_val = [0,1]
+        // $stato_richiesta.val($start_val).trigger("change");
+        $('#card_acceptance_form_list').find('#filters').find('#select_box_diagnosi, #select_box_richiesta, #age_min, #age_max').on('select2:select', function (e) {            
+            this.table.ajax.reload();    
+        });
+        $('#card_acceptance_form_list').find('#filters').find('#select_box_diagnosi, #select_box_richiesta, #age_min, #age_max').on('select2:unselect', function (e) {
+            this.table.ajax.reload();
+        });
+        // list_acceptance_form.ajax.reload();
+        this.api = this.api();
+        /**
+         * Eseguo la ricerca da una select esterna dentro una colonna nascosta
+         */
+        // api.columns(7).every( function () {
+        //     /**
+        //      * imposto il valore di base della select
+        //      */
+        //     this
+        //         .search($start_val,true, true, false)
+        //         .draw();
+        //     var that = this;
+        //     $('#card_acceptance_form_list').find('#toolbar').find('#select_box_richiesta').on('select2:select', function (e) {            
+        //         var data = e.params.data;
+        //         if(that.search()){
+        //             search_data = that.search()+"|"+data.id;
+        //         }else{
+        //             search_data = data.id;
+        //         }
+        //         if ( that.search() !== this.value ) {
+        //             that
+        //                 .search(search_data,true, true, false)
+        //                 .draw();
+        //         }
+        //     });
+        //     $('#card_acceptance_form_list').find('#toolbar').find('#select_box_richiesta').on('select2:unselect', function (e) {
+        //         var data = e.params.data;
+                
+        //         search_data = that.search().split("|");
+        //         search_data = search_data.map(Number);
+        //             removeItem = data.id;
+        //         array = jQuery.grep(search_data, function(value) {
+        //             return value != removeItem;
+        //             });
+        //         var value = array;
+        //         var blkstr = [];
+        //         $.each(value, function(idx2,val2) {                    
+        //         var str =  val2;
+        //         blkstr.push(str);
+        //         });
+        //         var a = blkstr.join("|");
+        //         console.log(a);
+    
+        //         if ( a !== this.value ) {
+        //             that
+        //             .search(a, true, false )
+        //                 .draw();
+        //         }
+        //     });
+        // });
+
+        /**
+         * Avilito la ricerca per la colonna uno creando una select
+         */
+        // api.columns(1)
+        //     .every(function () {
+        //         var column = this;
+        //         var select = $('<select id="eta" class="form-control form-control-sm"><option value=""></option></select>')
+        //             .appendTo($(column.footer()).empty())
+        //             .on('change', function () {
+        //                 var val = $.fn.dataTable.util.escapeRegex($(this).val());
+
+        //                 column.search(val ? '^' + val + '$' : '', true, false).draw();
+        //             });
+        //         column
+        //             .data()
+        //             .unique()
+        //             .sort()
+        //             .each(function (d, j) {
+        //                 console.log();
+        //                 select.append('<option value="' + d + '">' + d + '</option>');
+        //             });
+        //     });
+
+        /**
+         * Abilito la ricerca per queste colonne
+         */
+        // api.columns()
+        //     .every(function(){
+        //         var that = this;
+        //         $( 'input', this.footer() ).on( 'keyup change', function () {
+        //             if ( that.search() !== this.value ) {
+        //                 that
+        //                     .search( this.value, true, false )
+        //                     .draw();
+        //             }
+        //         });
+        //     })
+        var api_html = '';
+        this.api.columns()
+            .every(function () {
+                // console.log($(this.header()).text())
+                var column = this;
+                var title = $(this.header()).text().trim();
+                var idtitle = title.replace(/ /g,"_");
+                if(title == ''){
+                    
+                }else{
+                    var select = $('<div class="col-12 col-xxl my-1 my-xxl-0"><input id="'+idtitle+'" class="form-control form-control-sm '+idtitle+'" type="text" placeholder="Cerca '+title+'" /></div>')
+                    .appendTo('#filter_tabella')
+                    $(select.find('input')).on('keyup change', function () {
+                            var val = $.fn.dataTable.util.escapeRegex($(this).val());
+                                // column.search(val ? '^' + val + '$' : '', true, false).draw();
+                                column.search(this.value, true, false).draw();
+                        });
+                    column
+                        .data()
+                        .unique()
+                        .sort()
+                        // .each(function (d, j) {
+                        //     console.log();
+                        //     select.append('<option value="' + d + '">' + d + '</option>');
+                        // });
+                }
+            });
+    }
+})
 </script>
 {% endblock %}

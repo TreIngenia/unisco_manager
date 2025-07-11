@@ -87,8 +87,9 @@ def api_role_required(*roles):
         @jwt_required()
         def decorated_function(*args, **kwargs):
             current_user_uid = get_jwt_identity()
-            user = User.query.get(current_user_uid)
-            
+            # user = User.query.get(current_user_uid)
+            user = User.find_by_uid(current_user_uid) 
+
             if not user or not user.is_active or not user.is_email_confirmed:
                 return jsonify({
                     'status': 'error',
@@ -117,7 +118,8 @@ def api_admin_required(f):
     @jwt_required()
     def decorated_function(*args, **kwargs):
         current_user_uid = get_jwt_identity()
-        user = User.query.get(current_user_uid)
+        # user = User.query.get(current_user_uid)
+        user = User.find_by_uid(current_user_uid) 
         
         if not user or not user.is_active or not user.is_email_confirmed:
             return jsonify({
@@ -145,7 +147,8 @@ def api_moderator_required(f):
     @jwt_required()
     def decorated_function(*args, **kwargs):
         current_user_uid = get_jwt_identity()
-        user = User.query.get(current_user_uid)
+        # user = User.query.get(current_user_uid)
+        user = User.find_by_uid(current_user_uid) 
         
         if not user or not user.is_active or not user.is_email_confirmed:
             return jsonify({

@@ -343,7 +343,7 @@ def register_auth_routes(auth_bp):
     # ################################# #
     # Route controllo autenticazione    # 
     # ################################# #
-    @auth_bp.route('/api/auth/check', methods=['GET'])
+    @auth_bp.route('/api/check', methods=['GET'])
     def check_auth():
         """Endpoint per controllare lo stato di autenticazione"""
         # Prima prova JWT cookie
