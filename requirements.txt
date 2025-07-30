@@ -1,0 +1,15 @@
+Flask
+Flask-SQLAlchemy
+Flask-JWT-Extended
+Flask-Migrate
+psycopg2-binary
+Werkzeug
+python-dotenv
+flask-login
+tzdata
+qrcode[pil]
+Pillow
+uuid  
+pandas
+requests
+flask_caching

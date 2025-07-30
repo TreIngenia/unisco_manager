@@ -1,0 +1,1526 @@
+{% extends 'base_secure.html' %}
+<!-- Inserimento Titolo -->
+{#
+{% block title %}
+{% endblock %}
+#}
+<!-- Inserimento ToolBar -->
+{#
+{% block toolbar %}
+<div class=" align-items-center gap-2">
+    <div class="text-gray-700">Profilo di: <span class="text-white" id="total-contracts">{{ user.full_name }}</span></div>
+    <div class="text-gray-700">Registrato il:  <span class="text-white" id="last-updated">{{ user.created_at.strftime('%d/%m/%Y') }}</span></div>
+</div>
+<div class="col-4">
+    <input type="text" id="mySearch" class="form-control form-control-sm" placeholder="Cerca...">
+</div>
+<div class="d-flex align-items-center gap-2">
+    <div class="btn-group">
+        <button id="edit_button" type="button" class="btn btn-sm btn-primary" onclick="toggleEditMode()"><i class="fa-solid fa-pen-to-square me-2 fs-3"></i>Modifica Profilo</button>
+        <button id="save_all" type="button" class="btn btn-sm btn-warning" onclick="showPasswordModal()"><i class="fa-solid fa-key me-2 fs-3"></i>Cambia password</button>
+        <button id="reload" type="button" class="btn btn-sm btn-info" onclick="loadContracts('load')"><i class="fa-solid fa-arrows-rotate me-2 fs-3"></i>Ricarica Dati</button>
+    </div>
+</div>
+{% endblock %}     
+#}
+
+<!-- Inserimento contenuto Pagina -->
+{% block content %}
+<div id="kt_app_content" class="app-content flex-column-fluid">
+    <div id="kt_app_content_container" class="app-container #container-xxl">
+        <div class="card mb-5 mb-xl-10">
+            <div class="card-body pt-9 pb-0">
+                <div id="container_top_info">
+                    {% include 'web/partials/profiles/top_info.html' %}
+                </div>
+                <ul class="nav nav-stretch nav-line-tabs nav-line-tabs-2x border-transparent fs-5 fw-bold">
+                    <li class="nav-item mt-2">
+                        <a class="nav-link text-active-primary ms-0 me-10 py-5 active" data-bs-toggle="tab" href="#user_info">Dettagli</a>
+                    </li>
+                    <li class="nav-item mt-2">
+                        <a class="nav-link text-active-primary ms-0 me-10 py-5" data-bs-toggle="tab" href="#edit_profile">Modifica profilo</a>
+                    </li>
+                    <li class="nav-item mt-2">
+                        <a class="nav-link text-active-primary ms-0 me-10 py-5" data-bs-toggle="tab" href="account/security.html">Security</a>
+                    </li>
+                    <li class="nav-item mt-2">
+                        <a class="nav-link text-active-primary ms-0 me-10 py-5" data-bs-toggle="tab" href="account/activity.html">Activity</a>
+                    </li>
+                    <li class="nav-item mt-2">
+                        <a class="nav-link text-active-primary ms-0 me-10 py-5" data-bs-toggle="tab" href="account/billing.html">Billing</a>
+                    </li>
+                    <li class="nav-item mt-2">
+                        <a class="nav-link text-active-primary ms-0 me-10 py-5" data-bs-toggle="tab" href="account/statements.html">Statements</a>
+                    </li>
+                    <li class="nav-item mt-2">
+                        <a class="nav-link text-active-primary ms-0 me-10 py-5" data-bs-toggle="tab" href="account/referrals.html">Referrals</a>
+                    </li>
+                    <li class="nav-item mt-2">
+                        <a class="nav-link text-active-primary ms-0 me-10 py-5" data-bs-toggle="tab" href="account/api-keys.html">API Keys</a>
+                    </li>
+                    <li class="nav-item mt-2">
+                        <a class="nav-link text-active-primary ms-0 me-10 py-5" data-bs-toggle="tab" href="account/logs.html">Logs</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+     
+        <div class="tab-content" id="myTabContent">
+            <div class="tab-pane fade show active" id="user_info" role="tabpanel">
+                ...
+            </div>
+            <div class="tab-pane fade" id="edit_profile" role="tabpanel">
+                <div class="card shadow-sm mb-10">
+                    <div class="card-header">
+                        <h3 class="card-title">Modifica profilo</h3>
+                        <!-- <div class="card-toolbar">
+                            <button type="button" class="btn btn-sm btn-light">
+                                Action
+                            </button>
+                        </div> -->
+                    </div>
+                    <div class="card-body">
+                        <form id="profile-form" enctype="multipart/form-data">
+                            <div class="row">
+                                <div class="col-2 pt-5">
+                                    <div class="image-input image-input-outline" data-kt-image-input="true" style="background-image: url('assets/media/svg/avatars/blank.svg')">
+                                        <div class="image-input-wrapper w-125px h-125px" style="background-image: url({{ user.avatar_url }})"></div>
+                                        <label class="btn btn-icon btn-circle btn-active-color-primary w-25px h-25px bg-body shadow" data-kt-image-input-action="change" data-bs-toggle="tooltip" title="Change avatar">
+                                            <i class="ki-duotone ki-pencil fs-7">
+                                                <span class="path1"></span>
+                                                <span class="path2"></span>
+                                            </i>
+                                            <input type="file" name="avatar" accept=".png, .jpg, .jpeg" />
+                                            <input type="hidden" name="avatar_remove" />
+                                        </label>
+                                        <span class="btn btn-icon btn-circle btn-active-color-primary w-25px h-25px bg-body shadow" data-kt-image-input-action="cancel" data-bs-toggle="tooltip" title="Cancel avatar">
+                                            <i class="ki-duotone ki-cross fs-2">
+                                                <span class="path1"></span>
+                                                <span class="path2"></span>
+                                            </i>
+                                        </span>
+                                        <span class="btn btn-icon btn-circle btn-active-color-primary w-25px h-25px bg-body shadow" data-kt-image-input-action="remove" data-bs-toggle="tooltip" title="Remove avatar">
+                                            <i class="ki-duotone ki-cross fs-2">
+                                                <span class="path1"></span>
+                                                <span class="path2"></span>
+                                            </i>
+                                        </span>
+                                    </div>
+                                    <div class="form-text">File abilitati: png, jpg, jpeg.</div>
+                                </div>
+                                <div class="col-10">
+                                    <div class="row">
+                                        <div class="col-4 mb-10">
+                                            <div class="fv-row">
+                                                <label for="exampleFormControlInput1" class="required form-label">Società</label>
+                                                <input type="text" id="edit-company" name="company" value="" class="form-control form-control-solid #bg-transparent" placeholder="Società"/>    
+                                            </div>
+                                        </div>
+                                        <div class="col-4 mb-10">
+                                            <div class="fv-row">
+                                                <label for="exampleFormControlInput1" class="required form-label">Nome</label>
+                                                <input type="text" id="edit-first-name" name="first_name" value="{{ user.first_name or '' }}" class="form-control form-control-solid" placeholder="Nome"/>    
+                                            </div>
+                                        </div>
+                                        <div class="col-4 mb-10">
+                                            <div class="fv-row">
+                                                <label for="exampleFormControlInput1" class="required form-label">Cognome</label>
+                                                <input type="text" id="edit-last-name" name="last_name" value="{{ user.last_name or '' }}" class="form-control form-control-solid" placeholder="Cognome"/>    
+                                            </div>
+                                        </div>
+                                        <div class="col-4 mb-10">
+                                            <div class="fv-row">
+                                                <label for="exampleFormControlInput1" class="form-label">Mobile</label>
+                                                <input type="text" id="edit-phone" name="phone" value="{{ user.phone or '' }}" class="form-control form-control-solid" placeholder="+39 xxx xxx xxxx"/>    
+                                            </div>
+                                        </div>
+                                        <div class="col-4 mb-10">
+                                            <div class="fv-row">
+                                                <label for="exampleFormControlInput1" class="required form-label">E-Mail</label> 
+                                                <span class="ms-1 cursor-pointer" data-bs-toggle="tooltip" title="Cambiando l'email dovrai confermarla nuovamente.">
+                                                                        <i class="fas fa-circle-info text-gray-500 fs-6"></i>
+                                                                    </span>
+                                                <input type="email" id="edit-email" name="email" value="{{ user.email or '' }}" class="form-control form-control-solid" placeholder="E-Mail"/>    
+                                            </div>
+                                        </div>
+                                        <div class="col-4 mb-10">
+                                            <div class="fv-row">
+                                                <label for="exampleFormControlInput1" class="form-label">Username</label>
+                                                <input type="text" id="edit-username" value="{{ user.username }}" class="form-control form-control-solid" placeholder="Username" disabled readonly/>    
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="card-footer d-flex justify-content-end">
+                        <div class="btn-group">
+                            <button id="save_form" type="button" class="btn btn-sm btn-primary" ><i class="fa-solid fa-floppy-disk me-2 fs-3"></i>Salva modifiche</button>
+                            <button id="reset_form" type="button" class="btn btn-sm btn-warning" onclick="cancelEdit()"><i class="fa-solid fa-rectangle-xmark me-2 fs-3"></i>Annulla</button>
+                            <!-- <button id="reload" type="button" class="btn btn-sm btn-info" onclick="loadContracts('load')"><i class="fa-solid fa-arrows-rotate me-2 fs-3"></i>Ricarica Dati</button> -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="tab-pane fade" id="kt_tab_pane_3" role="tabpanel">
+                ...
+            </div>
+        </div>
+        
+        <!-- <div class="card mb-5 mb-xl-10">
+            <div class="card-header border-0 cursor-pointer" role="button" data-bs-toggle="collapse" data-bs-target="#kt_account_signin_method">
+                <div class="card-title m-0">
+                    <h3 class="fw-bold m-0">Sign-in Method</h3>
+                </div>
+            </div>
+            <div id="kt_account_settings_signin_method" class="collapse show">
+                <div class="card-body border-top p-9">
+                    <div class="d-flex flex-wrap align-items-center">
+                        <div id="kt_signin_email">
+                            <div class="fs-6 fw-bold mb-1">Email Address</div>
+                            <div class="fw-semibold text-gray-600">support@keenthemes.com</div>
+                        </div>
+                        <div id="kt_signin_email_edit" class="flex-row-fluid d-none">
+                            <form id="kt_signin_change_email" class="form" novalidate="novalidate">
+                                <div class="row mb-6">
+                                    <div class="col-lg-6 mb-4 mb-lg-0">
+                                        <div class="fv-row mb-0">
+                                            <label for="emailaddress" class="form-label fs-6 fw-bold mb-3">Enter New Email Address</label>
+                                            <input type="email" class="form-control form-control-lg form-control-solid" id="emailaddress" placeholder="Email Address" name="emailaddress" value="support@keenthemes.com" />
+                                        </div>
+                                    </div>
+                                    <div class="col-lg-6">
+                                        <div class="fv-row mb-0">
+                                            <label for="confirmemailpassword" class="form-label fs-6 fw-bold mb-3">Confirm Password</label>
+                                            <input type="password" class="form-control form-control-lg form-control-solid" name="confirmemailpassword" id="confirmemailpassword" />
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="d-flex">
+                                    <button id="kt_signin_submit" type="button" class="btn btn-primary me-2 px-6">Update Email</button>
+                                    <button id="kt_signin_cancel" type="button" class="btn btn-color-gray-500 btn-active-light-primary px-6">Cancel</button>
+                                </div>
+                            </form>
+                        </div>
+                        <div id="kt_signin_email_button" class="ms-auto">
+                            <button class="btn btn-light btn-active-light-primary">Change Email</button>
+                        </div>
+                    </div>
+                    <div class="separator separator-dashed my-6"></div>
+                    <div class="d-flex flex-wrap align-items-center mb-10">
+                        <div id="kt_signin_password">
+                            <div class="fs-6 fw-bold mb-1">Password</div>
+                            <div class="fw-semibold text-gray-600">************</div>
+                        </div>
+                        <div id="kt_signin_password_edit" class="flex-row-fluid d-none">
+                            <form id="kt_signin_change_password" class="form" novalidate="novalidate">
+                                <div class="row mb-1">
+                                    <div class="col-lg-4">
+                                        <div class="fv-row mb-0">
+                                            <label for="currentpassword" class="form-label fs-6 fw-bold mb-3">Current Password</label>
+                                            <input type="password" class="form-control form-control-lg form-control-solid" name="currentpassword" id="currentpassword" />
+                                        </div>
+                                    </div>
+                                    <div class="col-lg-4">
+                                        <div class="fv-row mb-0">
+                                            <label for="newpassword" class="form-label fs-6 fw-bold mb-3">New Password</label>
+                                            <input type="password" class="form-control form-control-lg form-control-solid" name="newpassword" id="newpassword" />
+                                        </div>
+                                    </div>
+                                    <div class="col-lg-4">
+                                        <div class="fv-row mb-0">
+                                            <label for="confirmpassword" class="form-label fs-6 fw-bold mb-3">Confirm New Password</label>
+                                            <input type="password" class="form-control form-control-lg form-control-solid" name="confirmpassword" id="confirmpassword" />
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-text mb-5">Password must be at least 8 character and contain symbols</div>
+                                <div class="d-flex">
+                                    <button id="kt_password_submit" type="button" class="btn btn-primary me-2 px-6">Update Password</button>
+                                    <button id="kt_password_cancel" type="button" class="btn btn-color-gray-500 btn-active-light-primary px-6">Cancel</button>
+                                </div>
+                            </form>
+                        </div>
+                        <div id="kt_signin_password_button" class="ms-auto">
+                            <button class="btn btn-light btn-active-light-primary">Reset Password</button>
+                        </div>
+                    </div>
+                    <div class="notice d-flex bg-light-primary rounded border-primary border border-dashed p-6">
+                        <i class="ki-duotone ki-shield-tick fs-2tx text-primary me-4">
+                            <span class="path1"></span>
+                            <span class="path2"></span>
+                        </i>
+                        <div class="d-flex flex-stack flex-grow-1 flex-wrap flex-md-nowrap">
+                            <div class="mb-3 mb-md-0 fw-semibold">
+                                <h4 class="text-gray-900 fw-bold">Secure Your Account</h4>
+                                <div class="fs-6 text-gray-700 pe-7">Two-factor authentication adds an extra layer of security to your account. To log in, in addition you'll need to provide a 6 digit code</div>
+                            </div>
+                            <a href="#" class="btn btn-primary px-6 align-self-center text-nowrap" data-bs-toggle="modal" data-bs-target="#kt_modal_two_factor_authentication">Enable</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="card mb-5 mb-xl-10">
+            <div class="card-header border-0 cursor-pointer" role="button" data-bs-toggle="collapse" data-bs-target="#kt_account_connected_accounts" aria-expanded="true" aria-controls="kt_account_connected_accounts">
+                <div class="card-title m-0">
+                    <h3 class="fw-bold m-0">Connected Accounts</h3>
+                </div>
+            </div>
+            <div id="kt_account_settings_connected_accounts" class="collapse show">
+                <div class="card-body border-top p-9">
+                    <div class="notice d-flex bg-light-primary rounded border-primary border border-dashed mb-9 p-6">
+                        <i class="ki-duotone ki-design-1 fs-2tx text-primary me-4"></i>
+                        <div class="d-flex flex-stack flex-grow-1">
+                            <div class="fw-semibold">
+                                <div class="fs-6 text-gray-700">Two-factor authentication adds an extra layer of security to your account. To log in, in you'll need to provide a 4 digit amazing code. 
+                                <a href="#" class="fw-bold">Learn More</a></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="py-2">
+                        <div class="d-flex flex-stack">
+                            <div class="d-flex">
+                                <img src="assets/media/svg/brand-logos/google-icon.svg" class="w-30px me-6" alt="" />
+                                <div class="d-flex flex-column">
+                                    <a href="#" class="fs-5 text-gray-900 text-hover-primary fw-bold">Google</a>
+                                    <div class="fs-6 fw-semibold text-gray-500">Plan properly your workflow</div>
+                                </div>
+                            </div>
+                            <div class="d-flex justify-content-end">
+                                <div class="form-check form-check-solid form-check-custom form-switch">
+                                    <input class="form-check-input w-45px h-30px" type="checkbox" id="googleswitch" checked="checked" />
+                                    <label class="form-check-label" for="googleswitch"></label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="separator separator-dashed my-5"></div>
+                        <div class="d-flex flex-stack">
+                            <div class="d-flex">
+                                <img src="assets/media/svg/brand-logos/github.svg" class="w-30px me-6" alt="" />
+                                <div class="d-flex flex-column">
+                                    <a href="#" class="fs-5 text-gray-900 text-hover-primary fw-bold">Github</a>
+                                    <div class="fs-6 fw-semibold text-gray-500">Keep eye on on your Repositories</div>
+                                </div>
+                            </div>
+                            <div class="d-flex justify-content-end">
+                                <div class="form-check form-check-solid form-check-custom form-switch">
+                                    <input class="form-check-input w-45px h-30px" type="checkbox" id="githubswitch" checked="checked" />
+                                    <label class="form-check-label" for="githubswitch"></label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="separator separator-dashed my-5"></div>
+                        <div class="d-flex flex-stack">
+                            <div class="d-flex">
+                                <img src="assets/media/svg/brand-logos/slack-icon.svg" class="w-30px me-6" alt="" />
+                                <div class="d-flex flex-column">
+                                    <a href="#" class="fs-5 text-gray-900 text-hover-primary fw-bold">Slack</a>
+                                    <div class="fs-6 fw-semibold text-gray-500">Integrate Projects Discussions</div>
+                                </div>
+                            </div>
+                            <div class="d-flex justify-content-end">
+                                <div class="form-check form-check-solid form-check-custom form-switch">
+                                    <input class="form-check-input w-45px h-30px" type="checkbox" id="slackswitch" />
+                                    <label class="form-check-label" for="slackswitch"></label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer d-flex justify-content-end py-6 px-9">
+                    <button class="btn btn-light btn-active-light-primary me-2">Discard</button>
+                    <button class="btn btn-primary">Save Changes</button>
+                </div>
+            </div>
+        </div>
+        <div class="card mb-5 mb-xl-10">
+            <div class="card-header border-0 cursor-pointer" role="button" data-bs-toggle="collapse" data-bs-target="#kt_account_email_preferences" aria-expanded="true" aria-controls="kt_account_email_preferences">
+                <div class="card-title m-0">
+                    <h3 class="fw-bold m-0">Email Preferences</h3>
+                </div>
+            </div>
+            <div id="kt_account_settings_email_preferences" class="collapse show">
+                <form class="form">
+                    <div class="card-body border-top px-9 py-9">
+                        <label class="form-check form-check-custom form-check-solid align-items-start">
+                            <input class="form-check-input me-3" type="checkbox" name="email-preferences[]" value="1" />
+                            <span class="form-check-label d-flex flex-column align-items-start">
+                                <span class="fw-bold fs-5 mb-0">Successful Payments</span>
+                                <span class="text-muted fs-6">Receive a notification for every successful payment.</span>
+                            </span>
+                        </label>
+                        <div class="separator separator-dashed my-6"></div>
+                        <label class="form-check form-check-custom form-check-solid align-items-start">
+                            <input class="form-check-input me-3" type="checkbox" name="email-preferences[]" checked="checked" value="1" />
+                            <span class="form-check-label d-flex flex-column align-items-start">
+                                <span class="fw-bold fs-5 mb-0">Payouts</span>
+                                <span class="text-muted fs-6">Receive a notification for every initiated payout.</span>
+                            </span>
+                        </label>
+                        <div class="separator separator-dashed my-6"></div>
+                        <label class="form-check form-check-custom form-check-solid align-items-start">
+                            <input class="form-check-input me-3" type="checkbox" name="email-preferences[]" value="1" />
+                            <span class="form-check-label d-flex flex-column align-items-start">
+                                <span class="fw-bold fs-5 mb-0">Fee Collection</span>
+                                <span class="text-muted fs-6">Receive a notification each time you collect a fee from sales</span>
+                            </span>
+                        </label>
+                        <div class="separator separator-dashed my-6"></div>
+                        <label class="form-check form-check-custom form-check-solid align-items-start">
+                            <input class="form-check-input me-3" type="checkbox" name="email-preferences[]" checked="checked" value="1" />
+                            <span class="form-check-label d-flex flex-column align-items-start">
+                                <span class="fw-bold fs-5 mb-0">Customer Payment Dispute</span>
+                                <span class="text-muted fs-6">Receive a notification if a payment is disputed by a customer and for dispute purposes.</span>
+                            </span>
+                        </label>
+                        <div class="separator separator-dashed my-6"></div>
+                        <label class="form-check form-check-custom form-check-solid align-items-start">
+                            <input class="form-check-input me-3" type="checkbox" name="email-preferences[]" value="1" />
+                            <span class="form-check-label d-flex flex-column align-items-start">
+                                <span class="fw-bold fs-5 mb-0">Refund Alerts</span>
+                                <span class="text-muted fs-6">Receive a notification if a payment is stated as risk by the Finance Department.</span>
+                            </span>
+                        </label>
+                        <div class="separator separator-dashed my-6"></div>
+                        <label class="form-check form-check-custom form-check-solid align-items-start">
+                            <input class="form-check-input me-3" type="checkbox" name="email-preferences[]" checked="checked" value="1" />
+                            <span class="form-check-label d-flex flex-column align-items-start">
+                                <span class="fw-bold fs-5 mb-0">Invoice Payments</span>
+                                <span class="text-muted fs-6">Receive a notification if a customer sends an incorrect amount to pay their invoice.</span>
+                            </span>
+                        </label>
+                        <div class="separator separator-dashed my-6"></div>
+                        <label class="form-check form-check-custom form-check-solid align-items-start">
+                            <input class="form-check-input me-3" type="checkbox" name="email-preferences[]" value="1" />
+                            <span class="form-check-label d-flex flex-column align-items-start">
+                                <span class="fw-bold fs-5 mb-0">Webhook API Endpoints</span>
+                                <span class="text-muted fs-6">Receive notifications for consistently failing webhook API endpoints.</span>
+                            </span>
+                        </label>
+                    </div>
+                    <div class="card-footer d-flex justify-content-end py-6 px-9">
+                        <button class="btn btn-light btn-active-light-primary me-2">Discard</button>
+                        <button class="btn btn-primary px-6">Save Changes</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <div class="card mb-5 mb-xl-10">
+            <div class="card-header border-0 cursor-pointer" role="button" data-bs-toggle="collapse" data-bs-target="#kt_account_notifications" aria-expanded="true" aria-controls="kt_account_notifications">
+                <div class="card-title m-0">
+                    <h3 class="fw-bold m-0">Notifications</h3>
+                </div>
+            </div>
+            <div id="kt_account_settings_notifications" class="collapse show">
+                <form class="form">
+                    <div class="card-body border-top px-9 pt-3 pb-4">
+                        <div class="table-responsive">
+                            <table class="table table-row-dashed border-gray-300 align-middle gy-6">
+                                <tbody class="fs-6 fw-semibold">
+                                    <tr>
+                                        <td class="min-w-250px fs-4 fw-bold">Notifications</td>
+                                        <td class="w-125px">
+                                            <div class="form-check form-check-custom form-check-solid">
+                                                <input class="form-check-input" type="checkbox" value="" id="kt_settings_notification_email" checked="checked" data-kt-check="true" data-kt-check-target="[data-kt-settings-notification=email]" />
+                                                <label class="form-check-label ps-2" for="kt_settings_notification_email">Email</label>
+                                            </div>
+                                        </td>
+                                        <td class="w-125px">
+                                            <div class="form-check form-check-custom form-check-solid">
+                                                <input class="form-check-input" type="checkbox" value="" id="kt_settings_notification_phone" checked="checked" data-kt-check="true" data-kt-check-target="[data-kt-settings-notification=phone]" />
+                                                <label class="form-check-label ps-2" for="kt_settings_notification_phone">Phone</label>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>Billing Updates</td>
+                                        <td>
+                                            <div class="form-check form-check-custom form-check-solid">
+                                                <input class="form-check-input" type="checkbox" value="1" id="billing1" checked="checked" data-kt-settings-notification="email" />
+                                                <label class="form-check-label ps-2" for="billing1"></label>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div class="form-check form-check-custom form-check-solid">
+                                                <input class="form-check-input" type="checkbox" value="" id="billing2" checked="checked" data-kt-settings-notification="phone" />
+                                                <label class="form-check-label ps-2" for="billing2"></label>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>New Team Members</td>
+                                        <td>
+                                            <div class="form-check form-check-custom form-check-solid">
+                                                <input class="form-check-input" type="checkbox" value="" id="team1" checked="checked" data-kt-settings-notification="email" />
+                                                <label class="form-check-label ps-2" for="team1"></label>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div class="form-check form-check-custom form-check-solid">
+                                                <input class="form-check-input" type="checkbox" value="" id="team2" data-kt-settings-notification="phone" />
+                                                <label class="form-check-label ps-2" for="team2"></label>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>Completed Projects</td>
+                                        <td>
+                                            <div class="form-check form-check-custom form-check-solid">
+                                                <input class="form-check-input" type="checkbox" value="" id="project1" data-kt-settings-notification="email" />
+                                                <label class="form-check-label ps-2" for="project1"></label>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div class="form-check form-check-custom form-check-solid">
+                                                <input class="form-check-input" type="checkbox" value="" id="project2" checked="checked" data-kt-settings-notification="phone" />
+                                                <label class="form-check-label ps-2" for="project2"></label>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="border-bottom-0">Newsletters</td>
+                                        <td class="border-bottom-0">
+                                            <div class="form-check form-check-custom form-check-solid">
+                                                <input class="form-check-input" type="checkbox" value="" id="newsletter1" data-kt-settings-notification="email" />
+                                                <label class="form-check-label ps-2" for="newsletter1"></label>
+                                            </div>
+                                        </td>
+                                        <td class="border-bottom-0">
+                                            <div class="form-check form-check-custom form-check-solid">
+                                                <input class="form-check-input" type="checkbox" value="" id="newsletter2" data-kt-settings-notification="phone" />
+                                                <label class="form-check-label ps-2" for="newsletter2"></label>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="card-footer d-flex justify-content-end py-6 px-9">
+                        <button class="btn btn-light btn-active-light-primary me-2">Discard</button>
+                        <button class="btn btn-primary px-6">Save Changes</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-header border-0 cursor-pointer" role="button" data-bs-toggle="collapse" data-bs-target="#kt_account_deactivate" aria-expanded="true" aria-controls="kt_account_deactivate">
+                <div class="card-title m-0">
+                    <h3 class="fw-bold m-0">Deactivate Account</h3>
+                </div>
+            </div>
+            <div id="kt_account_settings_deactivate" class="collapse show">
+                <form id="kt_account_deactivate_form" class="form">
+                    <div class="card-body border-top p-9">
+                        <div class="notice d-flex bg-light-warning rounded border-warning border border-dashed mb-9 p-6">
+                            <i class="ki-duotone ki-information fs-2tx text-warning me-4">
+                                <span class="path1"></span>
+                                <span class="path2"></span>
+                                <span class="path3"></span>
+                            </i>
+                            <div class="d-flex flex-stack flex-grow-1">
+                                <div class="fw-semibold">
+                                    <h4 class="text-gray-900 fw-bold">You Are Deactivating Your Account</h4>
+                                    <div class="fs-6 text-gray-700">For extra security, this requires you to confirm your email or phone number when you reset yousignr password. 
+                                    <br />
+                                    <a class="fw-bold" href="#">Learn more</a></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-check form-check-solid fv-row">
+                            <input name="deactivate" class="form-check-input" type="checkbox" value="" id="deactivate" />
+                            <label class="form-check-label fw-semibold ps-2 fs-6" for="deactivate">I confirm my account deactivation</label>
+                        </div>
+                    </div>
+                    <div class="card-footer d-flex justify-content-end py-6 px-9">
+                        <button id="kt_account_deactivate_account_submit" type="submit" class="btn btn-danger fw-semibold">Deactivate Account</button>
+                    </div>
+                </form>
+            </div>
+        </div> -->
+    </div>
+</div>
+
+<!-- <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#change_password">
+    Launch demo modal
+</button> -->
+
+<div class="modal fade" tabindex="-1" id="modal_change_password">
+    <div class="modal-dialog">
+        <form class="form w-100" method="post" novalidate="novalidate" id="register" action="">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Cambia password</h3>
+
+                <!--begin::Close-->
+                
+                    <div class="btn btn-icon btn-sm btn-active-light-primary ms-2" data-bs-dismiss="modal" aria-label="Close">
+                        <i class="fa-solid fa-xmark fs-4"></i>
+                    </div>
+              
+                <!--end::Close-->
+            </div>
+
+            <div class="modal-body">
+                <div class="fv-row mb-8" data-kt-password-meter="true"> 
+                    <label for="" class="required form-label">Password attuale </label>
+                    <div class="mb-1">
+                        <div class="position-relative mb-3">
+                            <input placeholder="Password attuale" name="actual_password" type="password" autocomplete="off" class="form-control bg-transparent" />
+                            <span class="btn btn-sm btn-icon position-absolute translate-middle top-50 end-0 me-n2" data-kt-password-meter-control="visibility">
+                                <i class="fa-solid fa-eye-slash"></i>
+                                <i class="fa-solid fa-eye d-none"></i>
+                            </span>
+                        </div>
+                        <!-- <div class="d-flex align-items-center mb-3" data-kt-password-meter-control="highlight">
+                            <div class="flex-grow-1 bg-secondary bg-active-success rounded h-5px me-2"></div>
+                            <div class="flex-grow-1 bg-secondary bg-active-success rounded h-5px me-2"></div>
+                            <div class="flex-grow-1 bg-secondary bg-active-success rounded h-5px me-2"></div>
+                            <div class="flex-grow-1 bg-secondary bg-active-success rounded h-5px"></div>
+                        </div> -->
+                    </div>
+                </div>
+                <div class="fv-row mb-8" id="password" #data-kt-password-meter="true"> 
+                    <label for="" class="required form-label">Nuova password</label>
+                    <div class="mb-1">
+                        <div class="position-relative mb-3">
+                            <input class="form-control bg-transparent" type="password" placeholder="Nuova Password" name="password" autocomplete="off" />
+                            <span class="btn btn-sm btn-icon position-absolute translate-middle top-50 end-0 me-n2" data-kt-password-meter-control="visibility">
+                                <i class="fa-solid fa-eye-slash"></i>
+                                <i class="fa-solid fa-eye d-none"></i>
+                            </span>
+                        </div>
+                        <div class="d-flex align-items-center mb-3" data-kt-password-meter-control="highlight">
+                            <div class="flex-grow-1 bg-secondary bg-active-success rounded h-5px me-2"></div>
+                            <div class="flex-grow-1 bg-secondary bg-active-success rounded h-5px me-2"></div>
+                            <div class="flex-grow-1 bg-secondary bg-active-success rounded h-5px me-2"></div>
+                            <div class="flex-grow-1 bg-secondary bg-active-success rounded h-5px"></div>
+                        </div>
+                    </div>
+                    <div class="text-muted">Usa almeno 8 caratteri, lettere numeri e caratteri speciali.</div>
+                </div>
+                <div class="fv-row mb-8" data-kt-password-meter="true"> 
+                    <label for="" class="required form-label">Conferma nuova password</label>
+                    <div class="mb-1">
+                        <div class="position-relative mb-3">
+                            <input placeholder="Conferma nuova password" name="confirm_password" type="password" autocomplete="off" class="form-control bg-transparent" />
+                            <span class="btn btn-sm btn-icon position-absolute translate-middle top-50 end-0 me-n2" data-kt-password-meter-control="visibility">
+                                <i class="fa-solid fa-eye-slash"></i>
+                                <i class="fa-solid fa-eye d-none"></i>
+                            </span>
+                        </div>
+                        <!-- <div class="d-flex align-items-center mb-3" data-kt-password-meter-control="highlight">
+                            <div class="flex-grow-1 bg-secondary bg-active-success rounded h-5px me-2"></div>
+                            <div class="flex-grow-1 bg-secondary bg-active-success rounded h-5px me-2"></div>
+                            <div class="flex-grow-1 bg-secondary bg-active-success rounded h-5px me-2"></div>
+                            <div class="flex-grow-1 bg-secondary bg-active-success rounded h-5px"></div>
+                        </div> -->
+                    </div>
+                </div>
+              
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Chiudi</button>
+                <button type="submit" id="register_submit" class="btn btn-primary">
+                    <span class="indicator-label">Aggiorna Password</span>
+                    <span class="indicator-progress">Attendere... 
+                    <span class="spinner-border spinner-border-sm align-middle ms-2"></span></span>
+                </button>
+            </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+
+<div id="kt_app_content" class="app-content  flex-column-fluid " >
+    <div id="kt_app_content_container" class="app-container  container-fluid ">
+        <div class="row">
+            <div class="profile-container">
+    <!-- Sezione Informazioni Profilo -->
+    <div class="profile-section">
+        <div class="section-header">
+            <h3>Informazioni Profilo</h3>
+            <p>Visualizza e modifica le tue informazioni personali</p>
+        </div>
+        <div class="profile-content">
+            <!-- Modalità Visualizzazione -->
+            <div id="view-mode">
+                
+                <div class="profile-grid">
+                    <div class="profile-section-card">
+                        <h4>Dati Personali</h4>
+                        <div class="profile-item">
+                            <label>Nome:</label>
+                            <span>{{ user.first_name or 'Non specificato' }}</span>
+                        </div>
+                        <div class="profile-item">
+                            <label>Cognome:</label>
+                            <span>{{ user.last_name or 'Non specificato' }}</span>
+                        </div>
+                        <div class="profile-item">
+                            <label>Telefono:</label>
+                            <span>
+                                {% if user.phone %}
+                                    <a href="tel:{{ user.phone }}">{{ user.phone }}</a>
+                                {% else %}
+                                    Non specificato
+                                {% endif %}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="profile-section-card">
+                        <h4>Dati Account</h4>
+                        <div class="profile-item">
+                            <label>ID Utente:</label>
+                            <span>{{ user.uid }}</span>
+                        </div>
+                        <div class="profile-item">
+                            <label>Nome Utente:</label>
+                            <span>{{ user.username }}</span>
+                        </div>
+                        <div class="profile-item">
+                            <label>Email:</label>
+                            <span>
+                                {{ user.email }}
+                                {% if user.is_email_confirmed %}
+                                    <span class="status-badge confirmed">
+                                        <i class="fa-solid fa-check-circle"></i> Confermata
+                                    </span>
+                                {% else %}
+                                    <span class="status-badge unconfirmed">
+                                        <i class="fa-solid fa-clock"></i> In attesa di conferma
+                                    </span>
+                                {% endif %}
+                            </span>
+                        </div>
+                        <div class="profile-item">
+                            <label>Stato Account:</label>
+                            <span class="status-badge {% if user.is_active %}active{% else %}inactive{% endif %}">
+                                {% if user.is_active %}
+                                    <i class="fa-solid fa-check"></i> Attivo
+                                {% else %}
+                                    <i class="fa-solid fa-times"></i> Disattivo
+                                {% endif %}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="profile-section-card">
+                        <h4>Informazioni Temporali</h4>
+                        
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+    <!-- Sezione Statistiche Account -->
+    <div class="stats-section">
+        <div class="section-header">
+            <h3>Statistiche Account</h3>
+            <p>Riepilogo delle tue attività</p>
+        </div>
+        <div class="stats-grid">
+            <div class="stat-item">
+                <div class="stat-icon">
+                    <i class="fa-solid fa-calendar-days"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-value" id="account-age">0</div>
+                    <div class="stat-label">Giorni da registrazione</div>
+                </div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-icon">
+                    <i class="fa-solid fa-clock"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-value" id="days-since-login">
+                        {% if user.last_login %}0{% else %}∞{% endif %}
+                    </div>
+                    <div class="stat-label">Giorni dall'ultimo accesso</div>
+                </div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-icon">
+                    <i class="fa-solid fa-shield-halved"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-value">{{ user.roles|length }}</div>
+                    <div class="stat-label">Ruoli assegnati</div>
+                </div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-icon">
+                    <i class="fa-solid fa-envelope"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-value">
+                        {% if user.is_email_confirmed %}
+                            <i class="fa-solid fa-check"></i>
+                        {% else %}
+                            <i class="fa-solid fa-times"></i>
+                        {% endif %}
+                    </div>
+                    <div class="stat-label">Email confermata</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Sezione Azioni Account -->
+    <div class="actions-section">
+        <div class="section-header">
+            <h3>Azioni Account</h3>
+            <p>Gestisci le impostazioni del tuo account</p>
+        </div>
+        <div class="actions-grid">
+            <div class="action-item">
+                <div class="action-icon">
+                    <i class="fa-solid fa-key"></i>
+                </div>
+                <div class="action-content">
+                    <div class="action-title">Cambia Password</div>
+                    <div class="action-description">Modifica la password del tuo account</div>
+                </div>
+                <div class="action-button">
+                    <button onclick="showPasswordModal()">Cambia</button>
+                </div>
+            </div>
+            {% if not user.is_email_confirmed %}
+            <div class="action-item">
+                <div class="action-icon">
+                    <i class="fa-solid fa-envelope"></i>
+                </div>
+                <div class="action-content">
+                    <div class="action-title">Conferma Email</div>
+                    <div class="action-description">Conferma il tuo indirizzo email</div>
+                </div>
+                <div class="action-button">
+                    <button onclick="resendConfirmation()">Invia Email</button>
+                </div>
+            </div>
+            {% endif %}
+            <div class="action-item">
+                <div class="action-icon">
+                    <i class="fa-solid fa-download"></i>
+                </div>
+                <div class="action-content">
+                    <div class="action-title">Esporta Dati</div>
+                    <div class="action-description">Scarica i tuoi dati personali</div>
+                </div>
+                <div class="action-button">
+                    <button onclick="exportUserData()">Esporta</button>
+                </div>
+            </div>
+            <div class="action-item">
+                <div class="action-icon">
+                    <i class="fa-solid fa-image"></i>
+                </div>
+                <div class="action-content">
+                    <div class="action-title">Cambia Avatar</div>
+                    <div class="action-description">Aggiorna la tua immagine profilo</div>
+                </div>
+                <div class="action-button">
+                    <button onclick="triggerAvatarUpload()">Carica</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Input nascosto per upload avatar -->
+<input type="file" id="quick-avatar-upload" style="display: none;" accept="image/*" onchange="quickUploadAvatar(this)">
+        </div>
+    </div>
+</div>
+{% endblock %}
+<!-- Inserimento Script -->
+{% block scripts %}
+<script>
+// Variabili globali
+let isEditMode = false;
+// Inizializzazione
+document.addEventListener('DOMContentLoaded', function() {
+    calculateStats();
+});
+
+// Calcola statistiche temporali
+// function calculateStats() {
+//     // count1.update
+//     const createdAt = new Date('{{ user.created_at.isoformat() }}');
+//     const now = new Date();
+//     const accountAge = Math.floor((now - createdAt) / (1000 * 60 * 60 * 24));
+//     document.getElementById('account-age').textContent = accountAge;
+//     {% if user.last_login %}
+//     const lastLogin = new Date('{{ user.last_login.isoformat() }}');
+//     const daysSinceLogin = Math.floor((now - lastLogin) / (1000 * 60 * 60 * 24));
+//     document.getElementById('days-since-login').textContent = daysSinceLogin;
+//     {% endif %}
+// }
+
+function calculateStats() {
+    const createdAt = new Date('{{ user.created_at.isoformat() }}');
+    const now = new Date();
+    const diffMs = now - createdAt;
+
+    const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+    const hours = Math.floor(diffMs / (1000 * 60 * 60));
+    const minutes = Math.floor(diffMs / (1000 * 60));
+
+    if (days >= 1) {
+        document.getElementById('account-age').textContent = `${days} ${days === 1 ? 'giorno' : 'giorni'}`;
+    } else if (hours >= 1) {
+        document.getElementById('account-age').textContent = `${hours} ${hours === 1 ? 'ora' : 'ore'}`;
+    } else {
+        document.getElementById('account-age').textContent = `${minutes} ${minutes === 1 ? 'minuto' : 'minuti'}`;
+    }
+
+    {% if user.last_login %}
+    const lastLogin = new Date('{{ user.last_login.isoformat() }}');
+    const loginDiffMs = now - lastLogin;
+
+    const loginDays = Math.floor(loginDiffMs / (1000 * 60 * 60 * 24));
+    const loginHours = Math.floor(loginDiffMs / (1000 * 60 * 60));
+    const loginMinutes = Math.floor(loginDiffMs / (1000 * 60));
+
+    if (loginDays >= 1) {
+        document.getElementById('days-since-login').textContent = `${loginDays} ${loginDays === 1 ? 'giorno' : 'giorni'}`;
+    } else if (loginHours >= 1) {
+        document.getElementById('days-since-login').textContent = `${loginHours} ${loginHours === 1 ? 'ora' : 'ore'}`;
+    } else {
+        document.getElementById('days-since-login').textContent = `${loginMinutes} ${loginMinutes === 1 ? 'minuto' : 'minuti'}`;
+    }
+    {% endif %}
+}
+
+// function calculateStats() {
+//     const createdAt = new Date('{{ user.created_at.isoformat() }}');
+//     const now = new Date();
+//     const diffMs = now - createdAt;
+
+//     const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+//     if (days >= 1) {
+//         document.getElementById('account-age').textContent = `${days} ${days === 1 ? 'giorno' : 'giorni'}`;
+//     } else {
+//         const totalMinutes = Math.floor(diffMs / (1000 * 60));
+//         const hours = Math.floor(totalMinutes / 60);
+//         const minutes = totalMinutes % 60;
+
+//         let result = '';
+//         if (hours > 0) {
+//             result += `${hours} ${hours === 1 ? 'ora' : 'ore'}`;
+//             if (minutes > 0) {
+//                 result += ` e ${minutes} ${minutes === 1 ? 'minuto' : 'minuti'}`;
+//             }
+//         } else {
+//             result += `${minutes} ${minutes === 1 ? 'minuto' : 'minuti'}`;
+//         }
+
+//         document.getElementById('account-age').textContent = result;
+//     }
+
+//     {% if user.last_login %}
+//     const lastLogin = new Date('{{ user.last_login.isoformat() }}');
+//     const loginDiffMs = now - lastLogin;
+//     const loginDays = Math.floor(loginDiffMs / (1000 * 60 * 60 * 24));
+
+//     if (loginDays >= 1) {
+//         document.getElementById('days-since-login').textContent = `${loginDays} ${loginDays === 1 ? 'giorno' : 'giorni'}`;
+//     } else {
+//         const loginTotalMinutes = Math.floor(loginDiffMs / (1000 * 60));
+//         const loginHours = Math.floor(loginTotalMinutes / 60);
+//         const loginMinutes = loginTotalMinutes % 60;
+
+//         let loginResult = '';
+//         if (loginHours > 0) {
+//             loginResult += `${loginHours} ${loginHours === 1 ? 'ora' : 'ore'}`;
+//             if (loginMinutes > 0) {
+//                 loginResult += ` e ${loginMinutes} ${loginMinutes === 1 ? 'minuto' : 'minuti'}`;
+//             }
+//         } else {
+//             loginResult += `${loginMinutes} ${loginMinutes === 1 ? 'minuto' : 'minuti'}`;
+//         }
+
+//         document.getElementById('days-since-login').textContent = loginResult;
+//     }
+//     {% endif %}
+// }
+
+
+// Funzioni per la modalità modifica
+function toggleEditMode() {
+    isEditMode = !isEditMode;
+    if (isEditMode) {
+        document.getElementById('view-mode').style.display = 'none';
+        document.getElementById('edit-mode').style.display = 'block';
+        document.getElementById('edit-profile-btn').innerHTML = '<i class="fa-solid fa-times"></i> Annulla';
+    } else {
+        document.getElementById('view-mode').style.display = 'block';
+        document.getElementById('edit-mode').style.display = 'none';
+        document.getElementById('edit-profile-btn').innerHTML = '<i class="fa-solid fa-edit"></i> Modifica Profilo';
+    }
+}
+
+//In un form già compilato ma dove è stato scritto cambiato qualcosa torna allo stato precedente (solo se non è stato salvato)
+function cancelEdit() {
+    form = document.querySelector("#profile-form").reset();
+}
+
+// Funzioni per upload immagini
+function previewEditImage(input) {
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            document.getElementById('edit-preview-avatar').src = e.target.result;
+        };
+        reader.readAsDataURL(input.files[0]);
+    }
+}
+
+function removeEditImage() {
+    document.getElementById('edit-profile-image').value = '';
+    document.getElementById('edit-preview-avatar').src = '{{ user.avatar_url }}';
+}
+
+function triggerAvatarUpload() {
+    document.getElementById('quick-avatar-upload').click();
+}
+
+function quickUploadAvatar(input) {
+    if (input.files && input.files[0]) {
+        const formData = new FormData();
+        formData.append('profile_image', input.files[0]);
+        fetch('/profile/data', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                alert('Avatar aggiornato con successo');
+                location.reload();
+            } else {
+                alert(data.message || 'Errore nell\'aggiornamento avatar');
+            }
+        })
+        .catch(error => {
+            console.error('Errore:', error);
+            alert('Errore nell\'upload avatar');
+        });
+    }
+}
+
+// Funzioni per le azioni account
+function resendConfirmation() {
+    if (confirm('Inviare nuovamente l\'email di conferma?')) {
+        fetch('/api/resend-confirmation', {
+            method: 'POST'
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                alert('Email di conferma inviata con successo');
+            } else {
+                alert(data.message || 'Errore nell\'invio email');
+            }
+        })
+        .catch(error => {
+            console.error('Errore:', error);
+            alert('Errore nell\'invio email di conferma');
+        });
+    }
+}
+
+function exportUserData() {
+    if (confirm('Scaricare i tuoi dati personali?')) {
+        fetch('/api/export-user-data', {
+            method: 'POST'
+        })
+        .then(response => {
+            if (response.ok) {
+                return response.blob();
+            }
+            throw new Error('Errore nell\'esportazione');
+        })
+        .then(blob => {
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'i_miei_dati.json';
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+        })
+        .catch(error => {
+            console.error('Errore:', error);
+            alert('Errore nell\'esportazione dati');
+        });
+    }
+}
+
+
+
+// Aggiorna la password
+async function update_password(form_data) {
+    try {
+        
+        const url = `/profile/password`
+        const method = 'POST';
+        
+        // 1. Salva i dati utente (JSON con JWT cookies)
+        const data = await apiCall(url, {
+            method: method,
+            body: JSON.stringify(form_data)  // ✅ JSON invece di FormData
+        });
+        
+        return data
+    } catch (error) {
+        // alert(error.message);
+        return error
+    }
+    
+}
+
+//Aggiorna i dati utente
+async function aggiorna_dati(form_data) {
+    try {
+        const url = `/profile/data`
+        const method = 'POST';
+        
+        // 1. Salva i dati utente (JSON con JWT cookies)
+        const data = await apiCall(url, {
+            method: method,
+            body: JSON.stringify(form_data)  // ✅ JSON invece di FormData
+        });
+        
+        return data
+    } catch (error) {
+        // alert(error.message);
+        return error
+    }
+}
+
+// Esegue i controlli sul form password
+let CSFormControl_password = (function () {
+    let formElement, submitButton, validator;
+    const check_password = CSPasswordMeter('#password')
+    check_password.init();
+    return {
+        init: function () {
+            formElement = document.querySelector("#register");
+            submitButton = document.querySelector("#register_submit");
+
+            // Inizializza validazione form
+            validator = FormValidation.formValidation(formElement, {
+                fields: {
+                    actual_password: {
+                        validators: {
+                            notEmpty: {
+                                message: "La password è obbligatoria."
+                            }
+                        }
+                    },
+                    password: {
+                        validators: {
+                            notEmpty: {
+                                message: "La password è obbligatoria."
+                            },
+                            callback: {
+                                message: 'Inserici una password sicura.',
+                                callback: function (input) {
+                                    if (input.value.length === 0) {
+                                        return true
+                                    }
+                                    return check_password.getScore() >= 25
+                                }
+                            }
+                        }
+                    },
+                    confirm_password: {
+                        validators: {
+                            notEmpty: {
+                                message: 'La password di conferma è obbligatoria.'
+                            },
+                            callback: {
+                                message: 'Le due password non combaciano.',
+                                callback: function (input) {
+                                    const confirmValue = input.value;
+                                    const passwordValue = formElement.querySelector('[name="password"]').value;
+
+                                    // Mostra errore solo se l'utente ha scritto qualcosa
+                                    if (confirmValue.length === 0) {
+                                        return true; // Evita conflitto con notEmpty
+                                    }
+
+                                    return confirmValue === passwordValue;
+                                }
+                            }
+                        }
+                    },
+                },
+                plugins: {
+                    trigger: new FormValidation.plugins.Trigger(),
+                    bootstrap: new FormValidation.plugins.Bootstrap5({
+                        rowSelector: ".fv-row",
+                        eleInvalidClass: "",
+                        eleValidClass: ""
+                    })
+                }
+            });
+
+            submitButton.addEventListener("click", async function (event) {
+                event.preventDefault();
+
+                const status = await validator.validate();
+                if (status === "Valid") {
+                    submitButton.setAttribute("data-kt-indicator", "on");
+                    submitButton.disabled = true;
+
+                    const form = document.getElementById('register');
+                    const formData = new FormData(form);
+                    const data = Object.fromEntries(formData.entries());
+
+                    let response = await update_password(data);
+
+                    submitButton.setAttribute("data-kt-indicator", "off");
+                    submitButton.disabled = false;
+
+                    if (response) {
+                        Swal.fire({
+                            text: response.message,
+                            icon: response.status,
+                            buttonsStyling: false,
+                            confirmButtonText: "Ok, riprovo!",
+                            timer: 2000,
+                            timerProgressBar: true,
+                            customClass: {
+                                confirmButton: "btn btn-primary"
+                            }
+                        });
+                        if(response.status == 'success'){
+                            formElement.querySelectorAll("input, select, textarea").forEach(el => {
+                                if (el.type === "checkbox" || el.type === "radio") {
+                                    el.checked = false;
+                                } else {
+                                    el.value = "";
+                                }
+                            });
+                            modal_password.close();
+                        }
+                    }
+                }
+            });
+        }
+    };
+})();
+
+//Esegue i controlli sul form dei dati ed effettua la validazione
+let CSFormControl_user_info = (function () {
+    let formElement, submitButton, validator
+
+    return {
+        init: function () {
+            formElement = document.querySelector("#profile-form");
+            submitButton = document.querySelector("#save_form");
+
+            validator = FormValidation.formValidation(formElement, {
+                fields: {
+                    first_name: {
+                        validators: {
+                            notEmpty: {
+                                message: "Il nome è obbligatoria."
+                            }
+                        }
+                    },
+                    last_name: {
+                        validators: {
+                            notEmpty: {
+                                message: "Il cognome è obbligatoria."
+                            }
+                        }
+                    },
+                    email: {
+                        validators: {
+                            regexp: {
+                                regexp: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+                                message: "Inserisci un indirizzo mail valido"
+                            },
+                            notEmpty: {
+                                message: "L'indirizzo E-Mail è obbligatorio."
+                            }
+                        }
+                    },                       
+                },
+                plugins: {
+                    trigger: new FormValidation.plugins.Trigger(),
+                    bootstrap: new FormValidation.plugins.Bootstrap5({
+                        rowSelector: ".fv-row",
+                        eleInvalidClass: "",
+                        eleValidClass: ""
+                    })
+                }
+            });
+
+            submitButton.addEventListener("click", async function (event) {
+                event.preventDefault();
+
+                const status = await validator.validate();
+                if (status === "Valid") {
+                    submitButton.setAttribute("data-kt-indicator", "on");
+                    submitButton.disabled = true;
+
+                    const form = document.getElementById('profile-form');
+                    const formData = new FormData(form);
+                    const data = Object.fromEntries(formData.entries());
+
+                    let response = await aggiorna_dati(data);
+
+                    submitButton.setAttribute("data-kt-indicator", "off");
+                    submitButton.disabled = false;
+
+                    if (response) {
+                        Swal.fire({
+                            text: response.message,
+                            icon: response.status,
+                            buttonsStyling: false,
+                            confirmButtonText: "Ok, riprovo!",
+                            timer: 2000,
+                            timerProgressBar: true,
+                            customClass: {
+                                confirmButton: "btn btn-primary"
+                            }
+                        }).then((result) => {
+                            if(response.status == 'success'){
+                                CSTabManager.saveState();
+                                location.reload();
+                            }
+                        })
+                    }
+                }
+            });
+        }
+    };
+})();
+
+
+
+
+
+
+// let CSModalManager = (function () {
+//     let modalElement = document.querySelector('#modal_change_password');
+//     let modalInstance = null;
+//     let option = {
+//         keyboard: false,
+//         backdrop: true
+//     }
+//     return {
+//         init: function () {
+//             if (modalElement) {
+//                 modalInstance = new bootstrap.Modal(modalElement, option);
+//             }
+//         },
+//         open: function () {
+//             if (modalInstance) {
+//                 modalInstance.show();
+//             }
+//         },
+//         close: function () {
+//             if (modalInstance) {
+//                 modalInstance.hide();
+//             }
+//         },
+//         onClose: function (callback) {
+//             if (modalElement) {
+//                 modalElement.addEventListener('hidden.bs.modal', function () {
+//                     if (typeof callback === 'function') {
+//                         callback();
+//                     }
+//                 });
+//             }
+//         },
+//         onOpen: function (callback) {
+//             if (modalElement) {
+//                 modalElement.addEventListener('shown.bs.modal', function () {
+//                     if (typeof callback === 'function') {
+//                         callback();
+//                     }
+//                 });
+//             }
+//         }
+//     };
+// })();
+
+
+
+//Gestisce la memorizzazione dei TAB in cui si sta lavorando per riaprirli in caso di operazioni di aggiornamento nella pagina.
+let CSTabManager = (function () {
+    const tabSelector = '[data-bs-toggle="tab"]';
+    const tabKey = 'activeTabId';
+    const restoreFlagKey = 'shouldRestoreTab';
+
+    function storeTab(tabId) {
+        localStorage.setItem(tabKey, tabId);
+        sessionStorage.setItem(restoreFlagKey, 'true');
+    }
+
+    function shouldRestoreTab() {
+        return sessionStorage.getItem(restoreFlagKey) === 'true';
+    }
+
+    function activateStoredTab() {
+        if (!shouldRestoreTab()) return;
+
+        const tabId = localStorage.getItem(tabKey);
+        if (tabId) {
+            const trigger = document.querySelector(`${tabSelector}[href="${tabId}"]`);
+            if (trigger) {
+                new bootstrap.Tab(trigger).show();
+            }
+        }
+
+        // Reset la flag subito dopo l'utilizzo
+        sessionStorage.removeItem(restoreFlagKey);
+    }
+
+    function bindTabEvents() {
+        document.querySelectorAll(tabSelector).forEach(tab => {
+            tab.addEventListener('shown.bs.tab', function (e) {
+                // Non salvare automaticamente, a meno che non venga chiamato `saveState`
+                // Qui lasciamo vuoto apposta
+            });
+        });
+    }
+
+    return {
+        init: function () {
+            activateStoredTab();
+            bindTabEvents();
+        },
+        saveState: function () {
+            // Chiama questa funzione dopo un salvataggio
+            const activeTab = document.querySelector(`${tabSelector}.active`);
+            if (activeTab) {
+                const href = activeTab.getAttribute('href');
+                if (href) {
+                    storeTab(href);
+                }
+            }
+        },
+        reset: function () {
+            localStorage.removeItem(tabKey);
+            sessionStorage.removeItem(restoreFlagKey);
+        }
+    };
+})();
+
+//Prende il valore [data-datetime] e lo inserisce nell'oggetto con il timezone corretto
+let CSDateFormatter = (function () {
+    const selector = '[data-datetime]';
+    const timeZone = 'Europe/Rome';
+    console.log('CSDateFormatter:');
+    function formatDate(dateStr, type = 'datetime') {
+        const date = new Date(dateStr);
+        if (isNaN(date.getTime())) return null;
+
+        const optionsCommon = {
+            timeZone: timeZone,
+            hour12: false
+        };
+
+        const optionsMap = {
+            date: { day: '2-digit', month: '2-digit', year: 'numeric' },
+            time: { hour: '2-digit', minute: '2-digit' },
+            datetime: { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }
+        };
+
+        const options = { ...optionsCommon, ...optionsMap[type] || optionsMap['datetime'] };
+        return new Intl.DateTimeFormat('it-IT', options).format(date);
+    }
+
+    function render() {
+        const elements = document.querySelectorAll(selector);
+        elements.forEach(el => {
+            const rawDatetime = el.dataset.datetime;
+            const formatType = el.dataset.format || 'datetime';
+            const formatted = formatDate(rawDatetime, formatType);
+
+            console.log('Found:', rawDatetime);
+
+            if (formatted) {
+                if (formatType === 'datetime') {
+                    el.textContent = formatted.replace(',', ' alle');
+                } else {
+                    el.textContent = formatted;
+                }
+            }
+        });
+    }
+
+    return {
+        init: function () {
+            render()
+        },
+        render: render
+    };
+})();
+
+
+
+
+
+  
+
+
+
+
+
+// Inizializzazione dopo caricamento DOM
+KTUtil.onDOMContentLoaded(function () {
+    const modal_password = CSModalManager('#modal_change_password')
+    modal_password.init();
+
+    const check_password = CSPasswordMeter('#password')
+    check_password.init();
+    
+    CSFormControl_password.init();
+    CSFormControl_user_info.init();
+    CSTabManager.init();
+
+    CSDateFormatter.init();
+
+    CSContentCopier.bindLiveCopy('[name="email"]', ['#edit-username','#info_email']);
+    CSContentCopier.bindLiveCopy('#edit-phone', ['#info_phone']);
+    CSContentCopier.bindLiveCopy('#edit-first-name', ['#info_first_name']);
+    CSContentCopier.bindLiveCopy('#edit-last-name', ['#info_last_name']);
+
+    modal_password.onClose(function () {
+        formElement = document.querySelector("#register");
+        formElement.reset();
+        check_password.reset();
+        passwordMeter.reset();
+        formElement.querySelectorAll("input, select, textarea").forEach(el => {
+            if (el.type === "checkbox" || el.type === "radio") {
+                el.checked = false;
+            } else {
+                el.value = "";
+            }
+        });
+    });
+
+    document.querySelector("#password_modal_button").onclick = function(event) {
+        modal_password.open()
+    }
+    document.querySelector("#export_button").onclick = function(event) {
+        exportUserData()
+    }
+});
+
+ 
+</script>
+{% endblock scripts %}

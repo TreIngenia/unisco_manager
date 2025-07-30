@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<!--
+Author: Keenthemes
+Product Name: MetronicProduct Version: 8.3.0
+Purchase: https://themeforest.net/item/metronic-responsive-admin-dashboard-template/4021469?irgwc=1&clickid=Qb1XFm3dIxyIUCez3ZXf1X0mUks0kb3cC2sEUQ0&iradid=275988&irpid=1330466&iradtype=ONLINE_TRACKING_LINK&irmptype=mediapartner&mp_value1=&utm_campaign=af_impact_radius_1330466&utm_medium=affiliate&utm_source=impact_radius
+Website: http://www.keenthemes.com
+Contact: support@keenthemes.com
+Follow: www.twitter.com/keenthemes
+Dribbble: www.dribbble.com/keenthemes
+Like: www.facebook.com/keenthemes
+License: For each use you must have a valid license purchased only from above link in order to legally use the theme for your project.
+-->
+<html lang="IT" >
+    <head><base href="{{ url_for('static', filename='') }}">
+        <title>Unisco Manager | {% block title %}{% endblock %}</title>
+        <meta charset="utf-8"/>
+        <meta name="description" content="
+        "/>
+        <meta name="keywords" content="
+        "/>
+        <meta name="viewport" content="width=device-width, initial-scale=1"/>
+        <meta property="og:locale" content="it_IT" />
+        <meta property="og:type" content="application" />
+        <meta property="og:title" content="Unisco Manager" />
+        <meta property="og:url" content="https://www.unisco.pro"/>
+        <meta property="og:site_name" content="Unisco Manager" />
+        <link rel="canonical" href="http://unisco.pro"/>
+        <link rel="shortcut icon" href="assets/media/logos/favicon.ico"/>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inter:300,400,500,600,700"/>        
+        <link href="assets/plugins/custom/fullcalendar/fullcalendar.bundle.css" rel="stylesheet" type="text/css"/>
+        <link href="assets/plugins/custom/datatables/datatables.bundle.css" rel="stylesheet" type="text/css"/>
+        <link href="assets/plugins/global/plugins.bundle.css" rel="stylesheet" type="text/css"/>
+        <link href="assets/css/style.bundle.css" rel="stylesheet" type="text/css"/>
+		<link href="assets/treingenia/css/style.css" rel="stylesheet" type="text/css"/>
+        <script>
+            // Frame-busting to prevent site from being loaded within a frame without permission (click-jacking)
+            if (window.top != window.self) {
+                window.top.location.replace(window.self.location.href);
+            }
+        </script>
+    </head>
+    <body id="kt_body" class="app-blank bgi-size-cover bgi-attachment-fixed bgi-position-center"></body>
+    <!-- <body  id="kt_app_body" data-kt-app-page-loading-enabled="true" data-kt-app-page-loading="on" data-kt-app-layout="dark-sidebar" data-kt-app-header-fixed="true" data-kt-app-sidebar-enabled="true" data-kt-app-sidebar-fixed="true" data-kt-app-sidebar-hoverable="true" data-kt-app-sidebar-push-header="true" data-kt-app-sidebar-push-toolbar="true" data-kt-app-sidebar-push-footer="true" data-kt-app-footer-fixed="true" data-kt-app-toolbar-fixed="true" class="app-default" > -->
+        {% include 'partials/theme-mode/_init.html' %}
+        {% include 'layout/partials/_page-loader.html' %}
+        <div class="d-flex flex-column flex-root" id="kt_app_root">
+			<style>body { background-image: url('assets/treingenia/images/background/genesyshub_background_2.jpg'); } [data-bs-theme="dark"] body { background-image: url('assets/treingenia/images/background/genesyshub_background_2.jpg'); }</style>
+			<div class="d-flex flex-column flex-lg-row flex-column-fluid">
+				<div class="d-flex flex-lg-row-fluid">
+					<div class="d-flex flex-column flex-center pb-0 pb-lg-10 p-10 w-100">
+						<img class="theme-light-show mx-auto mw-100 w-150px w-lg-500px mb-10 mb-lg-20" src="assets/media/logos/unisco_orizzontale.svg" alt="" />
+						<img class="theme-dark-show mx-auto mw-100 w-150px w-lg-500px mb-10 mb-lg-20" src="assets/media/logos/unisco_orizzontale.svg" alt="" />
+						<h1 class="text-gray-800 fs-2qx fw-bold text-center mb-7">Fast, Efficient and Productive</h1>
+						<div class="text-gray-600 fs-base text-center fw-semibold">In this kind of post, 
+						<a href="#" class="opacity-75-hover text-primary me-1">the blogger</a>introduces a person they’ve interviewed 
+						<br />and provides some background information about 
+						<a href="#" class="opacity-75-hover text-primary me-1">the interviewee</a>and their 
+						<br />work following this is a transcript of the interview.</div>
+					</div>
+				</div>
+				<div class="d-flex flex-column-fluid flex-lg-row-auto justify-content-center justify-content-lg-end p-12">
+					<div class="bg-body d-flex flex-column flex-center rounded-4 w-md-600px p-10">
+						<div class="d-flex flex-center flex-column align-items-stretch h-lg-100 w-md-400px">
+							<div class="d-flex flex-center flex-column flex-column-fluid pb-15 pb-lg-20">
+                                {% block content %}{% endblock %}
+                            </div>
+							<div class="d-flex flex-stack-DISABLED flex-center">
+								<!-- <div class="me-10">
+									<button class="btn btn-flex btn-link btn-color-gray-700 btn-active-color-primary rotate fs-base" data-kt-menu-trigger="click" data-kt-menu-placement="bottom-start" data-kt-menu-offset="0px, 0px">
+										<img data-kt-element="current-lang-flag" class="w-20px h-20px rounded me-3" src="assets/media/flags/united-states.svg" alt="" />
+										<span data-kt-element="current-lang-name" class="me-1">English</span>
+										<i class="ki-duotone ki-down fs-5 text-muted rotate-180 m-0"></i>
+									</button>
+									<div class="menu menu-sub menu-sub-dropdown menu-column menu-rounded menu-gray-800 menu-state-bg-light-primary fw-semibold w-200px py-4 fs-7" data-kt-menu="true" id="kt_auth_lang_menu">
+										<div class="menu-item px-3">
+											<a href="#" class="menu-link d-flex px-5" data-kt-lang="English">
+												<span class="symbol symbol-20px me-4">
+													<img data-kt-element="lang-flag" class="rounded-1" src="assets/media/flags/united-states.svg" alt="" />
+												</span>
+												<span data-kt-element="lang-name">English</span>
+											</a>
+										</div>
+										<div class="menu-item px-3">
+											<a href="#" class="menu-link d-flex px-5" data-kt-lang="Spanish">
+												<span class="symbol symbol-20px me-4">
+													<img data-kt-element="lang-flag" class="rounded-1" src="assets/media/flags/spain.svg" alt="" />
+												</span>
+												<span data-kt-element="lang-name">Spanish</span>
+											</a>
+										</div>
+										<div class="menu-item px-3">
+											<a href="#" class="menu-link d-flex px-5" data-kt-lang="German">
+												<span class="symbol symbol-20px me-4">
+													<img data-kt-element="lang-flag" class="rounded-1" src="assets/media/flags/germany.svg" alt="" />
+												</span>
+												<span data-kt-element="lang-name">German</span>
+											</a>
+										</div>
+										<div class="menu-item px-3">
+											<a href="#" class="menu-link d-flex px-5" data-kt-lang="Japanese">
+												<span class="symbol symbol-20px me-4">
+													<img data-kt-element="lang-flag" class="rounded-1" src="assets/media/flags/japan.svg" alt="" />
+												</span>
+												<span data-kt-element="lang-name">Japanese</span>
+											</a>
+										</div>
+										<div class="menu-item px-3">
+											<a href="#" class="menu-link d-flex px-5" data-kt-lang="French">
+												<span class="symbol symbol-20px me-4">
+													<img data-kt-element="lang-flag" class="rounded-1" src="assets/media/flags/france.svg" alt="" />
+												</span>
+												<span data-kt-element="lang-name">French</span>
+											</a>
+										</div>
+									</div>
+								</div> -->
+								<div class="d-flex fw-semibold text-primary fs-base gap-5">
+									<a href="pages/team.html" target="_blank">Terms</a>
+									<a href="pages/pricing/column.html" target="_blank">Plans</a>
+									<a href="pages/contact.html" target="_blank">Contact Us</a>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+        <!-- <script>
+            var hostUrl = "assets/"; 
+        </script> -->
+        <script src="assets/plugins/global/plugins.bundle.js"></script>
+        <script src="assets/js/scripts.bundle.js"></script>
+        <script src="assets/treingenia/js/scripts.js"></script>
+        {%block scripts %}{% endblock %}        
+        <script>
+            /** 
+             *  Configurazione di Toastr per le notifiche 
+             * */
+            toastr.options = {
+                "closeButton": false,
+                "debug": false,
+                "newestOnTop": false,
+                "progressBar": true,
+                "positionClass": "toastr-top-right",
+                "preventDuplicates": false,
+                "onclick": null,
+                "showDuration": "300",
+                "hideDuration": "1000",
+                "timeOut": "5000",
+                "extendedTimeOut": "1000",
+                "showEasing": "swing",
+                "hideEasing": "linear",
+                "showMethod": "fadeIn",
+                "hideMethod": "fadeOut"
+            };
+            function formatEuro(value) {
+                return value.toFixed(4).replace('.', ',');
+            }
+            function applyMarkup(price, markupPercent) {
+                if (isNaN(price) || isNaN(markupPercent)) {
+                    throw new Error("Prezzo o markup non valido");
+                }
+                return price * (1 + markupPercent / 100);
+            }
+            function reinitTooltips(scope = document) {
+                const tooltipTriggerList = [].slice.call(scope.querySelectorAll('[data-bs-toggle="tooltip"]'));
+                tooltipTriggerList.map(el => new bootstrap.Tooltip(el));
+            }
+        </script>
+    </body>
+</html>
+{% if current_user %}
+{% include 'partials/auth_check.html' %}
+{% endif %}

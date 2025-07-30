@@ -1,0 +1,90 @@
+{% if current_user %}
+<div class="menu menu-sub menu-sub-dropdown menu-column menu-rounded menu-gray-800 menu-state-bg menu-state-color fw-semibold py-4 fs-6 w-275px" data-kt-menu="true">
+    <div class="menu-item px-3">
+        <div class="menu-content d-flex align-items-center px-3">
+            <div class="symbol symbol-50px me-5">
+                <img src="{{ current_user.avatar_url }}" alt="{{ current_user.full_name }}">
+            </div>
+            <div class="d-flex flex-column">
+                <div class="fw-bold d-flex align-items-center fs-5">
+                    {% if current_user.full_name %}
+                        {{ current_user.full_name }}   
+                    {%else%}
+                        {{ current_user.username }} 
+                    {%endif%}
+                    <span class="badge badge-light-success fw-bold fs-8 px-2 py-1 ms-2">Pro</span>
+                </div>
+                <a href="#" class="fw-semibold text-muted text-hover-primary fs-7">
+                    {{ current_user.username }}               
+                </a>
+            </div>
+        </div>
+    </div>
+    <div class="separator my-2"></div>
+    {% for item in get_children_menu(['web.profile']) %}
+        {% if item.children %}
+            <div class="menu-item px-5" data-kt-menu-trigger="{default: 'click', lg: 'hover'}" data-kt-menu-placement="left-start" data-kt-menu-offset="-15px, 0">
+                <a href="#" class="menu-link px-5">
+                    <span class="menu-title">{{ item.title }}</span>
+                    <span class="menu-arrow"></span>
+                </a>
+                <div class="menu-sub menu-sub-dropdown w-175px py-4">
+                    {% for child in item.children %}
+                        <div class="menu-item px-3">
+                            <a href="{{ url_for(child.endpoint) }}" class="menu-link px-5">
+                                {{ child.title }}
+                                <span class="menu-badge">
+                                    <span class="badge badge-light-danger badge-circle fw-bold fs-7">3</span>
+                                </span> 
+                            </a>
+                            
+                        </div>
+                    {% endfor %}
+                    <!-- <div class="separator my-2"></div>
+                    <div class="menu-item px-3">
+                        <div class="menu-content px-3">
+                            <label class="form-check form-switch form-check-custom form-check-solid">
+                                <input class="form-check-input w-30px h-20px" type="checkbox" value="1" checked="checked" name="notifications"/>
+                                <span class="form-check-label text-muted fs-7">
+                                    Notifications
+                                </span>
+                            </label>
+                        </div>
+                    </div> -->
+                </div>
+            </div>
+        {%else%}
+            <div class="menu-item px-5">
+                <a href="{{ url_for(item.endpoint) }}" class="menu-link px-5">
+                    {{ item.title }}
+                    <!-- <span class="menu-badge">
+                        <span class="badge badge-light-danger badge-circle fw-bold fs-7">3</span>
+                    </span> -->
+                </a>
+                
+            </div>
+        {%endif%}
+    {% endfor %}
+    
+    
+    
+    <div class="separator my-2"></div>
+        <div class="menu-item px-5" data-kt-menu-trigger="{default: 'click', lg: 'hover'}" data-kt-menu-placement="left-start" data-kt-menu-offset="-15px, 0">
+            <a href="#" class="menu-link px-5">
+                <span class="menu-title position-relative">
+                    Mode
+                    <span class="ms-5 position-absolute translate-middle-y top-50 end-0">
+                        <i class="ki-outline ki-night-day theme-light-show fs-2"></i>                        <i class="ki-outline ki-moon theme-dark-show fs-2"></i>                    </span>
+                </span>
+            </a>
+            {% include 'partials/theme-mode/__menu.html' %}
+        </div>
+        <!-- {% include 'partials/language_flag.html' %} -->
+
+    <div class="menu-item px-5">
+        <a href="{{ url_for('web.logout') }}" class="menu-link px-5">
+            Logout
+        </a>
+    </div>
+</div>
+{% endif %}

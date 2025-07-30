@@ -1,0 +1,33 @@
+{% extends "base_error.html" %}
+
+{% block title %}{{ msg.title }}{% endblock %}
+
+{% block content %}
+    <div class="card card-flush w-lg-650px py-5 shadow-sm ">
+        <div class="card-body py-15 py-lg-20 ">
+            <div class="mb-10">
+                <img src="assets/media/logos/unisco_orizzontale.svg" class="w-lg-400px mw-100 mh-300px theme-light-show" alt="" />
+                <img src="assets/media/logos/unisco_orizzontale.svg" class="w-lg-400px mw-100 mh-300px theme-dark-show" alt="" />
+            </div>
+            {% set icons = {
+                'info': '<i class="fas fa-circle-info"></i>',
+                'success': '<i class="fas text-success fa-circle-check"></i>',
+                'warning': '<i class="fas text-warning fa-circle-exclamation"></i>',
+                'error': '<i class="fas text-danger fa-circle-xmark"></i>'
+            } %}
+            
+            <h1 class="fs-6hx">{{ icons.get(msg.status, '') | safe }} </h1>
+            <h1 class="fw-bolder fs-2hx text-gray-900 mb-4 rem_font">{{ msg.title }}</h1>
+            <div class="fw-semibold fs-6 text-gray-500 mb-7">{{ msg.message }}</div>
+            <div class="mt-15">
+                <a href="{{ url_for('web.index') }}" class="btn btn-sm btn-primary">Torna alla home</a>
+            </div>
+            <div class="mt-10">
+                Se il problema persiste, <a href="mailto:support@example.com">contattaci</a>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{%block scripts %}
+{% endblock %}       

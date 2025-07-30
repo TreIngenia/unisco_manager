@@ -1,0 +1,331 @@
+{
+    "data": [
+        {
+            "codice_contratto": 5,
+            "cliente_finale": "STUDIO ODONTOIATRICO GISMONDI - ROMA",
+            "durata_secondi_totale": 6333,
+            "costo_euro_totale": 1.113,
+            "costo_euro_totale_with_markup": 3.524,
+            "numero_chiamate": 72,
+            "tipi_chiamata": {
+                "INTERURBANA": {
+                    "durata_secondi_totale": 2802,
+                    "costo_euro_totale": 0.221,
+                    "costo_euro_totale_with_markup": 0.7,
+                    "numero_chiamate": 18
+                },
+                "CELLULARE": {
+                    "durata_secondi_totale": 3531,
+                    "costo_euro_totale": 0.892,
+                    "costo_euro_totale_with_markup": 2.824,
+                    "numero_chiamate": 54
+                }
+            }
+        },
+        {
+            "codice_contratto": 6,
+            "cliente_finale": "FASDA - ROMA",
+            "durata_secondi_totale": 6894,
+            "costo_euro_totale": 0.0,
+            "costo_euro_totale_with_markup": 0.0,
+            "numero_chiamate": 37,
+            "tipi_chiamata": {
+                "INTERURBANA": {
+                    "durata_secondi_totale": 2512,
+                    "costo_euro_totale": 0.0,
+                    "costo_euro_totale_with_markup": 0.0,
+                    "numero_chiamate": 17
+                },
+                "CELLULARE": {
+                    "durata_secondi_totale": 4382,
+                    "costo_euro_totale": 0.0,
+                    "costo_euro_totale_with_markup": 0.0,
+                    "numero_chiamate": 20
+                }
+            }
+        },
+        {
+            "codice_contratto": 7,
+            "cliente_finale": "CMPH - ROMA",
+            "durata_secondi_totale": 17671,
+            "costo_euro_totale": 0.0,
+            "costo_euro_totale_with_markup": 0.0,
+            "numero_chiamate": 101,
+            "tipi_chiamata": {
+                "CELLULARE": {
+                    "durata_secondi_totale": 15629,
+                    "costo_euro_totale": 0.0,
+                    "costo_euro_totale_with_markup": 0.0,
+                    "numero_chiamate": 91
+                },
+                "INTERURBANA": {
+                    "durata_secondi_totale": 2042,
+                    "costo_euro_totale": 0.0,
+                    "costo_euro_totale_with_markup": 0.0,
+                    "numero_chiamate": 10
+                }
+            }
+        },
+        {
+            "codice_contratto": 8,
+            "cliente_finale": "STUDIO FV - ROMA",
+            "durata_secondi_totale": 11936,
+            "costo_euro_totale": 0.904,
+            "costo_euro_totale_with_markup": 2.88,
+            "numero_chiamate": 48,
+            "tipi_chiamata": {
+                "INTERURBANA": {
+                    "durata_secondi_totale": 7237,
+                    "costo_euro_totale": 0.568,
+                    "costo_euro_totale_with_markup": 1.809,
+                    "numero_chiamate": 29
+                },
+                "CELLULARE": {
+                    "durata_secondi_totale": 1338,
+                    "costo_euro_totale": 0.336,
+                    "costo_euro_totale_with_markup": 1.07,
+                    "numero_chiamate": 11
+                },
+                "N.D.": {
+                    "durata_secondi_totale": 3361,
+                    "costo_euro_totale": 0.0,
+                    "costo_euro_totale_with_markup": 0.0,
+                    "numero_chiamate": 8
+                }
+            }
+        },
+        {
+            "codice_contratto": 12,
+            "cliente_finale": "CONGREGAZIONE SUORE DELL'IMMACOLATA CONCEZIONE DI CASTRES - ROMA",
+            "durata_secondi_totale": 8825,
+            "costo_euro_totale": 0.0,
+            "costo_euro_totale_with_markup": 0.0,
+            "numero_chiamate": 66,
+            "tipi_chiamata": {
+                "N.D.": {
+                    "durata_secondi_totale": 2166,
+                    "costo_euro_totale": 0.0,
+                    "costo_euro_totale_with_markup": 0.0,
+                    "numero_chiamate": 3
+                },
+                "CELLULARE": {
+                    "durata_secondi_totale": 4525,
+                    "costo_euro_totale": 0.0,
+                    "costo_euro_totale_with_markup": 0.0,
+                    "numero_chiamate": 48
+                },
+                "INTERURBANA": {
+                    "durata_secondi_totale": 2134,
+                    "costo_euro_totale": 0.0,
+                    "costo_euro_totale_with_markup": 0.0,
+                    "numero_chiamate": 15
+                }
+            }
+        },
+        {
+            "codice_contratto": 14,
+            "cliente_finale": "A.P.REFRIGEERAZIONE SRL - ROMA",
+            "durata_secondi_totale": 7582,
+            "costo_euro_totale": 0.0,
+            "costo_euro_totale_with_markup": 0.0,
+            "numero_chiamate": 39,
+            "tipi_chiamata": {
+                "CELLULARE": {
+                    "durata_secondi_totale": 1394,
+                    "costo_euro_totale": 0.0,
+                    "costo_euro_totale_with_markup": 0.0,
+                    "numero_chiamate": 17
+                },
+                "INTERURBANA": {
+                    "durata_secondi_totale": 5457,
+                    "costo_euro_totale": 0.0,
+                    "costo_euro_totale_with_markup": 0.0,
+                    "numero_chiamate": 21
+                },
+                "N.D.": {
+                    "durata_secondi_totale": 731,
+                    "costo_euro_totale": 0.0,
+                    "costo_euro_totale_with_markup": 0.0,
+                    "numero_chiamate": 1
+                }
+            }
+        },
+        {
+            "codice_contratto": 15,
+            "cliente_finale": "PERRINA CARLA - ROMA",
+            "durata_secondi_totale": 7417,
+            "costo_euro_totale": 1.402,
+            "costo_euro_totale_with_markup": 4.467,
+            "numero_chiamate": 35,
+            "tipi_chiamata": {
+                "INTERURBANA": {
+                    "durata_secondi_totale": 2238,
+                    "costo_euro_totale": 0.177,
+                    "costo_euro_totale_with_markup": 0.559,
+                    "numero_chiamate": 17
+                },
+                "CELLULARE": {
+                    "durata_secondi_totale": 4885,
+                    "costo_euro_totale": 1.225,
+                    "costo_euro_totale_with_markup": 3.908,
+                    "numero_chiamate": 15
+                },
+                "N.D.": {
+                    "durata_secondi_totale": 294,
+                    "costo_euro_totale": 0.0,
+                    "costo_euro_totale_with_markup": 0.0,
+                    "numero_chiamate": 3
+                }
+            }
+        },
+        {
+            "codice_contratto": 16,
+            "cliente_finale": "BLACKSTONE SRL - ROMA",
+            "durata_secondi_totale": 3699,
+            "costo_euro_totale": 0.0,
+            "costo_euro_totale_with_markup": 0.0,
+            "numero_chiamate": 34,
+            "tipi_chiamata": {
+                "INTERURBANA": {
+                    "durata_secondi_totale": 3019,
+                    "costo_euro_totale": 0.0,
+                    "costo_euro_totale_with_markup": 0.0,
+                    "numero_chiamate": 28
+                },
+                "CELLULARE": {
+                    "durata_secondi_totale": 680,
+                    "costo_euro_totale": 0.0,
+                    "costo_euro_totale_with_markup": 0.0,
+                    "numero_chiamate": 6
+                }
+            }
+        },
+        {
+            "codice_contratto": 22,
+            "cliente_finale": "MONDO DEGLI INFISSI SRL - ROMA",
+            "durata_secondi_totale": 17968,
+            "costo_euro_totale": 0.0,
+            "costo_euro_totale_with_markup": 0.0,
+            "numero_chiamate": 117,
+            "tipi_chiamata": {
+                "CELLULARE": {
+                    "durata_secondi_totale": 9974,
+                    "costo_euro_totale": 0.0,
+                    "costo_euro_totale_with_markup": 0.0,
+                    "numero_chiamate": 78
+                },
+                "INTERURBANA": {
+                    "durata_secondi_totale": 7994,
+                    "costo_euro_totale": 0.0,
+                    "costo_euro_totale_with_markup": 0.0,
+                    "numero_chiamate": 39
+                }
+            }
+        },
+        {
+            "codice_contratto": 17,
+            "cliente_finale": "FRAMAR HEMOLOGIX S.R.L. - FORMELLO",
+            "durata_secondi_totale": 3062,
+            "costo_euro_totale": 0.308,
+            "costo_euro_totale_with_markup": 0.968,
+            "numero_chiamate": 21,
+            "tipi_chiamata": {
+                "INTERURBANA": {
+                    "durata_secondi_totale": 2693,
+                    "costo_euro_totale": 0.214,
+                    "costo_euro_totale_with_markup": 0.673,
+                    "numero_chiamate": 14
+                },
+                "CELLULARE": {
+                    "durata_secondi_totale": 369,
+                    "costo_euro_totale": 0.094,
+                    "costo_euro_totale_with_markup": 0.295,
+                    "numero_chiamate": 7
+                }
+            }
+        },
+        {
+            "codice_contratto": 4,
+            "cliente_finale": "AMEDEO POMPONIO - ROMA",
+            "durata_secondi_totale": 503,
+            "costo_euro_totale": 0.107,
+            "costo_euro_totale_with_markup": 0.342,
+            "numero_chiamate": 4,
+            "tipi_chiamata": {
+                "INTERURBANA": {
+                    "durata_secondi_totale": 107,
+                    "costo_euro_totale": 0.008,
+                    "costo_euro_totale_with_markup": 0.025,
+                    "numero_chiamate": 2
+                },
+                "CELLULARE": {
+                    "durata_secondi_totale": 396,
+                    "costo_euro_totale": 0.099,
+                    "costo_euro_totale_with_markup": 0.317,
+                    "numero_chiamate": 2
+                }
+            }
+        },
+        {
+            "codice_contratto": 13,
+            "cliente_finale": "MESSERE FABIO - ROMA",
+            "durata_secondi_totale": 114,
+            "costo_euro_totale": 0.008,
+            "costo_euro_totale_with_markup": 0.025,
+            "numero_chiamate": 9,
+            "tipi_chiamata": {
+                "INTERURBANA": {
+                    "durata_secondi_totale": 114,
+                    "costo_euro_totale": 0.008,
+                    "costo_euro_totale_with_markup": 0.025,
+                    "numero_chiamate": 9
+                }
+            }
+        },
+        {
+            "codice_contratto": 9,
+            "cliente_finale": "TREINGENIA SRL - ROMA",
+            "durata_secondi_totale": 524,
+            "costo_euro_totale": 0.0,
+            "costo_euro_totale_with_markup": 0.0,
+            "numero_chiamate": 1,
+            "tipi_chiamata": {
+                "INTERURBANA": {
+                    "durata_secondi_totale": 524,
+                    "costo_euro_totale": 0.0,
+                    "costo_euro_totale_with_markup": 0.0,
+                    "numero_chiamate": 1
+                }
+            }
+        }
+    ],
+    "statistics": {
+        "total_input_records": 584,
+        "total_contracts": 13,
+        "call_types_found": [
+            "CELLULARE",
+            "INTERURBANA",
+            "N.D."
+        ],
+        "total_duration": 92528,
+        "total_cost": 3.842,
+        "call_type_statistics": {
+            "durations_by_type": {
+                "INTERURBANA": 38873,
+                "CELLULARE": 47103,
+                "N.D.": 6552
+            },
+            "costs_by_type": {
+                "INTERURBANA": 1.196,
+                "CELLULARE": 2.646,
+                "N.D.": 0.0
+            },
+            "costs_by_type_with_markup": {
+                "INTERURBANA": 3.79,
+                "CELLULARE": 8.41,
+                "N.D.": 0.0
+            }
+        },
+        "total_cost_with_markup": 12.21
+    }
+}

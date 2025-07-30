@@ -1,0 +1,2294 @@
+{% extends 'base_secure.html' %}
+
+{% block title %}
+{% endblock %}
+
+{#{% block toolbar %}
+<div class="toolbar-info">
+    <span>Totale utenti: <strong id="total-users">{{ users.total if users else 0 }}</strong></span>
+    <span>Utenti attivi: <strong id="active-users">{{ stats.active_users if stats else 0 }}</strong></span>
+    <span>Ultimo aggiornamento: <strong id="last-updated">{{ datetime.now().strftime('%d/%m/%Y %H:%M') if datetime else 'N/A' }}</strong></span>
+</div>
+<div class="toolbar-search">
+    <input type="text" id="search-users" placeholder="Cerca utenti..." value="{{ current_filters.search if current_filters else '' }}">
+</div>
+<div class="toolbar-actions">
+    <button id="add-user-btn" type="button" onclick="showAddUserModal()">
+        <i class="fa-solid fa-plus"></i>Aggiungi Utente
+    </button>
+    <button id="export-btn" type="button" onclick="exportUsers()">
+        <i class="fa-solid fa-file-export"></i>Esporta
+    </button>
+    <button id="reload-btn" type="button" onclick="reloadUsers()">
+        <i class="fa-solid fa-arrows-rotate"></i>Ricarica
+    </button>
+</div>
+{% endblock %}#}
+
+{% block content %}
+<div id="kt_app_content" class="app-content flex-column-fluid">
+    <div id="kt_app_content_container" class="app-container container-fluid">
+        <div id="user_list" class="card shadow-sm mb-10">
+            <!-- <div class="card-header">
+                <h3 class="card-title">Title</h3>
+                <div class="card-toolbar">
+                    <button type="button" class="btn btn-sm btn-light">
+                        Action
+                    </button>
+                </div>
+            </div> -->
+            <div class="card-body">
+                <div class="d-flex flex-stack mb-2">
+                    <!--begin::Search-->
+                    <div class="d-flex align-items-center position-relative my-1">
+                        <i class="ki-duotone ki-magnifier fs-1 position-absolute ms-6"><span class="path1"></span><span class="path2"></span></i>
+                        <input type="text" data-kt-docs-table-filter="search" class="form-control form-control-sm form-control-solid w-250px ps-15" placeholder="Search Customers"/>
+                    </div>
+                    <!--end::Search-->
+
+                    
+                    <div id="toolbar_edit" class="d-flex justify-content-end" data-kt-docs-table-toolbar="base">
+                        <button type="button" cs-action-toggle="reload_tables" class="btn btn-icon btn-sm btn-primary me-2" data-bs-toggle="tooltip" data-bs-dismiss="click" title="Ricarica tabella">
+                            <i class="fa-solid fa-rotate"></i>
+                        </button>
+                        <button type="button" class="btn btn-sm btn-light-primary text-uppercase me-2" data-kt-menu-trigger="click" data-kt-menu-placement="bottom-start" data-kt-menu-offset="0,5">
+                            <i class="fa-solid fa-filter"></i> Filtri
+                            <i class="ki-duotone ki-down fs-3 rotate-180 ms-3 me-0"></i>
+                        </button>
+
+                        <div class="menu menu-sub menu-sub-dropdown w-250px w-md-300px" data-kt-menu="true" id="kt_menu_select2">
+                            <form id="table_filter">
+                                <div class="px-7 py-5">
+                                    <div class="fs-5 text-gray-900 fw-bold">Opzione filtri</div>
+                                </div>
+                                <div class="separator border-gray-200"></div>
+                                <div class="px-7 py-5">
+                                    <div class="mb-10">
+                                        <label class="form-label fw-semibold">Ruolo:</label>
+                                        <div>
+                                            <select id="role_select" data-dropdown-parent="#kt_menu_select2" class="form-select form-select-solid" data-control="select2" data-close-on-select="false" data-placeholder="Seleziona ruolo" data-allow-clear="false" multiple="multiple">
+                                            <!-- <select class="form-select form-select-solid" multiple="multiple" data-control="select2" data-close-on-select="false" data-placeholder="Seleziona ruolo"  data-allow-clear="true"> -->
+                                                <option value="admin">Amministratore</option>
+                                                <option value="user">Utente</option>
+                                                <option value="moderator">Moderatore</option>
+                                                <option value="guest">Ospite</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="mb-10">
+                                        <label class="form-label fw-semibold">Stato:</label>
+                                        <div class="d-line gy-5">
+                                            <label class="form-check form-check-sm form-check-custom form-check-solid me-5 mb-5">
+                                                <input id="user_status" class="form-check-input" type="checkbox" value="true" checked="checked"/>
+                                                <span class="form-check-label">Attivo</span>
+                                            </label>
+
+                                            <label class="form-check form-check-sm form-check-custom form-check-solid">
+                                                <input id="email_status" class="form-check-input" type="checkbox" value="true" checked="checked"/>
+                                                <span class="form-check-label">E-Mail Confermata</span>
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <!-- <div class="mb-10">
+                                        <label class="form-label fw-semibold">Notifications:</label>
+
+                                        <div class="form-check form-switch form-switch-sm form-check-custom form-check-solid">
+                                            <input class="form-check-input" type="checkbox" value="" name="notifications" checked />
+                                            <label class="form-check-label">
+                                                Enabled
+                                            </label>
+                                        </div>
+                                    </div> -->
+
+                                    <div class="d-flex justify-content-end">
+                                        <button cs-action-toggle="reset_filter" type="reset" class="btn btn-sm btn-light btn-active-light-primary me-2" data-kt-menu-dismiss="false">Reseta</button>
+                                        <button type="reset" class="btn btn-sm btn-primary"  data-kt-menu-dismiss="true">Chiudi</button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                        <button type="button" cs-action-toggle="add-user" class="btn btn-sm btn-primary text-uppercase" #data-bs-toggle="tooltip" #data-bs-dismiss="click" #title="Coming Soon">
+                            <i class="fa-solid fa-plus"></i>
+                            Aggiungi
+                        </button>
+                        
+                    </div>
+
+                    <div id="toolbar_delete" class="d-flex justify-content-end d-none align-middle" data-kt-docs-table-toolbar="base">
+                        <div>Voci selezionate <span id="row_checked_label" class="ms-2 m-5 fs-5"></span>
+                            <button type="button" class="btn btn-sm btn-danger" data-bs-toggle="tooltip" data-bs-dismiss="click" title="Elimina i record selezionati">
+                                <i class="ki-duotone ki-plus fs-2"></i>
+                                Elimina
+                            </button>
+                        </div>
+                    </div>
+                    <!--end::Toolbar-->
+
+                    <!--begin::Group actions-->
+                    <div class="d-flex justify-content-end align-items-center d-none" data-kt-docs-table-toolbar="selected">
+                        <div class="fw-bold me-5">
+                            <span class="me-2" data-kt-docs-table-select="selected_count"></span> Selected
+                        </div>
+
+                        <button type="button" class="btn btn-danger" data-bs-toggle="tooltip" data-bs-dismiss="click" title="Coming Soon">
+                            Selection Action
+                        </button>
+                    </div>
+                    <!--end::Group actions-->
+                </div>
+                <div class="table-responsive">
+                    <table id="users_tables" class="table-responsive table table-row-dashed table-row-gray-300 #table-row-bordered #table-rounded  #border gy-5 gs-5 align-middle table-hover #gy-5 #gs-7">
+                            <thead><tr></tr></thead>
+                            <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+            <!-- <div class="card-footer">
+                Footer
+            </div> -->
+        </div>
+
+<!---------------------- EDIT ------------------------------------------------------------------------------------------>
+
+
+        <div id="user_edit" class="row d-none">
+            <div class="col-3">
+                <div class="card shadow-sm h-100">
+                    <!-- <div class="card-header">
+                        <h3 class="card-title">Modifica profilo</h3>
+                        <div class="card-toolbar">
+                            <button type="button" class="btn btn-sm btn-light">
+                                Action
+                            </button>
+                        </div>
+                    </div> -->
+                    <div class="card-body">
+                        <div class="card-body py-3 ">
+                            <div class="d-flex flex-column align-items-center mt-5 mb-9 px-0 ">
+                                <div id="avatar_image" class="image-input image-input-empty" #data-kt-image-input="true">
+                                    <div class="image-input-wrapper w-125px h-125px image-input-placeholder"></div>
+                                    <label class="btn btn-icon btn-circle btn-color-muted btn-active-color-primary w-25px h-25px bg-body shadow"
+                                        data-kt-image-input-action="change"
+                                        data-bs-toggle="tooltip"
+                                        data-bs-dismiss="click"
+                                        title="Cambia immagine">
+                                        <i class="ki-duotone ki-pencil fs-6"><span class="path1"></span><span class="path2"></span></i>
+                                        <input type="file" name="avatar" accept=".png, .jpg, .jpeg" />
+                                        <input type="hidden" name="avatar_remove" />
+                                    </label>
+
+                                    <span class="btn btn-icon btn-circle btn-color-muted btn-active-color-primary w-25px h-25px bg-body shadow"
+                                    data-kt-image-input-action="cancel"
+                                    data-bs-toggle="tooltip"
+                                    data-bs-dismiss="click"
+                                    title="Cancella immagine">
+                                        <i class="ki-outline ki-cross fs-3"></i>
+                                    </span>
+
+                                    <span class="btn btn-icon btn-circle btn-color-muted btn-active-color-primary w-25px h-25px bg-body shadow"
+                                    data-kt-image-input-action="remove"
+                                    data-bs-toggle="tooltip"
+                                    data-bs-dismiss="click"
+                                    title="Rimuovi immagine">
+                                        <i class="ki-outline ki-cross fs-3"></i>
+                                    </span>
+                                </div>
+                                
+                                <a rif="name_surname" href="#" class="d-flex text-gray-900 text-hover-primary fs-2 fw-bold me-1 mt-4">Claudio Gregori</a>
+                                <span rif="role" class="badge badge-light-primary fw-bold fs-8 px-3 py-1 text-uppercase">Utente</span>
+
+                                <div class="d-flex flex-column fw-semibold fs-6 mt-8 mb-4 align-items-center text-gray-600">
+                                    <a rif="company" href="company?manage_company=profile&amp;uid=IvJ5CHrEyT65493c22a4a3d8.41685364" class="d-flex align-items-center text-gray-600 text-hover-primary me-5 mb-2">
+                                        <i class="ki-duotone ki-geolocation fs-4 me-1"><span class="path1"></span><span class="path2"></span></i>
+                                        <span>Self DC</span>    
+                                    </a>
+                                    <a rif="mobile" href="tel:---" class="d-flex align-items-center text-gray-600 text-hover-primary me-5 mb-2">
+                                        <i class="ki-duotone ki-phone fs-4 me-1"><span class="path1"></span><span class="path2"></span></i>                                
+                                        <span>---</span>       
+                                    </a>
+                                    <a rif="email" href="mailto:claudio.sgroi+24@gmail.com" class="d-flex align-items-center text-gray-600 text-hover-primary mb-2">
+                                        <i class="ki-duotone ki-sms fs-4 me-1"><span class="path1"></span><span class="path2"></span></i>                                
+                                        <span>claudio.sgroi+24@gmail.com</span>
+                                    </a>        
+                                </div>          
+                            </div>
+
+                            <div class="separator my-10"></div>
+                            
+                            <div class="d-flex flex-column align-items-center mb-9 px-0">
+                                <div class="me-0 mb-4">
+                                    <div rif="qrcode" class="symbol symbol-100px symbol-lg-160px symbol-fixed position-relative">
+                                        <img src="archive/qrcode/QR_CODE_000017.png" alt="image" class="border border-4 border-gray-300">
+                                    </div>
+                                </div>
+                                
+                                <a rif="qrcode_code" href="#" class="d-flex text-gray-600 text-hover-primary fs-2 fw-bold me-1">000017[Wo1FlMVWTSXwbFln9vKq]</a>
+                                <!--
+                                <span rif="role" class="badge badge-light-primary fw-bold fs-8 px-3 py-1 text-uppercase"></span>
+
+                                <div class="d-flex flex-column fw-semibold fs-6 mt-8 mb-4 align-items-center text-gray-600">
+                                    <a rif="company" href="#" class="d-flex align-items-center text-gray-600 text-hover-primary me-5 mb-2 d-none">
+                                        <i class="ki-duotone ki-geolocation fs-4 me-1"><span class="path1"></span><span class="path2"></span></i>
+                                        <span></span>    
+                                    </a>
+                                    <a rif="mobile" href="#" class="d-flex align-items-center text-gray-600 text-hover-primary me-5 mb-2 d-none">
+                                        <i class="ki-duotone ki-phone fs-4 me-1"><span class="path1"></span><span class="path2"></span></i>                                
+                                        <span></span>       
+                                    </a>
+                                    <a rif="email" href="#" class="d-flex align-items-center text-gray-600 text-hover-primary mb-2 d-none">
+                                        <i class="ki-duotone ki-sms fs-4 me-1"><span class="path1"></span><span class="path2"></span></i>                                
+                                        <span></span>
+                                    </a>        
+                                </div>        
+                                -->  
+                                <div rif="qrcode_button" class="f-flex d-md-flex justify-content-end align-items-center mt-10">
+                                    <div type="button-container" class="gap-0 gap-xxl-2 d-grid d-xxl-flex align-items-center text-right mt-md-0 mt-5">
+                                        
+                                    <button type="button" id="genera_qrcode" href="" target="_blank" class="btn    btn-primary btn-sm text-uppercase" data-kt-indicator="off">  
+                                        <span class="indicator-label align-middle">
+                                            <i class="fa-regular fa-id-badge  me-2 fs-3 align-middle "></i>
+                                            <span class="align-middle mt-1">Genera tesserino</span>
+                                            
+                                        </span>
+                                        <span class="indicator-progress">
+                                            <span class="align-middle mt-1">Attendi...</span> <i class="fa-solid fa-circle-notch fa-spin fs-4 align-middle ms-2"></i>
+                                        </span>
+                                    </button>
+                                    
+                                
+                                
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- <div class="card-footer d-flex justify-content-between">
+                        <div class="btn-group">
+                            <button cs-action-toggle="delete_form" type="button" class="btn btn-sm btn-danger text-uppercase"><i class="fa-solid fa-rectangle-xmark me-2 fs-3"></i>Elimina</button>
+                        </div>
+                        <div class="btn-group">
+                            <button cs-action-toggle="save_form" type="button" class="btn btn-sm btn-primary text-uppercase" ><i class="fa-solid fa-floppy-disk me-2 fs-3"></i>Salva</button>
+                            <button cs-action-toggle="reset_form" type="button" class="btn btn-sm btn-warning text-uppercase"><i class="fa-solid fa-rectangle-xmark me-2 fs-3"></i>Resetta</button>
+                            <button cs-action-toggle="return_list" type="button" class="btn btn-sm btn-info text-uppercase"><i class="fa-solid fa-list me-2 fs-3"></i>Torna alla lista</button>
+                        </div>
+                    </div> -->
+                </div>
+            </div>
+            <div class="col-9">
+                <div class="card shadow-sm h-100 ">
+                    <div class="card-header">
+                        <h3 class="card-title">Modifica profilo</h3>
+                        <div class="card-toolbar">      
+                            <div class="btn_group btn-group py-1"> 
+                                <button cs-action-toggle="delete_form" type="button" class="btn btn-sm btn-light-danger text-uppercase"><i class="fa-solid fa-rectangle-xmark me-2 fs-3"></i>Elimina</button>
+                                <button cs-action-toggle="modal_password" type="button" class="btn btn-sm btn-light-primary text-uppercase" ><i class="fa-solid fa-key me-2 fs-3"></i>Cambia password</button>
+                            </div> 
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <form id="profile-form" enctype="multipart/form-data">
+                            <div class="row">
+                                <div class="col-4 mb-10">
+                                    <div class="fv-row">
+                                        <label for="exampleFormControlInput1" class="form-label">UID</label>
+                                        <input type="text" id="edit-uid" name="uid" value="" class="form-control form-control-solid #bg-transparent" placeholder="UID"  readonly/>    
+                                    </div>
+                                </div>
+                                <div class="col-4 mb-10">
+                                    <div class="fv-row">
+                                        <label for="exampleFormControlInput1" class="form-label">Username</label>
+                                        <span class="ms-1 cursor-pointer" data-bs-toggle="tooltip" data-bs-dismiss="click" title="La username viene generata automaticamente dall'indirizzo E-Mail.">
+                                            <i class="fas fa-circle-info text-gray-500 fs-6"></i>
+                                        </span>
+                                        <input type="text" id="edit-username" name="username" value="" class="form-control form-control-solid" placeholder="Username" disabled readonly/>    
+                                    </div>
+                                </div>
+                                <div class="col-1 mb-10">
+                                    <div class="fv-row">
+                                        <label class="form-check form-check-inline mt-12">
+                                            <input class="form-check-input" type="checkbox" name="is_active" value="true" />
+                                            <span class="form-check-label fw-semibold text-gray-700 fs-base ms-1">Attivo</span>
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-2 mb-10">
+                                    <div class="fv-row">
+                                        <label class="form-check form-check-inline mt-12">
+                                            <input class="form-check-input" type="checkbox" name="is_email_confirmed" value="true" />
+                                            <span class="form-check-label fw-semibold text-gray-700 fs-base ms-1">E-Mail Confermata</span>
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="w-100"></div>
+                                <div class="col-4 mb-10">
+                                    <div class="fv-row">
+                                        <label for="exampleFormControlInput1" class="required form-label">Nome</label>
+                                        <input type="text" id="edit-first-name" name="first_name" value="" class="form-control form-control-solid" placeholder="Nome"/>    
+                                    </div>
+                                </div>
+                                <div class="col-4 mb-10">
+                                    <div class="fv-row">
+                                        <label for="exampleFormControlInput1" class="required form-label">Cognome</label>
+                                        <input type="text" id="edit-last-name" name="last_name" value="" class="form-control form-control-solid" placeholder="Cognome"/>    
+                                    </div>
+                                </div>
+                                <div class="col-4 mb-10">
+                                    <div class="fv-row">
+                                        <label for="exampleFormControlInput1" class="required form-label">E-Mail</label> 
+                                        <span class="ms-1 cursor-pointer" data-bs-toggle="tooltip" data-bs-dismiss="click" title="Cambiando l'email dovrai confermarla nuovamente.">
+                                            <i class="fas fa-circle-info text-gray-500 fs-6"></i>
+                                        </span>
+                                        <input type="email" id="edit-email" name="email" value="" class="form-control form-control-solid" placeholder="E-Mail"/>    
+                                    </div>
+                                </div>
+                                <div class="col-4 mb-10">
+                                    <div class="fv-row">
+                                        <label for="exampleFormControlInput1" class="form-label">Mobile</label>
+                                        <input type="text" id="edit-phone" name="phone" value="" class="form-control form-control-solid" placeholder="+39 xxx xxx xxxx"/>    
+                                    </div>
+                                </div>
+                                <div class="col-4 mb-10">
+                                    <!-- <div class="fv-row">
+                                        <label for="exampleFormControlInput1" class="required form-label">Società</label>
+                                        <input type="text" id="edit-company" name="company" value="" class="form-control form-control-solid #bg-transparent" placeholder="Società"/>    
+                                    </div> -->
+                                    <div class="fv-row">
+                                        <label class="form-label fw-semibold">Società:</label>
+                                        <div>
+                                            <select id="company_select_edit" name="company_select_edit" class="form-select form-select-solid" data-close-on-select="True" data-placeholder="Seleziona una società" >
+                                            <!-- <select class="form-select form-select-solid" multiple="multiple" data-control="select2" data-close-on-select="false" data-placeholder="Seleziona ruolo"  data-allow-clear="true"> -->
+
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-4 mb-10">
+                                    <div class="fv-row">
+                                        <label class="form-label fw-semibold">Ruolo:</label>
+                                        <div>
+                                            <select id="role_select_edit" name="role_select_edit" class="form-select form-select-solid" data-control="select2" data-close-on-select="false" data-placeholder="Seleziona ruolo" data-allow-clear="false" multiple="multiple">
+
+                                            <!-- <select class="form-select form-select-solid" multiple="multiple" data-control="select2" data-close-on-select="false" data-placeholder="Seleziona ruolo"  data-allow-clear="true"> -->
+                                                <option value="admin">Amministratore</option>
+                                                <option value="user">Utente</option>
+                                                <option value="moderator">Moderatore</option>
+                                                <option value="guest">Ospite</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-4 mb-10">
+                                    <!-- <div class="fv-row">
+                                        <label for="exampleFormControlInput1" class="required form-label">Password</label> 
+                                        <input type="password" id="edit-password" name="password" value="" class="form-control form-control-solid" placeholder="Password"/>    
+                                    </div> -->
+                                    <div class="fv-row mb-8" id="check_password_new" #data-kt-password-meter="true"> 
+                                        <label for="" class="required form-label">Password</label>
+                                        <div class="mb-1">
+                                            <div class="position-relative mb-3">
+                                                <input id="edit-password" class="form-control form-control-solid #bg-transparent" type="password" placeholder="Nuova Password" name="password" autocomplete="off" />
+                                                <span class="btn btn-sm btn-icon position-absolute translate-middle top-50 end-0 me-n2" data-kt-password-meter-control="visibility">
+                                                    <i class="fa-solid fa-eye-slash"></i>
+                                                    <i class="fa-solid fa-eye d-none"></i>
+                                                </span>
+                                            </div>
+                                            <div class="d-flex align-items-center mb-3" data-kt-password-meter-control="highlight">
+                                                <div class="flex-grow-1 bg-secondary bg-active-success rounded h-5px me-2"></div>
+                                                <div class="flex-grow-1 bg-secondary bg-active-success rounded h-5px me-2"></div>
+                                                <div class="flex-grow-1 bg-secondary bg-active-success rounded h-5px me-2"></div>
+                                                <div class="flex-grow-1 bg-secondary bg-active-success rounded h-5px"></div>
+                                            </div>
+                                        </div>
+                                        <div class="text-muted">Usa almeno 8 caratteri, lettere numeri e caratteri speciali.</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="card-footer d-flex justify-content-between">
+                        <div class="btn-group">                            
+                            <button cs-action-toggle="return_list" type="button" class="btn btn-sm btn-info text-uppercase"><i class="fa-solid fa-list me-2 fs-3"></i>Torna alla lista</button>
+                        </div>
+                        <div class="btn-group">
+                            <button cs-action-toggle="save_form" type="button" class="btn btn-sm btn-primary text-uppercase" ><i class="fa-solid fa-floppy-disk me-2 fs-3"></i>Salva</button>
+                            <button cs-action-toggle="reset_form" type="button" class="btn btn-sm btn-warning text-uppercase"><i class="fa-solid fa-rectangle-xmark me-2 fs-3"></i>Resetta</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- <div id="user_edit" class="card shadow-sm">
+            <div class="card-header">
+                <h3 class="card-title">Dati utente</h3>
+                <div class="card-toolbar">
+                    <button type="button" class="btn btn-sm btn-light">
+                        Action
+                    </button>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="row">
+
+                </div>
+            </div>
+            <div class="card-footer">
+                Footer
+            </div>
+        </div> -->
+    </div>
+</div>
+
+<div class="modal fade modal-lg" tabindex="-1" id="image_editor">
+    <div class="modal-dialog">
+        <form class="form w-100" method="post" novalidate="novalidate" id="register" action="">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3 class="modal-title">Modifica immagine</h3>
+                    <div class="btn btn-icon btn-sm btn-active-light-primary ms-2" data-bs-dismiss="modal" aria-label="Close">
+                        <i class="fa-solid fa-xmark fs-4"></i>
+                    </div>
+                </div>
+
+                <div class="modal-body">
+                    <div class="container">
+                        <div class="row">
+                            <div class="col-md-9">
+                            <div class="docs-demo">
+                                <div class="img-container h-300px h-lg-450px ">
+                                <img id="avatar_image_preview" src="" alt="Picture" class="cropper-hidden">
+                                </div>
+                            </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="docs-preview ">
+                                    <div class="w-170px h-170px symbol symbol-fixed position-relative border border-4 border-gray-300 ">
+                                        <div class="img-preview-new overflow-hidden" style="width: 150px; height: 150px;">
+                                                <img src="" alt="image" class="">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row" id="actions">
+                            <div class="col-md-9 docs-buttons mt-3">
+                            <!-- <h3>Toolbar:</h3> -->
+                            <div class="btn-group py-1">
+                                <button type="button" class="btn btn-sm btn-primary" data-method="setDragMode" data-option="move" title="Move">
+                                <span class="docs-tooltip" data-bs-toggle="tooltip" title="" data-bs-original-title="Muovi">
+                                    <span class="fa fa-arrows-alt"></span>
+                                </span>
+                                </button>
+                                <button type="button" class="btn btn-primary" data-method="setDragMode" data-option="crop" title="Crop">
+                                <span class="docs-tooltip" data-bs-toggle="tooltip" title="" data-bs-original-title="Taglia">
+                                    <span class="fa fa-crop-alt"></span>
+                                </span>
+                                </button>
+                            </div>
+
+                            <div class="btn-group py-1">
+                                <button type="button" class="btn btn-primary" data-method="zoom" data-option="0.1" title="Zoom In">
+                                <span class="docs-tooltip" data-bs-toggle="tooltip" title="" data-bs-original-title="Ingrandisci">
+                                    <span class="fa fa-search-plus"></span>
+                                </span>
+                                </button>
+                                <button type="button" class="btn btn-primary" data-method="zoom" data-option="-0.1" title="Zoom Out">
+                                <span class="docs-tooltip" data-bs-toggle="tooltip" title="" data-bs-original-title="Riduci">
+                                    <span class="fa fa-search-minus"></span>
+                                </span>
+                                </button>
+                            </div>
+
+                            <div class="btn-group py-1">
+                                <button type="button" class="btn btn-primary" data-method="move" data-option="-10" data-second-option="0"
+                                title="Move Left">
+                                <span class="docs-tooltip" data-bs-toggle="tooltip" title="" data-bs-original-title="Muovi a sinistra">
+                                    <span class="fa fa-arrow-left"></span>
+                                </span>
+                                </button>
+                                <button type="button" class="btn btn-primary" data-method="move" data-option="10" data-second-option="0"
+                                title="Move Right">
+                                <span class="docs-tooltip" data-bs-toggle="tooltip" title="" data-bs-original-title="Muovi a destra">
+                                    <span class="fa fa-arrow-right"></span>
+                                </span>
+                                </button>
+                                <button type="button" class="btn btn-primary" data-method="move" data-option="0" data-second-option="-10"
+                                title="Move Up">
+                                <span class="docs-tooltip" data-bs-toggle="tooltip" title="" data-bs-original-title="Muovi su">
+                                    <span class="fa fa-arrow-up"></span>
+                                </span>
+                                </button>
+                                <button type="button" class="btn btn-primary" data-method="move" data-option="0" data-second-option="10"
+                                title="Move Down">
+                                <span class="docs-tooltip" data-bs-toggle="tooltip" title="" data-bs-original-title="Muovi giù">
+                                    <span class="fa fa-arrow-down"></span>
+                                </span>
+                                </button>
+                            </div>
+
+                            <div class="btn-group py-1">
+                                <button type="button" class="btn btn-primary" data-method="rotate" data-option="-45" title="Rotate Left">
+                                <span class="docs-tooltip" data-bs-toggle="tooltip" title="" data-bs-original-title="Ruota di 45° in senso anti orario">
+                                    <span class="fa fa-undo-alt"></span>
+                                </span>
+                                </button>
+                                <button type="button" class="btn btn-primary" data-method="rotate" data-option="45" title="Rotate Right">
+                                <span class="docs-tooltip" data-bs-toggle="tooltip" title="" data-bs-original-title="Ruota di 45° in senso orario">
+                                    <span class="fa fa-redo-alt"></span>
+                                </span>
+                                </button>
+                            </div>
+
+                            <div class="btn-group py-1">
+                                <button type="button" class="btn btn-primary" data-method="scaleX" data-option="-1" title="Flip Horizontal">
+                                <span class="docs-tooltip" data-bs-toggle="tooltip" title="" data-bs-original-title="Capovolgi orizzontalmente">
+                                    <span class="fa fa-arrows-alt-h"></span>
+                                </span>
+                                </button>
+                                <button type="button" class="btn btn-primary" data-method="scaleY" data-option="-1" title="Flip Vertical">
+                                <span class="docs-tooltip" data-bs-toggle="tooltip" title="" data-bs-original-title="Capovolgi verticalmente">
+                                    <span class="fa fa-arrows-alt-v"></span>
+                                </span>
+                                </button>
+                            </div>
+
+                            <div class="btn-group py-1">
+                                <button type="button" class="btn btn-primary" data-method="reset" title="Reset">
+                                <span class="docs-tooltip" data-bs-toggle="tooltip" title="" data-bs-original-title="Resetta le modifiche">
+                                    <span class="fa fa-sync-alt"></span>
+                                </span>
+                                </button>
+                                <label class="btn btn-primary btn-upload" for="inputImage" title="Upload image file">
+                                <input type="file" class="sr-only" id="inputImage" name="file" accept="image/*">
+                                <span class="docs-tooltip" data-bs-toggle="tooltip" title="" data-bs-original-title="Carica immagine">
+                                    <span class="fa fa-upload"></span>
+                                </span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>  
+                </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Chiudi</button>
+                    <button type="button" id="inserisci_avatar" class="btn btn-primary">
+                        <span class="indicator-label">Inserisci avatar</span>
+                        <span class="indicator-progress">Attendere... 
+                        <span class="spinner-border spinner-border-sm align-middle ms-2"></span></span>
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="modal fade" tabindex="-1" id="modal_change_password">
+    <div class="modal-dialog">
+        <form class="form w-100" method="post" novalidate="novalidate" id="change_password" action="">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3 class="modal-title">Cambia password</h3>
+
+                    <!--begin::Close-->
+                    
+                        <div class="btn btn-icon btn-sm btn-active-light-primary ms-2" data-bs-dismiss="modal" aria-label="Close">
+                            <i class="fa-solid fa-xmark fs-4"></i>
+                        </div>
+                
+                    <!--end::Close-->
+                </div>
+
+                <div class="modal-body">
+                    <!-- <div class="fv-row mb-8" data-kt-password-meter="true"> 
+                        <label for="" class="required form-label">Password attuale </label>
+                        <div class="mb-1">
+                            <div class="position-relative mb-3">
+                                <input placeholder="Password attuale" name="actual_password" type="password" autocomplete="off" class="form-control bg-transparent" />
+                                <span class="btn btn-sm btn-icon position-absolute translate-middle top-50 end-0 me-n2" data-kt-password-meter-control="visibility">
+                                    <i class="fa-solid fa-eye-slash"></i>
+                                    <i class="fa-solid fa-eye d-none"></i>
+                                </span>
+                            </div>
+                        </div>
+                    </div> -->
+                    <div class="fv-row mb-8" id="password" #data-kt-password-meter="true"> 
+                        <label for="" class="required form-label">Nuova password</label>
+                        <div class="mb-1">
+                            <div class="position-relative mb-3">
+                                <input class="form-control bg-transparent" type="password" placeholder="Nuova Password" name="password" autocomplete="off" />
+                                <span class="btn btn-sm btn-icon position-absolute translate-middle top-50 end-0 me-n2" data-kt-password-meter-control="visibility">
+                                    <i class="fa-solid fa-eye-slash"></i>
+                                    <i class="fa-solid fa-eye d-none"></i>
+                                </span>
+                            </div>
+                            <div class="d-flex align-items-center mb-3" data-kt-password-meter-control="highlight">
+                                <div class="flex-grow-1 bg-secondary bg-active-success rounded h-5px me-2"></div>
+                                <div class="flex-grow-1 bg-secondary bg-active-success rounded h-5px me-2"></div>
+                                <div class="flex-grow-1 bg-secondary bg-active-success rounded h-5px me-2"></div>
+                                <div class="flex-grow-1 bg-secondary bg-active-success rounded h-5px"></div>
+                            </div>
+                        </div>
+                        <div class="text-muted">Usa almeno 8 caratteri, lettere numeri e caratteri speciali.</div>
+                    </div>
+                    <div class="fv-row mb-8" data-kt-password-meter="true"> 
+                        <label for="" class="required form-label">Conferma nuova password</label>
+                        <div class="mb-1">
+                            <div class="position-relative mb-3">
+                                <input placeholder="Conferma nuova password" name="confirm_password" type="password" autocomplete="off" class="form-control bg-transparent" />
+                                <span class="btn btn-sm btn-icon position-absolute translate-middle top-50 end-0 me-n2" data-kt-password-meter-control="visibility">
+                                    <i class="fa-solid fa-eye-slash"></i>
+                                    <i class="fa-solid fa-eye d-none"></i>
+                                </span>
+                            </div>
+                            <!-- <div class="d-flex align-items-center mb-3" data-kt-password-meter-control="highlight">
+                                <div class="flex-grow-1 bg-secondary bg-active-success rounded h-5px me-2"></div>
+                                <div class="flex-grow-1 bg-secondary bg-active-success rounded h-5px me-2"></div>
+                                <div class="flex-grow-1 bg-secondary bg-active-success rounded h-5px me-2"></div>
+                                <div class="flex-grow-1 bg-secondary bg-active-success rounded h-5px"></div>
+                            </div> -->
+                        </div>
+                    </div>
+                
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Chiudi</button>
+                    <button type="button" cs-action-toggle="update_password" id="update_password" class="btn btn-primary">
+                        <span class="indicator-label">Aggiorna Password</span>
+                        <span class="indicator-progress">Attendere... 
+                        <span class="spinner-border spinner-border-sm align-middle ms-2"></span></span>
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<link href="assets/plugins/custom/datatables/datatables.bundle.css" rel="stylesheet" type="text/css"/>
+<script src="assets/plugins/custom/datatables/datatables.bundle.js"></script>
+<script src="https://cdn.datatables.net/plug-ins/2.3.2/sorting/datetime-moment.js"></script>
+<!-- <link href="assets/plugins/custom/cropper/cropper.bundle.css" rel="stylesheet" type="text/css" /> -->
+<!-- <script src="assets/plugins/custom/cropper/cropper.bundle.js"></script> -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.css" integrity="sha512-UtLOu9C7NuThQhuXXrGwx9Jb/z9zPQJctuAgNUBK3Z6kkSYT9wJ+2+dh6klS+TDBCV9kNPBbAxbVD+vCcfGPaA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+<script>
+let check_password, check_password_new
+/**
+ * Attivo lordinamento per questo formato di data
+ */
+$.fn.dataTable.moment( 'DD/MM/YYYY - HH:mm' );
+$.fn.dataTable.moment( 'DD/MM/YYYY' );
+
+/*
+* Genero la datatables
+*/
+
+// async function getUsersList_datatables() {
+//     const data = await apiCall('/api/users', { method: 'GET' });
+    
+//     return Object.keys(data)
+//         .filter(k => !isNaN(k)) // Solo chiavi numeriche
+//         .map(k => {
+//             const user = data[k];
+//             return {
+//                 ...user,
+//                 name_surname: [user.first_name, user.last_name].filter(Boolean).join(' ')
+//             };
+//         });
+// }
+
+//Inizializzo i filtri della tabella
+const currentFilters = {
+    uid: undefined,
+    is_active: true,
+    is_email_confirmed: true,
+    role_names: undefined
+};
+
+let row_checked = null
+
+const UserTableManager = (function () {
+    let user_tables = null;
+
+    function init(currentFilters) {
+        user_tables = $("#users_tables").DataTable({
+            // "dom": "<'row '<'#toolbar.col-md-10 col-sm-12 mb-2'T><'#toolbar3.col-md-2 col-sm-12 text-right'B><'col-md-12 col-sm-12'<'#filters.form-row'>>r>t<'row mt-2'<'col-md-4 col-sm-12'i><'col-md-4 col-sm-12 text-center' l><'col-md-4 col-sm-12'p>>",
+            //Personalizzazione colonne
+            scrollX: false,  // Attiva lo scorrimento orizzontale per mostrare tutte le colonne
+            autoWidth: false,  // Disabilita l'autowidth per rispettare le larghezze definite
+            scrollCollapse: true,  // Migliora lo scorrimento
+            // scrollY: "500px",
+            // Configurazione per ottimizzare le prestazioni
+            deferRender: true,
+            processing: true,
+            stateSave: false,
+            // Resto della configurazione...
+            // dom:
+            //     `<"row "<"col-sm-12 col-md-4 d-flex align-items-center justify-content-center justify-content-md-start dt-toolbar"li>
+            //     <"#filter_container.col-sm-12 col-md-4 mb-1 d-flex align-items-center justify-content-center dt-toolbar">
+            //     <"col-sm-12 col-md-4 d-flex align-items-center justify-content-center justify-content-md-end"p>>
+            //     <"row"<"col-sm-12"t>>
+            //     <"row "<"col-sm-12 col-md-6 d-flex align-items-center justify-content-center justify-content-md-start dt-toolbar"li>
+            //     <"col-sm-12 col-md-6 d-flex align-items-center justify-content-center justify-content-md-end"p>>`,
+            dom:
+                `
+                <"row"
+                    <"#filter_container.col-12 d-flex align-items-center justify-content-start dt-toolbar mb-2 ">
+                >
+                <"row"<"col-sm-12"t>>
+                <"row"
+                    <"col-sm-12 col-md-6 d-flex align-items-center justify-content-center justify-content-md-start dt-toolbar"li>
+                    <"col-sm-12 col-md-6 d-flex align-items-center justify-content-center justify-content-md-end"p>
+                >`,
+            buttons: [
+                'copy', 'excel', 'pdf'
+                ],
+            pageLength: 8,
+            lengthMenu: [[8, 25, 50, 100, -1], [8, 25, 50, 100, "Tutti"]],
+            language: {
+                url: "assets/js/data_tables_it_IT.json",
+                paginate: {
+                    previous: "<i class='previous'></i>",
+                    next: "<i class='next'></i>",
+                },
+                select: {
+                    rows: {
+                        _: "", //"%d selezionate",
+                        0: "",
+                        1: "", //"1 selezionata"
+                    },
+                    columns: {
+                        _: "", //"%d colonne selezionate",
+                        0: "", //"Nessuna colonna selezionata",
+                        1: '', //"1 colonna selezionata"
+                    },
+                    cells: {
+                        _: '', //"%d celle selezionate",
+                        0: '', //"Nessuna cella selezionata",
+                        1: '', //"1 cella selezionata"
+                    }
+                    
+                },
+                search: "Cerca:",           
+                lengthMenu: "_MENU_",  
+                info: "da _START_ a _END_ di _TOTAL_", 
+            },
+            "columnDefs": [
+                { width: "1%",  title: `<div class="form-check form-check-sm form-check-custom form-check-solid">
+                                    <input class="form-check-input checkbox_multiple"  data-kt-check-target="#users_tables .checkbox_single" type="checkbox"  />
+                                </div>`, orderable: false, searchable: false, visible: true, className: "align-middle  px-3", responsivePriority: 1, targets: 0},
+                { width: "2%", title: "",orderable: true, searchable: true, visible: true, className: "align-middle text-start", responsivePriority: 1, targets: 1 },         
+                { width: "25%", title: "Nome",orderable: true, searchable: true, visible: true, className: "align-middle text-start", responsivePriority: 1, targets: 2 },
+                { width: "25%", title: "E-Mail", orderable: true, searchable: true, visible: true, className: "align-middle text-start", responsivePriority: 10001, targets: 3 },
+                { width: "20%", title: "Mobile", orderable: true, searchable: true, visible: true, className: "align-middle text-start", responsivePriority: 10001, targets: 4 },
+                { width: "26%",title: "Ruolo", orderable: true, searchable: true, visible: true, className: "align-middle text-start", responsivePriority: 1, targets: 5 },
+                { width: "1%", title: "",orderable: false, searchable: false, visible: true, className: "align-middle px-2", responsivePriority: 1, targets: 6 },
+            ],
+            //Ordine Colonne
+            "columns": [
+                {   
+                    "data": "uid", 
+                    "render": function ( data, type, row, index ) {
+                        return `<div class="form-check form-check-sm form-check-custom form-check-solid">
+                                    <input class="form-check-input checkbox_single" type="checkbox" value="${data}" />
+                                </div>`
+                                
+                    }
+                },
+                {   
+                    "data": "avatar_url", 
+                    "render": function ( data, type, row, index ) {
+                        return `<img src="${data}" alt="${row.name_surname}" width="40" height="40">`
+                                
+                    }
+                },
+                {   
+                    "data": "name_surname", 
+                    "render": function ( data, type, row ) {
+                        var x = row['active'];
+                        var y = row['main_company']
+                        var status = row['status']
+                        
+                        if(status == 'ONLINE'){
+                            var online='<div class="badge mr-1 help" data-bs-toggle="tooltip" data-bs-dismiss="click" data-placement="top" title="ONLINE"><i class="fa fa-circle text-success"></i></div>';
+                        }else{
+                            var online='<div class="badge mr-1 help " data-bs-toggle="tooltip" data-bs-dismiss="click" data-placement="top" title="OFFLINE"><i class="fa fa-circle text-danger"></i></div>';
+                        }
+                    
+                        if(x === 'TRUE'){
+                            var active='';
+                        }
+                        // else if (row['data_check'] === 'off')
+                        else 
+                        {
+                            var active='<div class="badge help todo-tasklist-badge badge badge-danger badge-roundless align-self-end ms-2" data-bs-toggle="tooltip" data-bs-dismiss="click" data-placement="top" title="DISABILITATO"><i class="fa-solid fa-user-xmark text-white"></i></div>'
+                        }
+                        if(y === 'on'){
+                            var type_user='';
+                        }
+                        // else if (row['data_check'] === 'off')
+                        else 
+                        {
+                            var type_user='<div class="badge help todo-tasklist-badge badge badge-info badge-roundless align-self-end" data-bs-toggle="tooltip" data-bs-dismiss="click" data-placement="top" title="ESTERNO"><i class="fa-solid fa-user-tag text-white"></i></div>'
+                        }
+                        //return '<a href="gestione_utente.php?id='+row[4]+'"><button id="Modifica" data-bs-toggle="tooltip" data-bs-dismiss="click" data-placement="top" data-original-title="Modifica" title="Modifica" class="btn btn-success btn-circle mr-1"><i class="fa fa-cog"></i></button></a> '+data+ active;
+                        return '<div class="link_in_tabella font-weight-bold d-flex align-items-center mr-auto " href="user_manager.php?manage_user=yes&uid='+row['uid']+'"> ' + online + '<div class="me-auto">'+data+'</div>' + type_user + active+'</div>';
+
+                    },
+                },
+                {   
+                    "data": "username",
+                    "render": function ( data, type, row ) {
+                        return data;
+                    },
+                },
+                {   
+                    "data": "phone",
+                    "render": function ( data, type, row ) {
+                        // return remove_char(data, '');
+                        return data;
+                    },
+                },
+                {   
+                    "data": "role_names",
+                    "render": function ( data, type, row ) {
+                        // var date_db = moment(data).format("DD/MM/YYYY - HH:mm");
+                        return generateRoleBadgesHTML(data);
+                    },
+                },
+                {   
+                    "data": "uid", 
+                    "render": function ( data, type, row ) {
+                        var uid_rif = row['uid'];
+                        //    return "<button class='text-white btn btn-block btn-secondary btn-xs' data-toggle='modal' data-link='dettagli.php?destinazione=utente&id_rif="+row[4]+"' data-id='" + row[4] +"' data-target='#ajax' >DETTAGLI</button>";
+                        //    return "<a data-toggle='modal' data-link='dettagli.php?destinazione=utente&id_rif="+row[4]+"' data-id='" + row[4] +"' data-target='#ajax' ><i role='button' class='cursor-pointer fas  fa-search-plus' data-toggle='tooltip' title='Dettagli' ></i></a>";
+                        return   `<div class="btn-group btn-group-sm">
+                                        <button cs-action-toggle='edit' cs-action-data="${uid_rif}" id="edit" type="button" data-bs-toggle="tooltip" data-bs-dismiss="click" title="MODIFICA" class="w-25px h-25px btn-icon btn btn-sm btn-warning float-right text-uppercase">
+                                            <i class="fas fa-pencil-alt text-light-warning"></i>
+                                        </button>
+                                        <button cs-action-toggle='modal' cs-action-data="${uid_rif}" id="change_user" type="button" data-bs-toggle="tooltip" data-bs-dismiss="click" title="IMPERSONA UTENTE"class="w-25px h-25px btn-icon btn btn-sm btn-primary float-right text-uppercase">
+                                                <i class="fas fa-user-gear"></i>
+                                        </button>
+                                    </div>`  ;
+                    }  
+                },
+            ],
+            //Ordina i record in modo crescente in base alla colonna 1
+            "order": [
+                [2, 'asc']
+            ],   
+            select: {
+                style: 'multi',
+                selector: 'td:first-child input[type="checkbox"]',
+                className: 'row-selected'
+            },
+
+            ajax: function (data, callback, settings) {
+                getUsersList_datatables(currentFilters)
+                    .then(users => {
+                        callback({ data: users });
+                        console.log(users)
+                    })
+                    .catch(error => {
+                        console.error('Errore DataTables:', error);
+                        callback({ data: [] });
+                    });
+            },
+            
+            "initComplete": function(settings, json){
+                CheckboxSelectionHandler.init(user_tables)
+                // GestioneAzioni.init();
+                // initTooltips();
+                
+            },
+
+            "drawCallback": function(settings) {
+                GestioneAzioni.init();
+                // initTooltips(); // esempio: riattiva i tooltip
+            }
+        });
+
+        user_tables.on('draw', function () {
+            initTooltips();
+        });
+
+        // initTooltips();
+    }
+
+    function reload() {
+        if (user_tables) {
+            user_tables.ajax.reload();
+        }
+    }
+
+    function getTable() {
+        return user_tables;
+    }
+
+    return {
+        init,
+        reload,
+        getTable
+    };
+})();
+
+
+//Carica tutti i dati e li prepara per un datatables
+async function getUsersList_datatables(filters = {}) {
+    const data = await apiCall('/api/users', { method: 'GET' });
+
+    const users = Object.keys(data)
+        .filter(k => !isNaN(k)) // Solo chiavi numeriche
+        .map(k => {
+            const user = data[k];
+            return {
+                ...user,
+                name_surname: [user.first_name, user.last_name].filter(Boolean).join(' ')
+            };
+        });
+
+    // Applica i filtri
+    return users.filter(user => {
+        if (filters.uid !== undefined && user.uid !== filters.uid) return false;
+        if (filters.is_active !== undefined && user.is_active !== filters.is_active) return false;
+        if (filters.is_admin !== undefined && user.is_admin !== filters.is_admin) return false;
+        if (filters.is_email_confirmed !== undefined && user.is_email_confirmed !== filters.is_email_confirmed) return false;
+        if (filters.role_names && filters.role_names.length > 0 && !filters.role_names.some(r => user.role_names.includes(r))) return false;
+        return true;
+    });
+}
+
+
+//Genra un i badge dei ruoli
+function generateRoleBadgesHTML(roleInput) {
+    let roles = [];
+
+    if (typeof roleInput === 'string') {
+        roles = roleInput.split(',').map(r => r.trim());
+    } else if (Array.isArray(roleInput)) {
+        roles = roleInput;
+    } else {
+        return '';
+    }
+
+    const roleClassMap = {
+        admin: 'badge badge-danger',
+        user: 'badge badge-primary',
+        moderator: 'badge badge-warning',
+        guest: 'badge badge-secondary'
+    };
+
+    const roleLabelMap = {
+        admin: 'Administrator',
+        user: 'Utente',
+        moderator: 'Moderatore',
+        guest: 'Ospite'
+    };
+
+    return roles
+        .filter(Boolean)
+        .map(role => {
+            const cssClass = roleClassMap[role] || 'badge badge-light';
+            const label = roleLabelMap[role] || role;
+            return `<span class="${cssClass} me-1">${label}</span>`;
+        })
+        .join(' ');
+}
+
+
+//Gestione del search in datatables
+function CSTableSearchManager(inputSelector, datatableInstance) {
+    let inputElement = document.querySelector(inputSelector);
+
+    return {
+        init: function () {
+            if (!inputElement || !datatableInstance) return;
+
+            inputElement.addEventListener('keyup', function (e) {
+                datatableInstance.search(e.target.value).draw();
+            });
+        },
+        setPlaceholder: function (text) {
+            if (inputElement) {
+                inputElement.placeholder = text;
+            }
+        },
+        clear: function () {
+            if (inputElement) {
+                inputElement.value = '';
+                datatableInstance.search('').draw();
+            }
+        }
+    };
+}
+
+
+//Filtra la select dei ruoli
+const RoleSelectFilter = (function () {
+    const selector = '#role_select';
+
+    const init = function () {
+        $(selector).on('change', function (e) {
+            const selected = $(this).select2('data');
+
+            // Estrai solo gli ID selezionati
+            const selectedRoles = selected.map(item => item.id);
+
+            // Salva nel tuo oggetto filtro
+            currentFilters.role_names = selectedRoles;
+
+            console.log(currentFilters);
+            UserTableManager.reload();
+        });
+    };
+
+    return {
+        init: init
+    };
+})();
+
+
+//Gestisce i checkbox
+const CheckboxFilterHandler = (function () {
+    const checkboxMap = {
+        'user_status': 'is_active',
+        'email_status': 'is_email_confirmed'
+    };
+
+    function handleChange(e) {
+        const checkboxId = e.target.id;
+        const filterKey = checkboxMap[checkboxId];
+        const isChecked = e.target.checked;
+
+        if (filterKey && currentFilters.hasOwnProperty(filterKey)) {
+            currentFilters[filterKey] = isChecked;
+            // console.log(`🔁 currentFilters aggiornato:`, currentFilters);
+            UserTableManager.reload();
+        }
+    }
+
+    return {
+        init: function () {
+            for (const id in checkboxMap) {
+                const checkbox = document.getElementById(id);
+                if (checkbox) {
+                    checkbox.addEventListener('change', handleChange);
+                }
+            }
+        }
+    };
+})();
+
+
+
+
+
+
+
+
+// Controlla tutti i check e abilita l'eliminazione     
+const CheckboxSelectionHandler = (function () {
+    const singleSelector = '.checkbox_single';
+    const multiSelector = '.checkbox_multiple';
+    let selectedValues = [];
+    let lastCount = 0;
+
+    function getCheckedValues() {
+        const checkboxes = document.querySelectorAll(`${singleSelector}:checked`);
+        return Array.from(checkboxes).map(cb => cb.value);
+    }
+
+    function handleSelectionChange() {
+        selectedValues = getCheckedValues();
+        const count = selectedValues.length;
+
+        console.log(`🔢 Selezionati: ${count}`, selectedValues);
+        document.querySelector('#row_checked_label').innerHTML  = count;
+        
+
+        if (count === 1 && lastCount === 0) {
+            onSingleSelect(selectedValues[0]);
+        } else if (count === 0 && lastCount > 0) {
+            onZeroSelected();
+        } else if (count > 0 && lastCount === 0) {
+            // caso aggiuntivo per .checkbox_multiple → da 0 a molti
+            onSomeSelected(selectedValues);
+        }
+
+        lastCount = count;
+    }
+
+    function onSingleSelect(value) {
+        ToggleVisibility.toggle('#toolbar_edit', '#toolbar_delete')
+    }
+
+    function onZeroSelected() {
+        ToggleVisibility.toggle('#toolbar_edit', '#toolbar_delete')
+        const multiCheckbox = document.querySelector('.checkbox_multiple');
+        if (multiCheckbox) {
+            multiCheckbox.checked = false;
+        }
+    }
+
+    function onSomeSelected(values) {
+        ToggleVisibility.toggle('#toolbar_edit', '#toolbar_delete')
+    }
+
+    function selectAllVisible(table, isChecked) {
+        const nodes = table.rows({ search: 'applied' }).nodes().toArray();
+
+        nodes.forEach(row => {
+            const cb = row.querySelector(singleSelector);
+            if (cb) {
+                cb.checked = isChecked;
+            }
+        });
+
+        // Dopo aver aggiornato tutti, chiama handleSelectionChange
+        handleSelectionChange();
+    }
+
+    function init(table) {
+        document.addEventListener('change', function (e) {
+            if (e.target.matches(singleSelector)) {
+                handleSelectionChange();
+            }
+        });
+
+        const multiCheckbox = document.querySelector(multiSelector);
+        if (multiCheckbox) {
+            multiCheckbox.addEventListener('change', function (e) {
+                selectAllVisible(table, e.target.checked);
+            });
+        }
+    }
+
+    return {
+        init
+    };
+})();
+
+
+
+//Gestione azioni per i pulsanti con attributo [cs-action-toggle]
+const GestioneAzioni = (function () {
+    //Gestione del modal password
+    function handleClick(e) {
+        const el = e.target.closest('[cs-action-toggle]');
+        if (!el) return;
+
+        const action = el.getAttribute('cs-action-toggle');
+        const id = el.getAttribute('cs-action-data');
+
+        //Verifico se il pulsante ha un tooltip ed è impostato per chiudersi al click
+        const hasTooltip = el.getAttribute('data-bs-toggle') === 'tooltip';
+        const hasDismissClick = el.getAttribute('data-bs-dismiss') === 'click';
+        if (hasTooltip && hasDismissClick) {
+            const tooltipInstance = bootstrap.Tooltip.getInstance(el);
+            tooltipInstance.hide();
+        }
+
+        switch (action) {
+            case 'add-user':
+                handleAdd(id, el);
+                break;
+            case 'delete':
+                handleDelete(id, el);
+                break;
+            case 'edit':
+                handleEdit(id, el);
+                break;
+            case 'view':
+                handleView(id, el);
+                break;
+            case 'save_form':
+                handleSaveForm(id, el);
+                break;
+            case 'return_list':
+                handleReturnList(id, el);
+                break;
+            case 'reset_form':
+                handleResetForm(id, el);
+                break;
+            case 'reset_filter':
+                handleResetFilter(id, el);
+                break;
+            case 'reload_tables':
+                handleReloadTables(id, el);
+                break;
+            case 'delete_form':
+                handleDelete(id, el);
+                break;
+            case 'modal_password':
+                handleModalPassword(id, el);
+                break;
+            case 'update_password':
+                handleUpdatePassword(id, el);
+                break;
+            default:
+                console.warn(`⚠️ Azione non gestita: "${action}"`, el);
+        }
+    }
+
+    function init() {
+        // ✅ Usa delegazione eventi: un solo listener su document
+        document.removeEventListener('click', handleClick); // evita duplicazioni
+        document.addEventListener('click', handleClick);
+    }
+
+    //Ricarica il datatables
+    function handleReloadTables(id, el) {
+        UserTableManager.reload();
+    }
+
+    // 🔧 Funzioni specifiche per le azioni
+    // function add_user(id, el) {
+    //     ToggleVisibility.toggle('#user_list', '#user_edit');
+    //     FormValidatorManager.init('profile-form', {
+    //         'email': {
+    //             validators: {
+    //                 notEmpty: { message: 'Email richiesta' },
+    //                 emailAddress: { message: 'Email non valida' }
+    //             }
+    //         }
+    //     });
+    // }
+
+    function handleAdd(id, el) {
+        const pulsate_elimina = document.querySelector('[cs-action-toggle="delete_form"]');
+        if (pulsate_elimina) {
+            const btnGroup = pulsate_elimina.closest('.btn_group');
+            if (btnGroup) {
+                // btnGroup.classList.remove('btn-group');
+                btnGroup.classList.add('d-none');  
+            }
+            // pulsate_elimina.classList.add('d-none');  
+        }
+        
+        const checkbox_email = document.querySelector('input[name="is_email_confirmed"]');
+        if (checkbox_email) {
+            const colContainer = checkbox_email.closest('.col-2.mb-10');
+            if (colContainer) {
+                colContainer.classList.add('d-none');   // 🔥 Rimuove l'intero blocco
+            }
+        }
+        const uid = document.querySelector('input[name="uid"]');
+        if (uid) {
+            const colContainer = uid.closest('.col-4.mb-10');
+            if (colContainer) {
+                colContainer.classList.add('d-none');   // 🔥 Rimuove l'intero blocco
+            }
+        }
+
+        const password = document.querySelector('#edit-password');
+        if (password) {
+            const colContainer = password.closest('.col-4.mb-10');
+            if (colContainer) {
+                colContainer.classList.remove('d-none');   // 🔥 Rimuove l'intero blocco
+            }
+        }
+
+        const password_button = document.querySelector('[cs-action-toggle="modal_password"]');
+        if (password_button) {
+            const colContainer = password_button.closest('.col-2.mb-10');
+            if (colContainer) {
+                colContainer.classList.add('d-none');   // 🔥 Rimuove l'intero blocco
+            }
+        }
+
+        const checkbox_attiva = document.querySelector('input[name="is_active"]');
+        if (checkbox_attiva) {
+            checkbox_attiva.checked = true;
+        }
+
+        CSContentCopier.bindLiveCopy('#edit-email', '#edit-username');
+
+        ToggleVisibility.toggle('#user_list', '#user_edit');
+        FormValidatorManager.init('profile-form', {
+            'email': {
+                validators: {
+                    notEmpty: { message: 'Email richiesta' },
+                    emailAddress: { message: 'Email non valida' }
+                }
+            },
+            'first_name': {
+                validators: {
+                    notEmpty: { message: 'Nome richiesto' },
+                    // emailAddress: { message: 'Email non valida' }
+                }
+            },
+            'last_name': {
+                validators: {
+                    notEmpty: { message: 'Cognome richiesto' },
+                    // emailAddress: { message: 'Email non valida' }
+                }
+            },
+            'role_select_edit': {
+                validators: {
+                    callback: {
+                        message: 'Selezionare almeno un ruolo',
+                        callback: function (input) {
+                            console.log(input)
+                            // Get the selected options
+                            const colorField = jQuery(document.getElementById('role_select_edit'));
+                            const options = colorField.select2('data');
+                            return options !== null && options.length >= 1 ;
+                            // return options !== null && options.length >= 2 && options.length <= 4;
+                        },
+                    },
+                }
+            },
+            'company_select_edit': {
+                validators: {
+                    notEmpty: { message: 'Selezionare una società' },
+                    // callback: {
+                    //     message: 'Selezionare una società',
+                    //     callback: function (input) {
+                    //         // Get the selected options
+                    //         console.log(input)
+                    //         const options = colorField.select2('data');
+                    //         return options !== null && options.length >= 1 ;
+                    //         // return options !== null && options.length >= 2 && options.length <= 4;
+                    //     },
+                    // },
+                }
+            },
+            'password': {
+                validators: {
+                    notEmpty: {
+                        message: "La password è obbligatoria."
+                    },
+                    callback: {
+                        message: 'Inserici una password sicura.',
+                        callback: function (input) {
+                            const confirmValue = input.value;
+                            const confirmEl = input.elements[0];  // Prende l'elemento DOM reale
+                            if (confirmValue.length === 0) {
+                                return true
+                            }
+                            return check_password_new.getScore() >= 25
+                        }
+                    }
+                }
+            },
+        },["role_select_edit","company_select_edit"]);
+       
+
+        if(id){
+            const myfilter = { uid: id };
+            getUsersNow(myfilter).then(users => {
+                const user = users[0];
+                const values = {
+                    first_name: user.first_name,
+                    last_name: user.last_name,
+                    phone: user.phone,
+                    email: user.email,
+                    username: user.username,
+                    uid: user.uid,
+                    is_email_confirmed: user.is_email_confirmed,
+                    is_active: user.is_active,
+                    avatar_url: user.avatar_url
+                };
+                console.log(user.avatar_url)
+                populateFormFields(values);
+                setDataInSelect(user.role_names, '#role_select_edit');
+                // setDataInSelect([user.company_uid], '#company_select_edit');
+                CSSelect2Loader.setValueIfExists('#company_select_edit', [user.company_uid]);
+                setImageInputPreview('avatar_image', user.avatar_url)
+            });
+        }else{
+            setImageInputPreview('avatar_image', null)
+        }
+    }
+
+
+    function handleEdit(id, el) {
+        const pulsate_elimina = document.querySelector('[cs-action-toggle="delete_form"]');
+        if (pulsate_elimina) {
+            const btnGroup = pulsate_elimina.closest('.btn_group');
+            if (btnGroup) {
+                btnGroup.classList.remove('d-none');
+            }
+            // pulsate_elimina.classList.remove('d-none');  
+        }
+        const checkbox_email = document.querySelector('input[name="is_email_confirmed"]');
+        if (checkbox_email) {
+            const colContainer = checkbox_email.closest('.col-2.mb-10');
+            if (colContainer) {
+                colContainer.classList.remove('d-none');   // 🔥 Rimuove l'intero blocco
+            }
+        }
+        const uid = document.querySelector('input[name="uid"]');
+        if (uid) {
+            const colContainer = uid.closest('.col-4.mb-10');
+            if (colContainer) {
+                colContainer.classList.remove('d-none');   // 🔥 Rimuove l'intero blocco
+            }
+        }
+        const password = document.querySelector('#edit-password');
+        if (password) {
+            const colContainer = password.closest('.col-4.mb-10');
+            if (colContainer) {
+                colContainer.classList.add('d-none');   // 🔥 Rimuove l'intero blocco
+            }
+        }
+
+        const password_button = document.querySelector('[cs-action-toggle="modal_password"]');
+        if (password_button) {
+            const colContainer = password_button.closest('.col-2.mb-10');
+            if (colContainer) {
+                colContainer.classList.remove('d-none');   // 🔥 Rimuove l'intero blocco
+            }
+        }
+        ToggleVisibility.toggle('#user_list', '#user_edit');
+        CSContentCopier.bindLiveCopy('#edit-email', '#edit-username');
+        FormValidatorManager.init('profile-form', {
+            'email': {
+                validators: {
+                    notEmpty: { message: 'Email richiesta' },
+                    emailAddress: { message: 'Email non valida' }
+                }
+            },
+            'first_name': {
+                validators: {
+                    notEmpty: { message: 'Nome richiesto' },
+                    // emailAddress: { message: 'Email non valida' }
+                }
+            },
+            'last_name': {
+                validators: {
+                    notEmpty: { message: 'Cognome richiesto' },
+                    // emailAddress: { message: 'Email non valida' }
+                }
+            },
+            'role_select_edit': {
+                validators: {
+                    callback: {
+                        message: 'Selezionare almeno un ruolo',
+                        callback: function (input) {
+                            console.log(input)
+                            // Get the selected options
+                            const colorField = jQuery(document.getElementById('role_select_edit'));
+                            const options = colorField.select2('data');
+                            return options !== null && options.length >= 1 ;
+                            // return options !== null && options.length >= 2 && options.length <= 4;
+                        },
+                    },
+                }
+            },
+            'company_select_edit': {
+                validators: {
+                    notEmpty: { message: 'Selezionare una società' },
+                    // callback: {
+                    //     message: 'Selezionare una società',
+                    //     callback: function (input) {
+                    //         // Get the selected options
+                    //         console.log(input)
+                    //         const options = colorField.select2('data');
+                    //         return options !== null && options.length >= 1 ;
+                    //         // return options !== null && options.length >= 2 && options.length <= 4;
+                    //     },
+                    // },
+                }
+            },
+        },["role_select_edit","company_select_edit"]);
+       
+
+        if(id){
+            const myfilter = { uid: id };
+            getUsersNow(myfilter).then(users => {
+                const user = users[0];
+                const values = {
+                    first_name: user.first_name,
+                    last_name: user.last_name,
+                    phone: user.phone,
+                    email: user.email,
+                    username: user.username,
+                    uid: user.uid,
+                    is_email_confirmed: user.is_email_confirmed,
+                    is_active: user.is_active,
+                    avatar_url: user.avatar_url
+                };
+                console.log(user.avatar_url)
+                populateFormFields(values);
+                setDataInSelect(user.role_names, '#role_select_edit');
+                // setDataInSelect([user.company_uid], '#company_select_edit');
+                CSSelect2Loader.setValueIfExists('#company_select_edit', [user.company_uid]);
+                setImageInputPreview('avatar_image', user.avatar_url)
+            });
+        }else{
+            setImageInputPreview('avatar_image', null)
+        }
+    }
+
+    function handleSaveForm(id, el) {
+        const form = document.getElementById('profile-form');
+        const formData = new FormData(form);
+        const data = Object.fromEntries(formData.entries());
+        const select_role_data = getSelectedOptionsRoles('role_select_edit');
+        const select_company_data = getSelectedOptions('company_select_edit','testi');
+  
+        data.roles = select_role_data;
+        data.company = select_company_data;
+
+        const base64_avatar = getBase64FromBackgroundImage('avatar_image')
+        
+        if(base64_avatar && base64_avatar.startsWith('data:image/') ){
+            data.base64_avatar = base64_avatar
+        }
+        const uid = data.uid;
+        console.log(data)
+        // Inizializzazione
+
+
+        // Verifica
+        FormValidatorManager.check('profile-form', function(isValid) {
+            if (isValid) {
+                if(uid){
+                    //Aggiorno i dati
+                    apiCall(`/api/users/${uid}`, {
+                        method: 'PUT',
+                        body: JSON.stringify(data),
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    })
+                    .then(response => {
+                        Swal.fire({
+                            title: response.message,
+                            icon: response.status,
+                            showConfirmButton: false,
+                            timer: 2000,
+                            timerProgressBar: true,
+                            customClass: { confirmButton: "btn btn-primary" }
+                        });
+                    })
+                    .catch(error => {
+                        Swal.fire({
+                            title: 'Errore',
+                            text: error.message,
+                            icon: 'error',
+                            showConfirmButton: false,
+                            timer: 3000,
+                            timerProgressBar: true,
+                            customClass: { confirmButton: "btn btn-danger" }
+                        });
+                    });
+                }else{
+                    //Salvo i dati
+                    apiCall(`/api/users`, {
+                        method: 'POST',
+                        body: JSON.stringify(data),
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    })
+                    .then(response => {
+                        Swal.fire({
+                            title: response.message,
+                            icon: response.status,
+                            showConfirmButton: false,
+                            timer: 2000,
+                            timerProgressBar: true,
+                            customClass: { confirmButton: "btn btn-primary" }
+                        });
+                    })
+                    .catch(error => {
+                        Swal.fire({
+                            title: 'Errore',
+                            text: error.message,
+                            icon: 'error',
+                            showConfirmButton: false,
+                            timer: 3000,
+                            timerProgressBar: true,
+                            customClass: { confirmButton: "btn btn-danger" }
+                        });
+                    });
+            }
+            }else{
+                Swal.fire({
+                        title: 'Errore',
+                        text: "Alcuni campi non sono compilati correttamente",
+                        icon: 'error',
+                        showConfirmButton: false,
+                        timer: 3000,
+                        timerProgressBar: true,
+                        customClass: { confirmButton: "btn btn-danger" }
+                    });
+            }
+        });
+    }
+
+    function handleDelete(id, el) {
+        Swal.fire({
+                title: 'Conferma eliminazione!',
+                html: `Stai per eliminare questo utente, sei sicuro?`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Procedi',
+                cancelButtonText: "Chiudi",
+                buttonsStyling: false,
+                customClass: {
+                    confirmButton: "btn btn-danger",
+                    cancelButton: "btn btn-light"
+                }
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    let uid = document.getElementById('edit-uid').value
+                    const data = {
+                        is_active: false,
+                    }
+                    // Reindirizza all'action_url
+                    // alert(uid)
+                    apiCall(`/api/users/${uid}`, {
+                        method: 'PUT',
+                        body: JSON.stringify(data),
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    })
+                    .then(response => {
+                        Swal.fire({
+                            title: response.message,
+                            icon: response.status,
+                            showConfirmButton: false,
+                            timer: 2000,
+                            timerProgressBar: true,
+                            customClass: { confirmButton: "btn btn-primary" }
+                        });
+                    })
+                    .catch(error => {
+                        Swal.fire({
+                            title: 'Errore',
+                            text: error.message,
+                            icon: 'error',
+                            showConfirmButton: false,
+                            timer: 3000,
+                            timerProgressBar: true,
+                            customClass: { confirmButton: "btn btn-danger" }
+                        });
+                    });
+                }
+            });
+    }
+
+    function handleView(id, el) {
+        console.log('🔍 View:', id);
+    }
+
+    function handleReturnList(id, el) {
+        resetFormElements('profile-form')
+        ToggleVisibility.toggle('#user_list', '#user_edit');
+        UserTableManager.reload();
+    }
+
+    function handleResetForm(id, el) {
+        id = document.getElementById('edit-uid').value;
+        resetFormElements('profile-form')
+        if(id){
+            const myfilter = { uid: id }
+            getUsersNow(myfilter).then(users => {
+                const user = users[0];
+                const values = {
+                    first_name: user.first_name,
+                    last_name: user.last_name,
+                    phone: user.phone,
+                    email: user.email,
+                    username: user.username,
+                    uid: user.uid,
+                    is_email_confirmed: user.is_email_confirmed,
+                    is_active: user.is_active
+                };
+                // document.getElementById('profile-form').reset(); 
+                
+                populateFormFields(values);
+                setDataInSelect(user.role_names, '#role_select_edit');
+                // setDataInSelect([user.company_uid], '#company_select_edit');
+                CSSelect2Loader.setValueIfExists('#company_select_edit', [user.company_uid]);
+                setImageInputPreview('avatar_image', user.avatar_url)
+            });
+        }
+        // ToggleVisibility.toggle('#user_list', '#user_edit');
+    }
+
+    function handleResetFilter(id, el) {
+        // resetFormElements('table_filter')
+        const resetButton = document.querySelector('button[type="reset"]');
+        const selectRole = $('#role_select');
+        const userStatus = document.getElementById('user_status');
+        const emailStatus = document.getElementById('email_status');
+
+        if (resetButton) {
+            // Reset select2
+            if (selectRole.length) {
+                selectRole.val(null).trigger('change'); // svuota selezione
+            }
+
+            // Reset checkbox
+            if (userStatus) {
+                userStatus.checked = true;
+            }
+            if (emailStatus) {
+                emailStatus.checked = true;
+            }
+            // (Opzionale) reset variabili di filtro
+            if (typeof currentFilters !== 'undefined') {
+                currentFilters.is_active = true;
+                currentFilters.is_email_confirmed = true;
+                currentFilters.role_names = null;
+                console.log('🔁 Filtro resettato:', currentFilters);
+            }
+
+            // (Opzionale) ricarica tabella
+            if (typeof UserTableManager !== 'undefined') {
+                UserTableManager.reload();
+            }
+        }
+    }
+
+    function handleModalPassword(id, el) {
+        modal_password.open()
+        // CSFormControl_password.init()
+            //Controllo sicurezza password
+        
+        modal_password.onClose(function(){
+            resetFormElements('change_password')
+        })
+        
+        FormValidatorManager.init('change_password', {
+            'password': {
+                validators: {
+                    notEmpty: {
+                        message: "La password è obbligatoria."
+                    },
+                    callback: {
+                        message: 'Inserici una password sicura.',
+                        callback: function (input) {
+                            const confirmValue = input.value;
+                            const confirmEl = input.elements[0];  // Prende l'elemento DOM reale
+                            if (confirmValue.length === 0) {
+                                return true
+                            }
+                            return check_password.getScore() >= 25
+                        }
+                    }
+                }
+            },
+            'confirm_password': {
+                validators: {
+                    notEmpty: {
+                        message: 'La password di conferma è obbligatoria.'
+                    },
+                    callback: {
+                        message: 'Le due password non sono uguali.',
+                        callback: function (input) {
+                            const confirmValue = input.value;
+                            const confirmEl = input.elements[0]; 
+                            const passwordEl = confirmEl.form.querySelector('[name="password"]');
+                            const passwordValue = passwordEl ? passwordEl.value : '';
+                            // Mostra errore solo se l'utente ha scritto qualcosa
+                            if (confirmValue.length === 0) {
+                                return true; // Evita conflitto con notEmpty
+                            }
+
+                            return confirmValue === passwordValue;
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    function handleUpdatePassword(id, el) {
+        FormValidatorManager.check('change_password', function(isValid) {
+            if (isValid) {
+                uid = document.getElementById('edit-uid').value;
+                formElement = document.querySelector("#change_password");
+
+                el.setAttribute("data-kt-indicator", "on");
+                el.disabled = true;
+
+                const form = formElement //document.getElementById('register');
+                const formData = new FormData(form);
+                const data = Object.fromEntries(formData.entries());
+
+                el.setAttribute("data-kt-indicator", "off");
+                el.disabled = false;
+                
+                apiCall(`/api/users/${uid}/reset-password`, {
+                    method: 'POST',
+                    body: JSON.stringify(data),
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                })
+                .then(response => {
+                    Swal.fire({
+                        title: response.message,
+                        icon: response.status,
+                        showConfirmButton: false,
+                        timer: 2000,
+                        timerProgressBar: true,
+                        customClass: { confirmButton: "btn btn-primary" }
+                    });
+                    resetFormElements('change_password')
+                    modal_password.close();
+                })
+                .catch(error => {
+                    Swal.fire({
+                        title: 'Errore',
+                        text: error.message,
+                        icon: 'error',
+                        showConfirmButton: false,
+                        timer: 3000,
+                        timerProgressBar: true,
+                        customClass: { confirmButton: "btn btn-danger" }
+                    });
+                });
+            }else{
+                Swal.fire({
+                        title: 'Errore',
+                        text: "Alcuni campi non sono compilati correttamente",
+                        icon: 'error',
+                        showConfirmButton: false,
+                        timer: 3000,
+                        timerProgressBar: true,
+                        customClass: { confirmButton: "btn btn-danger" }
+                    });
+            }
+        });
+    }
+
+    return {
+        init
+    };
+})();
+
+
+//Get avatar base64 data
+function getBase64FromBackgroundImage(elementId) {
+    const el = document.getElementById(elementId);
+    if (!el) return null;
+
+    const bg = el.querySelector('.image-input-wrapper')?.style.backgroundImage || '';
+    // const match = bg.match(/url\("data:image\/[^;]+;base64,([^"]+)"\)/);
+    const match = bg.match(/url\("([^"]+)"\)/);
+    return match ? match[1] : null;
+}
+
+
+//Imposta l'immagine di preview dell'avatar
+function setImageInputPreview(imageInputId, imageUrl) {
+    const imageInput = document.getElementById(imageInputId);
+    if (!imageInput) return;
+
+    const wrapper = imageInput.querySelector('.image-input-wrapper');
+    if (!wrapper) return;
+
+    // 🕵️‍♂️ Se l'immagine è vuota o null o undefined
+    if (!imageUrl) {
+        imageInput.classList.add('image-input-placeholder');
+        wrapper.style.setProperty('background-image', `url('')`, 'important');
+
+        imageInput.classList.remove('image-input-changed');
+        imageInput.classList.add('image-input-empty');
+        return;
+    }
+
+    // 🌐 Verifica se è un URL assoluto
+    const isAbsoluteUrl = imageUrl.startsWith('http://') || imageUrl.startsWith('https://') || imageUrl.startsWith('data:image/') 
+
+    if (!isAbsoluteUrl) {
+        // ✅ Immagine esterna o già completa
+        // imageInput.style.backgroundImage = `url('${imageUrl}')`;
+        wrapper.style.setProperty('background-image', `url('${imageUrl}')`, 'important');
+        imageInput.classList.add('image-input-changed');
+        imageInput.classList.remove('image-input-empty');
+    } else {
+        // 🔁 Immagine interna al tuo sito, es. da /static
+        // const finalUrl = `${window.location.origin}${imageUrl}`;
+        wrapper.style.backgroundImage = `url('${imageUrl}')`;
+        imageInput.classList.add('image-input-changed');
+        imageInput.classList.remove('image-input-empty');
+    }
+    // // 🖼️ Imposta immagine personalizzata
+    // wrapper.style.setProperty('background-image', `url('${imageUrl}')`, 'important');
+    // imageInput.classList.add('image-input-changed');
+    // imageInput.classList.remove('image-input-empty');
+}
+
+
+//Recupero le informaizoni di un utente tramite un filtro
+async function getUsersNow(filter) {
+    const users = await getUsersList_datatables(filter);
+    // console.log(users); // qui hai i dati
+    return users;
+}
+
+
+//Popola i campi di un form
+function populateFormFields(values) {
+    if (typeof values !== 'object' || values === null) return;
+
+    Object.entries(values).forEach(([name, value]) => {
+        const field = document.querySelector(`[name="${name}"]`);
+        if (!field) return;
+
+        const tag = field.tagName.toLowerCase();
+        const type = field.type?.toLowerCase();
+
+        if (tag === 'input' || tag === 'textarea' || tag === 'select') {
+            if (type === 'checkbox') {
+                field.checked = !!value;
+            } else if (type === 'radio') {
+                // Se ci sono più radio con stesso name
+                const radios = document.querySelectorAll(`input[name="${name}"]`);
+                radios.forEach(r => r.checked = r.value == value);
+            } else {
+                field.value = value;
+            }
+        }
+    });
+}
+
+
+//Caricamento immagine
+const ImageUploaderHandler = (function () {
+    let inputFile = null;
+
+    function handleImageChange(e) {
+        const file = e.target.files[0];
+        if (!file || !file.type.startsWith("image/")) {
+            console.warn("⚠️ File non valido");
+            return;
+        }
+
+        console.log("✅ File caricato:", file.name, file.size, file.type);
+
+        const reader = new FileReader();
+        reader.onload = function (e) {
+            const base64 = e.target.result;
+            console.log("📷 Immagine in base64:", base64);
+
+            // Inserisci l'immagine nel preview
+            document.getElementById("avatar_image_preview").src = base64;
+
+            // Imposta la callback per il modal editor
+            modal_image_editor.onOpen_callback(function () {
+                image_editor_script("avatar_image_preview");
+            });
+
+            // Apri il modal editor
+            modal_image_editor.open();
+        };
+
+        reader.readAsDataURL(file);
+    }
+
+    return {
+        init: function (containerId = "avatar_image") {
+            const container = document.getElementById(containerId);
+            if (!container) {
+                console.error(`❌ Contenitore con id '${containerId}' non trovato.`);
+                return;
+            }
+
+            // Recupera l'input file interno
+            inputFile = container.querySelector("input[type='file']");
+            if (!inputFile) {
+                console.error(`❌ input[type='file'] non trovato nel contenitore '${containerId}'`);
+                return;
+            }
+
+            inputFile.addEventListener("change", handleImageChange);
+
+            // Pulisci il preview al close del modal
+            modal_image_editor.onClose(function () {
+                document.getElementById("avatar_image_preview").src = "";
+            });
+
+            console.log(`✅ ImageUploaderHandler inizializzato su #${containerId}`);
+        }
+    };
+})();
+
+
+
+//Permette di ritagliare un immagine
+function image_editor_script(id) {
+    var Cropper = window.Cropper;
+    var URL = window.URL || window.webkitURL;
+    var cropper = null;
+    var uploadedImageURL;
+    var uploadedImageType = 'image/jpeg';
+    var uploadedImageName = 'cropped.jpg';
+    var image = document.getElementById(id);
+    var inputImage = document.getElementById('inputImage');
+    var download = document.getElementById('download'); // se esiste
+
+    if (!image) {
+        console.error(`❌ Elemento con id '${id}' non trovato.`);
+        return;
+    }
+
+    const options = {
+        aspectRatio: 1 / 1,
+        preview: '.img-preview-new',
+        ready: e => console.log(e.type),
+        cropstart: e => console.log(e.type, e.detail.action),
+        cropmove: e => console.log(e.type, e.detail.action),
+        cropend: e => console.log(e.type, e.detail.action),
+        crop: e => {},
+        zoom: e => console.log(e.type, e.detail.ratio),
+    };
+
+    // Se immagine già presente (es. da base64 FileReader)
+    if (image.src.startsWith('data:image')) {
+        if (image.complete && image.naturalWidth !== 0) {
+            cropper = new Cropper(image, options);
+        } else {
+            image.onload = function () {
+                cropper = new Cropper(image, options);
+            };
+        }
+    }
+
+    // Input per nuovo caricamento immagine
+    if (inputImage && URL) {
+        inputImage.onchange = function () {
+            const files = this.files;
+            if (!files || !files.length) return;
+
+            const file = files[0];
+            if (!/^image\/\w+/.test(file.type)) {
+                alert('Hai selezionato un file non valido.');
+                return;
+            }
+
+            uploadedImageType = file.type;
+            uploadedImageName = file.name;
+
+            if (uploadedImageURL) {
+                URL.revokeObjectURL(uploadedImageURL);
+            }
+
+            uploadedImageURL = URL.createObjectURL(file);
+
+            if (cropper) {
+                cropper.destroy();
+                cropper = null;
+            }
+
+            image.onload = function () {
+                cropper = new Cropper(image, options);
+            };
+            image.src = uploadedImageURL;
+            inputImage.value = null;
+        };
+    }
+
+    // Pulsanti strumenti
+    const docsButtons = document.querySelector('.docs-buttons');
+    if (docsButtons) {
+        docsButtons.onclick = function (event) {
+            let target = event.target;
+            while (target && target !== this && !target.getAttribute('data-method')) {
+                target = target.parentNode;
+            }
+            if (!target || !cropper) return;
+
+            const data = {
+                method: target.getAttribute('data-method'),
+                option: target.getAttribute('data-option'),
+                secondOption: target.getAttribute('data-second-option'),
+                target: target.getAttribute('data-target')
+            };
+
+            let input = data.target ? document.querySelector(data.target) : null;
+            if (input && !data.option) {
+                try {
+                    data.option = JSON.parse(input.value);
+                } catch {}
+            }
+
+            let result = cropper[data.method](data.option, data.secondOption);
+
+            switch (data.method) {
+                case 'getCroppedCanvas':
+                    if (result && download) {
+                        download.href = result.toDataURL(uploadedImageType);
+                        download.download = uploadedImageName;
+                    }
+                    break;
+                case 'rotate': cropper.crop(); break;
+                case 'scaleX':
+                case 'scaleY':
+                    target.setAttribute('data-option', -data.option);
+                    break;
+                case 'destroy':
+                    cropper = null;
+                    if (uploadedImageURL) {
+                        URL.revokeObjectURL(uploadedImageURL);
+                        image.src = '';
+                    }
+                    break;
+            }
+
+            if (typeof result === 'object' && input) {
+                input.value = JSON.stringify(result);
+            }
+        };
+    }
+
+    // Distruggi il cropper alla chiusura
+    $('#image_editor').on('hidden.bs.modal', function () {
+        if (cropper) {
+            cropper.destroy();
+            cropper = null;
+        }
+    });
+
+    document.getElementById('inserisci_avatar').addEventListener('click', function () {
+        const canvas = cropper.getCroppedCanvas({
+            width: 250,
+            height: 250,
+        });
+        const croppedBase64 = canvas.toDataURL('image/jpeg');
+        const wrapper = document.querySelector('#avatar_image .image-input-wrapper');
+        if (wrapper) {
+            wrapper.style.backgroundImage = `url("${croppedBase64}")`;
+        }
+        modal_image_editor.close()
+    })
+    
+}
+
+
+//Gestione componente AVATAR image
+function initCustomImageInput(containerId) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+
+    const wrapper = container.querySelector('.image-input-wrapper');
+    const inputFile = container.querySelector('input[type="file"]');
+    const btnCancel = container.querySelector('[data-kt-image-input-action="cancel"]');
+    const btnRemove = container.querySelector('[data-kt-image-input-action="remove"]');
+
+    let originalImage = wrapper.style.backgroundImage;
+    let currentImage = null;
+
+    // 🟢 Cambio immagine
+    inputFile?.addEventListener('change', function () {
+        const file = this.files[0];
+        if (!file || !file.type.startsWith('image/')) return;
+
+        const reader = new FileReader();
+        reader.onload = function (e) {
+            currentImage = e.target.result;
+            wrapper.style.backgroundImage = `url('${currentImage}')`;
+            container.classList.add('image-input-changed');
+            container.classList.remove('image-input-empty');
+        };
+        reader.readAsDataURL(file);
+    });
+
+    // 🔴 Annulla: resetta all'immagine originale
+    btnCancel?.addEventListener('click', function () {
+        if (originalImage) {
+            wrapper.style.backgroundImage = originalImage;
+        } else {
+            wrapper.style.removeProperty('background-image');
+            container.classList.add('image-input-empty');
+        }
+        inputFile.value = '';
+        currentImage = null;
+        container.classList.remove('image-input-changed');
+    });
+
+    // ❌ Rimuovi: elimina completamente l'immagine
+    btnRemove?.addEventListener('click', function () {
+        wrapper.style.removeProperty('background-image');
+        inputFile.value = '';
+        currentImage = null;
+        container.classList.remove('image-input-changed');
+        container.classList.add('image-input-empty');
+    });
+
+    // 🚦 Stato iniziale
+    if (!wrapper.style.backgroundImage || wrapper.style.backgroundImage === 'none') {
+        container.classList.add('image-input-empty');
+    }
+}
+
+
+
+
+//Inizializza tutto al completo caricamento del DOM
+KTUtil.onDOMContentLoaded(function () {
+    //Inizializzo i tooltip
+    initTooltips();
+
+    //Inizianizzo la tabella
+    UserTableManager.init(currentFilters);
+    const user_tables = UserTableManager.getTable();
+
+    //Inizializzo la ricerca
+    let searchManager = CSTableSearchManager('[data-kt-docs-table-filter="search"]', user_tables);
+    searchManager.setPlaceholder('Cerca...');
+    searchManager.init();
+
+    //Inizializzo i filtri select
+    RoleSelectFilter.init();
+    CheckboxFilterHandler.init();
+
+    //Gestione modal immagine avatar
+    modal_image_editor = CSModalManager('#image_editor',{keyboard: false, backdrop: 'static'})
+    modal_image_editor.init()
+    ImageUploaderHandler.init();
+    initCustomImageInput('avatar_image');
+
+
+    check_password = CSPasswordMeter('#password')
+    check_password.init();
+
+    check_password_new = CSPasswordMeter('#check_password_new')
+    check_password_new.init();
+    // CSFormControl_password.init()
+    
+    //Gestione modal cambio password
+    modal_password = CSModalManager('#modal_change_password')
+    modal_password.init();
+    // GestioneAzioni.init();
+
+    CSSelect2Loader.init(
+        '#company_select_edit',
+        '/api/companies',
+        { method: 'GET' },
+        null, // nessun valore attivo iniziale
+        item => ({ id: item.uid, text: item.nome_societa }), {
+            allowClear: 'true',
+        },true
+    );
+
+    
+    
+
+    //     $('#image_editor').on('shown.bs.modal', function () {
+    //     const image = document.getElementById('avatar_image_preview');
+    //     if (image.src.startsWith('data:image')) {
+    //         cropper = new Cropper(image, {
+    //         aspectRatio: 1,
+    //         viewMode: 1
+    //         });
+    //     }
+    // });
+    // CheckboxSummaryManager.init();    
+});
+
+
+
+</script>
+{% endblock %}

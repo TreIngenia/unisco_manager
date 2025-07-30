@@ -1,0 +1,978 @@
+{% extends 'base_secure.html' %}
+{% block title %}>{% endblock %}
+{% block toolbar %}
+<div class=" align-items-center gap-2">
+    <div class="text-gray-700">Totale contratti: <span class="text-white" id="total-contracts">0</span></div>
+    <div class="text-gray-700">Ultimo aggiornamento: <span class="text-white" id="last-updated">-</span></div>
+</div>
+<div class="col-4">
+    <input type="text" id="mySearch" class="form-control form-control-sm" placeholder="Cerca...">
+</div>
+<div class="d-flex align-items-center gap-2">
+    <div class="btn-group">
+        <button id="edit_button" type="button" class="btn btn-sm btn-primary" ><i class="fa-solid fa-pen-to-square me-2 fs-3"></i>Modifica</button>
+        <button id="save_all" type="button" class="btn btn-sm btn-warning disabled" onclick="saveAllContracts()"><i class="fa-solid fa-floppy-disk me-2 fs-3"></i>Salva Tutti i Contratti</button>
+        <button id="reload" type="button" class="btn btn-sm btn-info" onclick="loadContracts('load')"><i class="fa-solid fa-arrows-rotate me-2 fs-3"></i>Ricarica Dati</button>
+    </div>
+</div>
+{% endblock %}     
+{% block content %}   
+<div id="kt_app_content" class="app-content  flex-column-fluid " >
+    <div id="kt_app_content_container" class="app-container  container-fluid ">
+        <div class="row">
+            <div class="col-md-4">
+                <div class="d-flex align-items-center bg-light-info rounded p-5 mb-7">
+                    <i class="fas fa-tags fs-2hx text-info me-5"><span class="path1"></span><span class="path2"></span></i>
+                    <div class="flex-grow-1 me-2">
+                        <span href="#" class="fw-bold text-gray-800 text-hover-info fs-6">Contratti totali</span>
+                        <span class="text-muted fw-semibold d-block">Tutti i contratti attivi nel CDR</span>
+                    </div>
+                    <span id="contratti_totali" class="fw-bold fs-2x text-info py-1">0</span>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="d-flex align-items-center bg-light-primary rounded p-5 mb-7">
+                    <i class="fas fa-tags fs-2hx text-primary me-5"><span class="path1"></span><span class="path2"></span></i>
+                    <div class="flex-grow-1 me-2">
+                        <span href="#" class="fw-bold text-gray-800 text-hover-primary fs-6">Contratti completi</span>
+                        <span class="text-muted fw-semibold d-block">Tutti i dati inseriti</span>
+                    </div>
+                    <span id="contrattiOK" class="fw-bold fs-2x text-primary py-1">0</span>
+                </div>
+            </div>
+            <!-- <div class="col-md-3">
+                <div class="d-flex align-items-center bg-light-warning rounded p-5 mb-7">
+                    <i class="fas fa-tags fs-2hx text-warning me-5"><span class="path1"></span><span class="path2"></span></i>
+                    <div class="flex-grow-1 me-2">
+                        <span href="#" class="fw-bold text-gray-800 text-hover-warning fs-6">Senza dati cliente</span>
+                        <span class="text-muted fw-semibold d-block">Senza dati del cliente</span>
+                    </div>
+                    <span id="NO_Cliente" class="fw-bold fs-2x text-warning py-1">0</span>
+                </div>
+            </div> -->
+            
+            <div class="col-md-4">
+                <div class="d-flex align-items-center bg-light-danger rounded p-5 mb-7">
+                    <i class="fas fa-tags fs-2hx text-danger me-5"><span class="path1"></span><span class="path2"></span></i>
+                    <div class="flex-grow-1 me-2">
+                        <span href="#" class="fw-bold text-gray-800 text-hover-danger fs-6">Contratti incompleti</span>
+                        <span class="text-muted fw-semibold d-block">Tutti i dati mancanti</span>
+                    </div>
+                    <span id="contrattiKO" class="fw-bold fs-2x text-danger py-1">0</span>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+                <form id="contracts-form">
+                    <div class="table-responsive">
+                        <table id="table_view" class="table table-rounded table-row-bordered border gy-5 gs-7 align-middle dataTable table-hover">
+                        </table>
+                        <table id="table_edit" class="table table-rounded table-row-bordered border gy-5 gs-7 align-middle dataTable table-hover">
+                        </table>
+                    </div>
+                </form>
+        </div>
+    </div>
+</div>
+<pre id="test"></pre>
+{% endblock %}
+
+{% block scripts %}
+ <script src="assets/plugins/custom/datatables/datatables.bundle.js"></script>
+ <script>
+    let contractsData = {};
+    let isEditMode = false;
+    let contractTypeOptions = [];
+    let odooclient = [];
+    let payment_terms = [];
+    let table_view = null;
+    let table_edit = null;
+    var target = document.querySelector("#kt_app_main"); 
+        var blockUI = new KTBlockUI(target);
+        if (blockUI.isBlocked()) {
+            blockUI.release();
+        } else {
+            blockUI.block();
+        }
+    // Carica contratti all'avvio
+    document.addEventListener('DOMContentLoaded', function() {
+        // loadSelectOptions();
+        loadContracts('load');
+        document.getElementById('edit_button').addEventListener('click', function () {
+                toggle_button('edit_button', 'fa-pen-to-square', 'fa-circle-xmark', 'Modifica', 'Fine modifica', 'loadContracts("load")', 'loadContracts("edit")');
+        });
+        // document.getElementById('reload').addEventListener('click', function () {
+        //      toggle_button('edit_button', 'fa-pen-to-square', 'fa-circle-xmark', 'Modifica', 'Fine modifica', 'loadContracts("load")', 'loadContracts("edit")');
+        // });
+    });
+    
+    async function CheckContracts() {
+        const response = await fetch('/api/contracts');
+        const json = await response.json();
+        const data = json.data
+        contractsData = data;
+        contOK = 0;
+        contNO_odoo_client_id = 0
+        contNO_contract_type = 0
+        const numeroContratti = Object.keys(data.contracts).length;
+
+        if(data){
+            for (const contractId in data.contracts) {
+                try {
+                    if (data.contracts.hasOwnProperty(contractId)) {
+                        const contract = data.contracts[contractId];  // CORRETTO QUI
+                        if(contract.contract_name != "" && contract.odoo_client_id != "" && contract.contract_type != ""){
+                            ++contOK
+                        }
+                        if(contract.odoo_client_id == "" || contract.odoo_client_id == undefined ){
+                            ++contNO_odoo_client_id
+                        }
+                        if(contract.contract_type == "" || contract.contract_type == undefined || contract.contract_type == null){
+                            ++contNO_contract_type
+                        }
+                    }
+                } catch (error) {
+                    console.error(`Errore durante la gestione del contratto ${contractId}:`, error);
+                    continue; // continua col prossimo contratto
+                }
+            }
+        }else{
+            callExtractContracts();
+        }
+        console.log(data)
+        document.getElementById('contrattiOK').textContent = contOK;
+        // document.getElementById('NO_Cliente').textContent = contNO_odoo_client_id;
+        document.getElementById('contratti_totali').textContent = numeroContratti
+        document.getElementById('contrattiKO').textContent = (contNO_contract_type > contNO_odoo_client_id) ? contNO_contract_type : contNO_odoo_client_id;
+        document.getElementById('total-contracts').textContent = json.contracts_count;
+        document.getElementById('last-updated').textContent = new Date(json.last_updated).toLocaleString('it-IT').replace(',',' - ');
+    }
+
+    async function loadContracts() {
+        CheckContracts()
+        // if (data.success) {
+        // contractsData = data.data;
+        if(isEditMode === true) {
+            $('#table_edit').removeClass('d-none');
+            $('#table_view').addClass('d-none');
+            $('#table_view').DataTable().clear().destroy();
+            loadSelectOptions_callback(function () {
+                edit_datatables('#table_edit');
+            });
+
+        } else {
+            $('#table_view').removeClass('d-none');
+            $('#table_edit').addClass('d-none');
+            $('#table_edit').DataTable().clear().destroy();
+            loadSelectOptions_callback(function () {
+                view_datatables('#table_view');
+            });
+        }
+
+    }
+
+    function toggle_button(id, icon1, icon2, text1, text2, action1, action2) {
+        
+        const this_button = document.getElementById('edit_button');
+        const icon = this_button.querySelector('i');
+        const isEdit = icon.classList.contains(icon1);
+
+        if (isEdit) {
+            if (blockUI.isBlocked()) {
+                blockUI.release();
+            } else {
+                blockUI.block();
+            }
+            isEditMode = true;
+            // Cambia in modalità "load"
+            icon.classList.replace(icon1, icon2);
+            this_button.innerHTML = `<i class="fas ${icon2}"></i> ${text2}`;
+            // this_button.setAttribute('onclick', action2);
+            loadContracts("edit");
+            
+        } else {
+            // Cambia in modalità "edit"
+            isEditMode = false;
+            icon.classList.replace(icon2, icon1);
+            this_button.innerHTML = `<i class="fas ${icon1}"></i> ${text1}`;
+            // this_button.setAttribute('onclick', action2);
+            loadContracts("load"); 
+        }
+    }
+    
+    /**Funzione che abilita DataTables per la tabella specificata */
+
+    function view_datatables(id){
+        if ( $.fn.DataTable.isDataTable(id) ) {
+            $(id).DataTable().clear().destroy();
+        }
+        const save_all_button = document.getElementById('save_all');
+        save_all_button.classList.add('disabled');
+
+        table_view = new DataTable(id,{
+            destroy: true,
+            responsive: true,
+            pageLength: 10,
+            lengthMenu: [ [10, 25, 50, -1], [10, 25, 50, "Tutti"] ],
+            //Ordine Colonne
+            "columns": [
+                {   
+                    data: "contract_code",
+                    title: "Contr. N.",
+                    width: "7%", orderable: true, searchable: true, visible: true, className: "align-middle", responsivePriority: 1, targets: 0,
+                    "render": function ( data, type, row ) {
+                        // var date_db = moment(data).format('DD/MM/YYYY - HH:mm:ss');
+                        return data;
+                    },
+                },
+                {   
+                    data: "cliente_finale_comune",
+                    title: "Cliente CDR",
+                    width: "18%", orderable: true, searchable: true, visible: true, className: "align-middle", responsivePriority: 1, targets: 0,
+                    "render": function ( data, type, row ) {
+                        // var date_db = moment(data).format("DD/MM/YYYY - HH:mm");
+                        // telefono = recupera_numero_principale(data);
+                        // if (!Array.isArray(telefono) || telefono.length === 0) return "";
+
+                        // const primo = telefono[0];
+                        // const altri = telefono.slice(1).join("<br>");
+
+                        
+                        return data;
+
+                    },
+                },
+                {   
+                    data: "contract_name",
+                    title: "Cliente",
+                    width: "17%", orderable: true, searchable: true, visible: true, className: "align-middle", responsivePriority: 1, targets: 0,
+                    "render": function ( data, type, row ) {
+                        // return remove_char(data, '');
+                        return data
+                    },
+                },
+                {   
+                    data: "contract_type",
+                    title: "Tipo Sottoscrizione",
+                    width: "25%", orderable: true, searchable: true, visible: true, className: "align-middle", responsivePriority: 1, targets: 0,
+                    "render": function ( data, type, row ) {
+                        // var date_db = moment(data).format("DD/MM/YYYY - HH:mm");
+                        let html = getTextByIdFromResults(contractTypeOptions,data) ? getTextByIdFromResults(contractTypeOptions,data) : ""
+                        return html
+                    },
+                },
+                // {   
+                //     data: "payment_term",
+                //     title: "Modalità pagamento",
+                //     width: "15%", orderable: true, searchable: true, visible: true, className: "align-middle", responsivePriority: 1, targets: 0,
+                //     "render": function ( data, type, row ) {
+                //         // html = `
+                //         //     <select 
+                //         //         id="payment_term_${row.contract_code}" 
+                //         //         class="form-select form-select-sm payment_term-select" 
+                //         //         data-control="select2" 
+                //         //         data-dropdown-css-class="" 
+                //         //         data-placeholder="Seleziona tipologia" 
+                //         //         data-selected="${data || ''}"
+                //         //         data-hide-search="true">
+                //         //     </select> 
+                //         // `+
+                //         // payment_terms = JSON.parse(payment_terms)
+                //         // return getTextByIdFromResults(payment_terms,data)
+                //         html = getTextByIdFromResults(payment_terms,data) ? getTextByIdFromResults(payment_terms,data) : ""
+                //         return html
+                //     },
+                // },
+                {   
+                    data: "phone_number",
+                    title: "N. Telefono",
+                    width: "33%", orderable: true, searchable: true, visible: true, className: "align-middle", responsivePriority: 1, targets: 0,
+                    "render": function ( data, type, row ) {
+                        // var date_db = moment(data).format("DD/MM/YYYY - HH:mm");
+                        telefono = recupera_numero_principale(data);
+                        if (!Array.isArray(telefono) || telefono.length === 0) return "";
+
+                        // const primo = telefono[0];
+                        const altri = telefono.slice(0).join(" | ");
+
+                        if (altri === "") {
+                            return 'Nessuno';
+                        }
+                        return altri;
+                    },
+                },
+                {   
+                    data: "id", 
+                    title: "",
+                    width: "2%", orderable: true, searchable: true, visible: true, className: "align-middle", responsivePriority: 1, targets: 0,
+                    "render": function ( data, type, row ) {
+                        // var uid_rif = row['uid'];
+                        // //    return "<button class='text-white btn btn-block btn-secondary btn-xs' data-toggle='modal' data-link='dettagli.php?destinazione=utente&id_rif="+row[4]+"' data-id='" + row[4] +"' data-target='#ajax' >DETTAGLI</button>";
+                        // //    return "<a data-toggle='modal' data-link='dettagli.php?destinazione=utente&id_rif="+row[4]+"' data-id='" + row[4] +"' data-target='#ajax' ><i role='button' class='cursor-pointer fas  fa-search-plus' data-toggle='tooltip' title='Dettagli' ></i></a>";
+                        // return   `<div class="btn-group btn-group-sm">
+                        //                 <!--<button data-toggle='edit' data-id="${uid_rif}" id="edit" type="button" data-bs-toggle="tooltip" title="${text('MODIFICA')}" class="w-25px h-25px btn-icon btn btn-sm btn-warning float-right text-uppercase">
+                        //                     <i class="fas fa-pencil-alt text-light-warning"></i>
+                        //                 </button>-->
+                        //                 <button data-bs-toggle="block_modal" data-bs-target="#kt_modal_scrollable" data-link='' data-id="${data}" id="detail" type="button" data-bs-toggle="tooltip" title="${text('DETTAGLI')}"class="w-25px h-25px btn-icon btn btn-sm btn-primary float-right text-uppercase">
+                        //                         <i class="fas  fa-search-plus"></i>
+                        //                 </button>
+                        //             </div>`  ;
+                        return "";
+                    }  
+                },
+                {   
+                    data: "notes",
+                    className: 'd-none',
+                    orderable: false,
+                    defaultContent: ''
+                },
+            ],
+            //Ordina i record in modo crescente in base alla colonna 1
+            "order": [
+                [0, 'asc']
+            ],   
+
+            processing: true,
+            // serverSide: true,
+            searchDelay:250,
+            // Personalizzazioni richieste al db
+            
+            ajax:{ 
+                url: "/api/contracts/datatable/ajax",    
+                type: "GET",
+                dataSrc: 'data'         
+            },
+            
+            createdRow: function(row, data, dataIndex) {
+                $(row).addClass('cursor-pointer');
+            },
+            "initComplete": function(settings, json){
+                blockUI.release(); 
+
+                $('#mySearch').on('keyup', function () {
+                    table_view.search(this.value).draw();
+                });
+
+                $('#table_view tbody').off('click', 'tr').on('click', 'tr', function () {
+                    var tr = $(this).closest('tr');
+                    var row = table_view.row(tr);
+                
+                    if (row.child.isShown()) {
+                        // This row is already open - close it
+                        row.child.hide();
+                        tr.removeClass('shown');
+                    }
+                    else {
+                        // Open this row
+                        row.child(dettaglio_tabella(row.data()), 'bg-active-opacity-50 bg-secondary').show();
+                        tr.addClass('shown');
+                    }
+                });
+                
+                var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+                tooltipTriggerList.forEach(function (tooltipTriggerEl) {
+                    new bootstrap.Tooltip(tooltipTriggerEl);
+                });
+            }
+        })
+        
+
+
+    }
+
+    function dettaglio_tabella(d) {
+        // `d` is the original data object for the row
+        return (
+            '<dl>' +
+            '<dt>Note:</dt>' +
+            '<dd>' +
+            d.notes +
+            '</dl>'
+        );
+    }
+
+    function recupera_numero_principale(array) {
+
+        // Converti gli apici singoli in doppi per renderlo un JSON valido
+        let jsonCompatibile = array.replace(/'/g, '"');
+
+        // Esegui il parsing
+        let numeri = JSON.parse(jsonCompatibile);
+
+        return numeri
+    }
+    function edit_datatables(id){
+        if ( $.fn.DataTable.isDataTable(id) ) {
+            $(id).DataTable().clear().destroy();
+        }
+        const save_all_button = document.getElementById('save_all');
+        save_all_button.classList.remove('disabled');
+        table_edit = new DataTable(id,{
+            destroy: true,
+            responsive: true,
+            pageLength: 10,
+            lengthMenu: [ [10, 25, 50, -1], [10, 25, 50, "Tutti"] ],
+            //Ordine Colonne
+            "columns": [
+                {   
+                    data: "contract_code",
+                    title: "Contr. N.",
+                    width: "7%", orderable: true, searchable: true, visible: true, className: "align-middle", responsivePriority: 1, targets: 0,
+                    "render": function ( data, type, row ) {
+                        return data;
+                    },
+                },
+                {   
+                    data: "cliente_finale_comune",
+                    title: "Cliente CDR",
+                    width: "18%", orderable: true, searchable: true, visible: true, className: "align-middle", responsivePriority: 1, targets: 0,
+                    "render": function ( data, type, row ) {
+                        // telefono = recupera_numero_principale(data);
+                        // if (!Array.isArray(telefono) || telefono.length === 0) return "";
+
+                        // const primo = telefono[0];
+                        // const altri = telefono.slice(1).join("<br>");
+                        // const nome_societa = row['cliente_finale_comune']
+                        html = `<span class="#fs-1"> ${data || ''}</span>`
+                        return html;
+                    },
+                },
+                {   
+                    data: "contract_name",
+                    title: "Cliente",
+                    width: "17%", orderable: true, searchable: true, visible: true, className: "align-middle", responsivePriority: 1, targets: 0,
+                    "render": function ( data, type, row ) {
+                        // Salva il valore selezionato nei data attributes per uso successivo
+                        html = `
+                        <select 
+                            id="odoo_${row.contract_code}" 
+                            class="form-select form-select-sm odoo-select" 
+                            data-control="select2" 
+                            data-dropdown-css-class="" 
+                            data-placeholder="Seleziona cliente" 
+                            data-selected="${row.odoo_client_id || ''}"
+                            data-selected-text="${data || ''}"
+                            data-hide-search="false">
+                        </select>
+                        `
+                        return html
+                    },
+                },
+                {   
+                    data: "contract_type",
+                    title: "Tipo Sottoscrizione",
+                    width: "25%", orderable: true, searchable: true, visible: true, className: "align-middle", responsivePriority: 1, targets: 0,
+                    "render": function ( data, type, row ) {
+                        html = `
+                            <select 
+                                id="contracttype_${row.contract_code}" 
+                                class="form-select form-select-sm contract-type-select" 
+                                data-control="select2" 
+                                data-dropdown-css-class="" 
+                                data-placeholder="Seleziona tipologia" 
+                                data-selected="${data || ''}"
+                                data-hide-search="true">
+                            </select> 
+                        `
+                        return html
+                    },
+                },
+                // {   
+                //     data: "payment_term",
+                //     title: "Modalità pagamento",
+                //     width: "15%", orderable: true, searchable: true, visible: true, className: "align-middle", responsivePriority: 1, targets: 0,
+                //     "render": function ( data, type, row ) {
+                //         html = `
+                //             <select 
+                //                 id="payment_term_${row.contract_code}" 
+                //                 class="form-select form-select-sm payment_term-select" 
+                //                 data-control="select2" 
+                //                 data-dropdown-css-class="" 
+                //                 data-placeholder="Seleziona pagamento" 
+                //                 data-selected="${data || ''}"
+                //                 data-hide-search="true">
+                //             </select> 
+                //         `
+                //         return html
+                //     },
+                // },
+                {   
+                    data: "notes",
+                    title: "Note",
+                    width: "31%", orderable: true, searchable: true, visible: true, className: "align-middle", responsivePriority: 1, targets: 0,
+                    "render": function ( data, type, row ) {
+                        html = `
+                            <textarea id="notes_${row['contract_code']}" name="notes_${row['contract_code']}" 
+                                placeholder="Note aggiuntive" 
+                                rows="1" style="resize: vertical;" 
+                                class="form-control form-control-sm">${data || ''}</textarea>
+                        `
+                        return html;
+                    },
+                },
+                {   
+                    data: "id", 
+                    title: "",
+                    width: "2%", orderable: true, searchable: true, visible: true, className: "align-middle", responsivePriority: 1, targets: 0,
+                    "render": function ( data, type, row ) {
+                        html = `
+                            <button type="button" onclick="saveContract('${row['contract_code']}')" class="btn btn-icon btn-sm btn-primary">
+                                <i class="fa-solid fa-floppy-disk fs-2"></i>
+                                <span class="indicator-progress">
+                                    Attendi... 
+                                    <span class="spinner-border spinner-border-sm align-middle ms-2"></span>
+                                </span>
+                            </button>
+                        `
+                        return html;
+                    }  
+                },
+            ],
+            //Ordina i record in modo crescente in base alla colonna 1
+            "order": [
+                [0, 'asc']
+            ],   
+            select: {
+                style: 'multi',
+                selector: 'td:first-child input[type="checkbox"]',
+                className: 'row-selected'
+            },
+            processing: true,
+            searchDelay:10000,
+            
+            ajax:{ 
+                url: "/api/contracts/datatable/ajax",    
+                type: "GET",
+                dataSrc: 'data'         
+            },
+            
+            // Evento che si scatena ad ogni ridisegno della tabella (inclusi cambi pagina)
+            drawCallback: function (setting) {      
+                // Distruggi tutti i select2 esistenti prima di ricrearli
+                $('.contract-type-select.select2-hidden-accessible').select2('destroy');
+                $('.odoo-select.select2-hidden-accessible').select2('destroy');
+                $('.payment_term.select2-hidden-accessible').select2('destroy');
+
+                get_client_select();
+                get_subscription_select()
+            },
+            
+            "initComplete": function(settings, json){
+                // Distruggi tutti i select2 esistenti prima di ricrearli
+                $('.contract-type-select.select2-hidden-accessible').select2('destroy');
+                $('.odoo-select.select2-hidden-accessible').select2('destroy');
+                $('.payment_term.select2-hidden-accessible').select2('destroy');
+
+                get_client_select();
+                get_subscription_select()
+                // Distruggi tutti i select2 esistenti prima di ricrearli
+                // $('.contract-type-select.select2-hidden-accessible').select2('destroy');
+                // $('.odoo-select.select2-hidden-accessible').select2('destroy');
+                // $('.payment_term.select2-hidden-accessible').select2('destroy');
+
+                // // Inizializza select per clienti Odoo
+                
+                
+                // // $.getJSON('api/subscriptions/select', function (data) {
+                // //     contractTypeOptions = data.results;
+                // // }),
+                // // Inizializza select per tipo contratto
+                // get_client_select();
+                // get_subscription_select()
+                // $('[data-control="select2"]').each(function () {});
+                
+
+                // $('.contract-type-select').each(function () {
+                //     const $select = $(this);
+                //     const selectedValue = $select.data('selected');
+                    
+                //     // Inizializza select2
+                //     $select.select2({
+                //         data: contractTypeOptions,
+                //         allowClear: true
+                //     });
+                    
+                //     // Imposta il valore selezionato
+                //     if (selectedValue && selectedValue !== '') {
+                //         // Verifica che il valore esista nelle opzioni
+                //         const optionExists = contractTypeOptions.some(opt => 
+                //             opt.id == selectedValue || opt.text == selectedValue
+                //         );
+                        
+                //         if (optionExists) {
+                //             $select.val(selectedValue).trigger('change.select2');
+                //         } else {
+                //             console.warn(`Valore non trovato nelle opzioni tipo contratto: ${selectedValue}`);
+                //             $select.val(null).trigger('change.select2');
+                //         }
+                //     } else {
+                //         $select.val(null).trigger('change.select2');
+                //     }
+                // });
+                blockUI.release(); 
+                $('#mySearch').on('keyup', function () {
+                    table_edit.search(this.value).draw();
+                });
+            }
+        });
+    }
+
+    function get_subscription_select(){
+        $('.contract-type-select').each(function () {
+            const $select = $(this);
+            const selectedValue = $select.data('selected');
+            const id = $select.attr('id'); // es: "contracttype_14"
+            const contractCode = id.split('_')[1];
+
+            const contract = contractsData.contracts[contractCode];
+            const partnerId = contract?.odoo_client_id;
+
+            // Filtro le opzioni valide solo per quel cliente
+            const filteredOptions = contractTypeOptions.filter(opt => opt.partner.id == partnerId);
+
+            // Inizializza select2 con opzioni filtrate
+            $select.select2({
+                data: filteredOptions,
+                allowClear: true,
+                width: 'resolve'
+            });
+
+            // Imposta il valore selezionato se esiste ancora
+            if (selectedValue && selectedValue !== '') {
+                const optionExists = filteredOptions.some(opt =>
+                    opt.id == selectedValue || opt.text == selectedValue
+                );
+                if (optionExists) {
+                    $select.val(selectedValue).trigger('change.select2');
+                } else {
+                    console.warn(`Valore non trovato tra le opzioni disponibili per il contratto ${contractCode}: ${selectedValue}`);
+                    $select.val(null).trigger('change.select2');
+                }
+            } else {
+                $select.val(null).trigger('change.select2');
+            }
+        });
+    }
+    function get_client_select(){
+        $('.odoo-select').each(function () {
+            const $select = $(this);
+            const selectedValue = $select.data('selected');
+            const selectedText = $select.data('selected-text');
+            
+            // Inizializza select2
+            $select.select2({
+                data: odooclient,
+                allowClear: true
+            });
+            
+            // Imposta il valore selezionato
+            if (selectedValue && selectedValue !== '') {
+                // Verifica che il valore esista nelle opzioni
+                const optionExists = odooclient.some(opt => 
+                    opt.id == selectedValue
+                );
+                
+                if (optionExists) {
+                    // get_subscription_select(selectedValue);
+                    $select.val(selectedValue).trigger('change.select2');
+                } else {
+                    // Se il valore non esiste, aggiungi un'opzione temporanea se abbiamo il testo
+                    if (selectedText && selectedText !== '') {
+                        const newOption = new Option(selectedText, selectedValue, true, true);
+                        $select.append(newOption);
+
+                    } else {
+                        console.warn(`Valore non trovato nelle opzioni cliente Odoo: ${selectedValue}`);
+                        $select.val(null).trigger('change.select2');
+                    }
+                }
+            } else {
+                $select.val(null).trigger('change.select2');
+            }
+            $select.on('change', function (e) {
+            // $select.off('change').on('change', function () {
+                const contractCode = this.id.split('_')[1];              // "odoo_123"
+                const partnerId = this.value;                             // nuovo partner selezionato
+                reloadSubscriptionSelectFor(contractCode, partnerId);     // passa partnerId aggiornato
+            });
+        });
+    }
+    // function get_subscription_select(partnerid){
+    //     $.getJSON('api/subscriptions/select/partner/partnerid', function (data) {
+    //         contractTypeOptions = data.results;
+    //         console.log(contractTypeOptions);
+    //     })        
+    // }
+    function getFirstNumber(input) {
+        if (!input) return null;
+
+        const parts = input.includes(',') ? input.split(',') : [input];
+        const first = String(parts[0]).trim();
+        return parseInt(first, 10) || null;
+    }
+
+    async function loadSelectOptions_callback(callback) {
+        $.when(
+            $.getJSON('/api/subscriptions/select', function (data) {
+                contractTypeOptions = data.results;
+            }),
+            $.getJSON('/api/odoo/partners/select', function (data) {
+                odooclient = data.results;
+            }),
+            // $.getJSON('/api/odoo/payment_terms/select', function (data) {
+            //     payment_terms = data.results;
+            // })
+        ).done(function () {
+            callback();
+        }).fail(function () {
+            alert("Errore nel caricamento dei dati");
+        });
+    }
+
+    async function loadSelectOptions() {
+        $.getJSON('/api/subscriptions/select', function (data) {
+            contractTypeOptions = data.results;
+        });
+        $.getJSON('/api/odoo/partners/select', function (data) {
+            odooclient = data.results;
+        });
+    }
+
+
+    async function saveContract(contractCode) {
+        // const statusElement = document.getElementById(`status_${contractCode}`);
+        // statusElement.textContent = 'Salvando...';
+        // statusElement.style.color = 'blue';
+        
+        // const contractName = document.getElementById(`name_${contractCode}`).value.trim();
+        let contractName = null;
+        const select = document.getElementById(`odoo_${contractCode}`);
+        if(select && 
+            select instanceof HTMLSelectElement &&
+            select.selectedIndex >= 0 &&
+            select.options.length > select.selectedIndex &&
+            select.options[select.selectedIndex]
+            ){
+            contractName = select.options[select.selectedIndex].text;
+        }
+        const odooClientId = document.getElementById(`odoo_${contractCode}`).value.trim();
+        const notes = document.getElementById(`notes_${contractCode}`).value.trim();
+        const contractType = document.getElementById(`contracttype_${contractCode}`).value.trim();
+        // const payment_term = document.getElementById(`payment_term_${contractCode}`).value.trim();
+
+        const updateData = {
+            contract_code: contractCode,
+            contract_name: contractName,
+            contract_type: contractType,
+            odoo_client_id: odooClientId,
+            // payment_term: payment_term,
+            notes: notes
+        };
+        
+        // Aggiungi odoo_client_id solo se ha un valore
+        // if (odooClientId) {
+        //     updateData.odoo_client_id = parseInt(odooClientId);
+        // }
+        
+        try {
+            const response = await fetch('/api/update_contract', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(updateData)
+            });
+            
+            const result = await response.json();
+            console.log(result)
+            if (result.success) {
+                CheckContracts() 
+                toastr.success(`Il contratto <span class="fs-3">${contractCode}</span> è stato salvato con successo.`, "Salvato con successo");
+            } else {
+                toastr.error(`Il contratto <span class="fs-3">${contractCode}</span> non è stato salvato ricontrolla i dati.`, "Errore nel salvataggio");
+                throw new Error(result.message || 'Errore nel salvataggio');
+            }
+        } catch (error) {
+            toastr.error(`Il contratto <span class="fs-3">${contractCode}</span> non è stato salvato ricontrolla i dati.`, "Errore nel salvataggio");
+        }
+    }
+    
+    async function saveAllContracts() {
+        if (blockUI.isBlocked()) {
+            blockUI.release();
+            blockUI.destroy();
+        } else {
+            blockUI.block();
+        }
+        
+        let successCount = 0;
+        let errorCount = 0;
+        let isAnyModified = false;
+        const contracts = Object.keys(contractsData.contracts);
+        let modifiedContracts = [];
+        
+        for (const contractCode of contracts) {
+            try {
+                const original = contractsData.contracts[contractCode] || {};
+                
+                // Verifica che gli elementi esistano prima di accedervi
+                const odooElement = document.getElementById(`odoo_${contractCode}`);
+                const notesElement = document.getElementById(`notes_${contractCode}`);
+                const contractTypeElement = document.getElementById(`contracttype_${contractCode}`);
+                // const payment_termElement = document.getElementById(`payment_term_${contractCode}`);
+
+                // Se gli elementi non esistono, salta questa iterazione
+                if (!odooElement || !notesElement || !contractTypeElement) {
+                    console.warn(`Elementi mancanti per il contratto: ${contractCode}`);
+                    continue; // Continua con il prossimo contratto
+                }
+                
+                // Gestisci il caso in cui non ci sia un'opzione selezionata
+                const contractName = odooElement.selectedIndex >= 0 ? odooElement.options[odooElement.selectedIndex].text : '';
+                const odooClientId = odooElement.value ? odooElement.value.trim() : '';
+                const notes = notesElement.value ? notesElement.value.trim() : '';
+                const contractType = contractTypeElement.value ? contractTypeElement.value.trim() : '';
+                // const payment_term = payment_termElement.value ? payment_termElement.value.trim() : '';
+                
+                const isModified = 
+                    contractName !== (original.contract_name || '') ||
+                    odooClientId !== (original.odoo_client_id || '') ||
+                    contractType !== (original.contract_type || '') ||
+                    // payment_term !== (original.payment_term || '') ||
+                    notes !== (original.notes || '');
+
+                if (isModified) {
+                    isAnyModified = true;
+                    modifiedContracts.push(contractCode);
+                    
+                    const updateData = {
+                        contract_code: contractCode,
+                        contract_name: contractName,
+                        odoo_client_id: odooClientId,
+                        contract_type: contractType,
+                        // payment_term: payment_term,
+                        notes: notes
+                    };
+                    
+                    const response = await fetch('/api/update_contract', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(updateData)
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        successCount++;
+                    } else {
+                        errorCount++;
+                        console.error(`Errore salvando contratto ${contractCode}:`, result.message);
+                        // Non interrompere il ciclo, continua con il prossimo
+                    }
+                }
+            } catch (error) {
+                errorCount++;
+                console.error(`Errore durante il salvataggio del contratto ${contractCode}:`, error);
+                // Non interrompere il ciclo, continua con il prossimo
+                continue;
+            }
+            
+            // Piccola pausa per non sovraccaricare il server
+            await new Promise(resolve => setTimeout(resolve, 100));
+        }
+        
+        // Messaggi finali
+        if (isAnyModified) {
+            if (successCount > 0) {
+                CheckContracts() 
+                toastr.success(`<span class="fs-3">${successCount}</span> contratti sono stati modificati con successo.`, "Dati aggiornati");
+            }
+            if (errorCount > 0) {
+                toastr.warning(`<span class="fs-3">${errorCount}</span> contratti non sono stati salvati a causa di errori.`, "Avviso");
+            }
+            blockUI.release();
+        } else {
+            toastr.warning(`Nessun contratto è stato modificato.`, "Nessuna modifica");
+            blockUI.release();
+        }
+    }
+    
+
+
+    function getTextByIdFromResults(results, targetId) {
+        const id = Number(targetId);
+        const found = results.find(item => item.id === id);
+        return found ? found.text : null;
+    }
+
+    async function callExtractContracts() {
+        try {
+            const response = await fetch('/api/cdr/extract_contracts', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    // force_redownload: true,  // ← cambia i dati in base alla tua API
+                    // pattern_filter: "RIV_*_*.CDR"
+                })
+            });
+
+            const result = await response.json();
+            
+            if (result.success) {
+                console.log("Contratti estratti con successo:", result);
+                // esegui altre azioni, ad esempio aggiornare l'interfaccia
+            } else {
+                console.error("Errore nell'estrazione contratti:", result.message);
+            }
+        } catch (error) {
+            console.error("Errore nella richiesta:", error);
+        }
+    }
+
+    function reloadSubscriptionSelectFor(contractCode, partnerId) {
+        if (!partnerId) {
+            console.warn(`❌ partnerId non valido per contratto ${contractCode}`);
+            return;
+        }
+
+        $.getJSON(`/api/subscriptions/select/partner/${partnerId}`, function (data) {
+            const filteredOptions = data.results;
+            const $select = $(`#contracttype_${contractCode}`);
+            const selectedValue = $select.val();
+
+            // 🔴 Step 1: Rimuove completamente tutte le opzioni dal DOM
+            $select.empty().select2('destroy');
+
+            // 🔵 Step 2: Reinizializza con nuovi dati
+            $select.select2({
+                data: filteredOptions,
+                allowClear: true,
+                width: 'resolve'
+            });
+
+            // 🔁 Step 3: Riassegna il valore se ancora esiste
+            const optionExists = filteredOptions.some(opt => opt.id == selectedValue);
+            if (optionExists) {
+                $select.val(selectedValue).trigger('change.select2');
+            } else {
+                $select.val(null).trigger('change.select2');
+            }
+        }).fail(function () {
+            console.error(`❌ Errore caricando le subscription per partner ${partnerId}`);
+        });
+    }
+
+
+
+</script>
+
+{% endblock scripts %}
+    
+    
+   
+
+   

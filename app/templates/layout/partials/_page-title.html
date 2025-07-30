@@ -1,0 +1,55 @@
+<div data-kt-swapper="true" data-kt-swapper-mode="{default: 'prepend', lg: 'prepend'}" data-kt-swapper-parent="{default: '#kt_app_content_container', lg: '#kt_app_header_wrapper'}" class="page-title d-flex flex-column justify-content-center flex-wrap me-3 mb-5 mb-lg-0">
+    {% set page_title = namespace(value='') %}
+{% for item in get_menu() %}
+    {% if request.endpoint == item.endpoint and not page_title.value %}
+        {% set page_title.value = item.title %}
+    {% endif %}
+{% endfor %}
+
+<h1 class="page-heading d-flex text-gray-900 fw-bold fs-3 flex-column justify-content-center my-0">
+    {% if page_title.value %}
+        {{ page_title.value }}
+    {% else %}
+        {{ get_menu_item(request.endpoint).title if get_menu_item(request.endpoint) else 'Pagina' }}
+    {% endif %}
+</h1>
+{% if request.endpoint != 'web.dashboard'%}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb breadcrumb-dot text-muted fs-6 fw-semibold">
+        <li class="breadcrumb-item">
+            <a href="{{ url_for('web.home') }}" class="">Home</a>
+        </li>
+        {% for item in get_breadcrumb(request.endpoint) %}
+            <li class="breadcrumb-item {% if item.is_active %}text-muted{% endif %}">
+                {% if item.url %}
+                    <a href="{{ item.url }}" class="text-muted">{{ item.title }}</a>
+                {% else %}
+                    {{ item.title }}
+                {% endif %}
+            </li>
+        {% endfor %}
+    </ol>
+</nav>
+{% endif %}
+
+        {% if breadcrumb %}
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb breadcrumb-dot text-muted fs-6 fw-semibold">
+                {% for item in get_breadcrumb() %}
+                <li class="breadcrumb-item {% if item.is_active %}text-muted{% endif %}">
+                    {% if item.url and not item.is_active %}
+                    <a href="{{ item.url }}" class="">
+                        {{ item.title }}
+                    </a>
+                    {% else %}
+                    {{ item.title }}
+                    {% endif %}
+                </li>
+                {% endfor %}
+            </ol>
+        </nav>
+        {% endif %}
+    
+
+
+</div>

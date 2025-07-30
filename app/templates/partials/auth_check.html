@@ -1,0 +1,42 @@
+<script>
+// Controllo autenticazione al caricamento della pagina
+window.addEventListener('pageshow', function(event) {
+    // Se la pagina è stata caricata dalla cache del browser
+    if (event.persisted) {
+        checkAuthStatus();
+    }
+});
+
+// Controllo quando si torna indietro alla pagina
+window.addEventListener('focus', function() {
+    checkAuthStatus();
+});
+
+// Controllo periodico dello stato di autenticazione
+setInterval(checkAuthStatus, 30000); // Ogni 30 secondi
+
+function checkAuthStatus() {
+    fetch('/auth/api/check', {
+        method: 'GET',
+        credentials: 'include'
+    })
+    .then(response => {
+        if (response.status === 401) {
+            // Utente non autenticato
+            window.location.href = '/auth/login';
+        }
+    })
+    .catch(() => {
+        // Errore di rete - reindirizza per sicurezza
+        window.location.href = '/auth/login';
+    });
+}
+
+// Prevenire navigazione indietro dopo logout
+if (window.location.pathname === '/auth/logout') {
+    history.replaceState(null, null, window.location.pathname);
+    window.addEventListener('beforeunload', function() {
+        history.replaceState(null, null, window.location.pathname);
+    });
+}
+</script>

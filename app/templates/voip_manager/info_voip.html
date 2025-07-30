@@ -1,0 +1,1223 @@
+{% extends 'base_secure.html' %}
+
+{% block title %}
+
+{% endblock %}
+
+{#{% block toolbar %}
+<div class="toolbar-info">
+    <span>Totale utenti: <strong id="total-users">{{ users.total if users else 0 }}</strong></span>
+    <span>Utenti attivi: <strong id="active-users">{{ stats.active_users if stats else 0 }}</strong></span>
+    <span>Ultimo aggiornamento: <strong id="last-updated">{{ datetime.now().strftime('%d/%m/%Y %H:%M') if datetime else 'N/A' }}</strong></span>
+</div>
+<div class="toolbar-search">
+    <input type="text" id="search-users" placeholder="Cerca utenti..." value="{{ current_filters.search if current_filters else '' }}">
+</div>
+<div class="toolbar-actions">
+    <button id="add-user-btn" type="button" onclick="showAddUserModal()">
+        <i class="fa-solid fa-plus"></i>Aggiungi
+    </button>
+    <button id="export-btn" type="button" onclick="exportUsers()">
+        <i class="fa-solid fa-file-export"></i>Esporta
+    </button>
+    <button id="reload-btn" type="button" onclick="reloadUsers()">
+        <i class="fa-solid fa-arrows-rotate"></i>Ricarica
+    </button>
+</div>
+{% endblock %}#}
+
+{% block content %}
+
+<div id="kt_app_content" class="app-content flex-column-fluid">
+    <div id="kt_app_content_container" class="app-container #container-xxl">
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="d-flex align-items-center bg-light-info rounded p-5 mb-7">
+                    <i class="fas fa-tags fs-2hx text-info me-5"></i>
+                    <div class="flex-grow-1 me-2">
+                        <span href="#" class="fw-bold text-gray-800 text-hover-info fs-6">Contratti Totali</span>
+                        <!-- <span class="text-muted fw-semibold d-block">Tutti i dati inseriti</span> -->
+                    </div>
+                    <!-- <span id="totalCategoriesCount" class="fw-bold fs-2x text-info py-1">0</span> -->
+                    <div
+                        class="fs-2x fw-bold text-info py-1"
+                        id="contratti_totali"
+                        data-kt-countup="true"
+                        data-kt-countup-value=""
+                        data-kt-countup-prefix=""
+                    >0</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="d-flex align-items-center bg-light-warning rounded p-5 mb-7">
+                    <i class="fas fa-check-circle fs-2hx text-warning me-5"></i>
+                    <div class="flex-grow-1 me-2">
+                        <span href="#" class="fw-bold text-gray-800 text-hover-warning fs-6">Data di riferimento</span>
+                        <!-- <span class="text-muted fw-semibold d-block">Tutti i dati inseriti</span> -->
+                    </div>
+                    <!-- <span id="activeCategoriesCount" class="fw-bold fs-2x text-primary py-1">0</span> -->
+                    <div
+                        class="fs-2x fw-bold text-warning py-1" id="data_riferimento">0</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="d-flex align-items-center bg-light-primary rounded p-5 mb-7">
+                    <i class="fas fa-check-circle fs-2hx text-primary me-5"></i>
+                    <div class="flex-grow-1 me-2">
+                        <span href="#" class="fw-bold text-gray-800 text-hover-primary fs-6">Costi totali</span>
+                        <!-- <span class="text-muted fw-semibold d-block">Tutti i dati inseriti</span> -->
+                    </div>
+                    <!-- <span id="activeCategoriesCount" class="fw-bold fs-2x text-primary py-1">0</span> -->
+                    <div
+                        class="fs-2x fw-bold text-primary py-1"
+                        id="costi_totali"
+                        data-kt-countup="true"
+                        data-kt-countup-value=""
+                        data-kt-countup-prefix="€ "
+                    >0</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="d-flex align-items-center bg-light-danger rounded p-5 mb-7">
+                    <i class="fas fa-search fs-2hx text-danger me-5"><span class="path1"></span><span class="path2"></span></i>
+                    <div class="flex-grow-1 me-2">
+                        <span href="#" class="fw-bold text-gray-800 text-hover-danger fs-6">Costi totali con Markup</span>
+                        <!-- <span class="text-muted fw-semibold d-block">Tutti i dati inseriti</span> -->
+                    </div>
+                    <!-- <span id="totalPatternsCount" class="fw-bold fs-2x text-warning py-1">0</span> -->
+                     <div
+                        class="fs-2x fw-bold text-danger py-1"
+                        id="costi_totali_con_markup"
+                        data-kt-countup="true"
+                        data-kt-countup-value=""
+                        data-kt-countup-prefix="€ "
+                    >0</div>
+                </div>
+            </div>
+            <!-- <div class="col-md-3">
+                <div class="d-flex align-items-center bg-light-danger rounded p-5 mb-7">
+                    <i class="fas fa-exclamation-triangle fs-2hx text-danger me-5"><span class="path1"></span><span class="path2"></span></i>
+                    <div class="flex-grow-1 me-2">
+                        <span href="#" class="fw-bold text-gray-800 text-hover-danger fs-6">Conflitti Pattern</span>
+                        <span class="text-muted fw-semibold d-block">Tutti i dati inseriti</span>
+                    </div>
+                    <span id="conflictsCount" class="fw-bold fs-2x text-danger py-1">0</span>
+                </div>
+                
+            </div> -->
+        </div>
+        <div id="user_list" class="card shadow-sm mb-10">
+            <!-- <div class="card-header">
+                <h3 class="card-title">Title</h3>
+                <div class="card-toolbar">
+                    <button type="button" class="btn btn-sm btn-light">
+                        Action
+                    </button>
+                </div>
+            </div> -->
+            <div class="card-body">
+                <div class="d-flex flex-stack mb-2">
+                    <!--begin::Search-->
+                    <div class="d-flex align-items-center position-relative my-1">
+                        <i class="ki-duotone ki-magnifier fs-1 position-absolute ms-6"><span class="path1"></span><span class="path2"></span></i>
+                        <input type="text" data-kt-docs-table-filter="search" class="form-control form-control-sm form-control-solid w-250px ps-15" placeholder="Search Customers"/>
+                    </div>
+                    <!--end::Search-->
+
+
+                    <div id="toolbar_edit" class="d-flex justify-content-end" data-kt-docs-table-toolbar="base">
+                        <button type="button" cs-action-toggle="genera_fattura" class="btn btn-icon btn-sm btn-light-primary me-2" data-bs-toggle="tooltip" data-bs-dismiss="click" title="Genera fattura">
+                            <i class="fa-solid fa-receipt"></i>
+                        </button>
+
+                        <button type="button" class="btn btn-sm btn-light-primary text-uppercase me-2" data-kt-menu-trigger="click" data-kt-menu-placement="bottom-start" data-kt-menu-offset="0,5">
+                            <i class="fa-solid fa-filter"></i> Filtri
+                            <i class="ki-duotone ki-down fs-3 rotate-180 ms-3 me-0"></i>
+                        </button>
+
+                        <div class="menu menu-sub menu-sub-dropdown w-250px w-md-300px" data-kt-menu="true" id="kt_menu_select2">
+                            <form id="table_filter">
+                                <div class="px-7 py-5">
+                                    <div class="fs-5 text-gray-900 fw-bold">Opzione filtri</div>
+                                </div>
+                                <div class="separator border-gray-200"></div>
+                                <div class="px-7 py-5">
+                                    <div class="mb-10">
+                                        <label class="form-label fw-semibold">Anno:</label>
+                                        <div>
+                                            <select id="anno" class="form-select form-select-solid"></select>
+                                        </div>
+                                    </div>
+                                    <div class="mb-10">
+                                        <label class="form-label fw-semibold">Mese:</label>
+                                        <div>
+                                            <select id="mese" class="form-select form-select-solid" ></select>
+                                        </div>
+                                    </div>
+                                    <!-- <div class="mb-10">
+                                        <label class="form-label fw-semibold">Stato:</label>
+                                        <div class="d-line gy-5">
+                                            <label class="form-check form-check-sm form-check-custom form-check-solid me-5 mb-5">
+                                                <input id="user_status" class="form-check-input" type="checkbox" value="true" checked="checked"/>
+                                                <span class="form-check-label">Attivo</span>
+                                            </label>
+
+                                            <label class="form-check form-check-sm form-check-custom form-check-solid">
+                                                <input id="email_status" class="form-check-input" type="checkbox" value="true" checked="checked"/>
+                                                <span class="form-check-label">E-Mail Confermata</span>
+                                            </label>
+                                        </div>
+                                    </div> -->
+                                    <!-- <div class="mb-10">
+                                        <label class="form-label fw-semibold">Notifications:</label>
+
+                                        <div class="form-check form-switch form-switch-sm form-check-custom form-check-solid">
+                                            <input class="form-check-input" type="checkbox" value="" name="notifications" checked />
+                                            <label class="form-check-label">
+                                                Enabled
+                                            </label>
+                                        </div>
+                                    </div> -->
+
+                                    <div class="d-flex justify-content-end">
+                                        <button cs-action-toggle="reset_filter" type="reset" class="btn btn-sm btn-light btn-active-light-primary me-2 text-uppercase" data-kt-menu-dismiss="false">Reseta</button>
+                                        <button type="reset" class="btn btn-sm btn-warning me-2 text-uppercase"  data-kt-menu-dismiss="true">Chiudi</button>
+                                        <button cs-action-toggle="apply_filter" type="button" class="btn btn-sm btn-primary text-uppercase " data-kt-menu-dismiss="true">Filtra</button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+
+                        <button type="button" cs-action-toggle="reload_tables" class="btn btn-icon btn-sm btn-primary me-2" data-bs-toggle="tooltip" data-bs-dismiss="click" title="Ricarica tabella">
+                            <i class="fa-solid fa-rotate"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="table-responsive">
+                    <table id="users_tables" class="table-responsive table table-row-dashed table-row-gray-300 #table-row-bordered #table-rounded  #border gy-5 gs-5 align-middle table-hover #gy-5 #gs-7">
+                            <thead><tr></tr></thead>
+                            <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+            <!-- <div class="card-footer">
+                Footer
+            </div> -->
+        </div>
+
+        <!-- <div id="user_edit" class="card shadow-sm">
+            <div class="card-header">
+                <h3 class="card-title">Dati utente</h3>
+                <div class="card-toolbar">
+                    <button type="button" class="btn btn-sm btn-light">
+                        Action
+                    </button>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="row">
+
+                </div>
+            </div>
+            <div class="card-footer">
+                Footer
+            </div>
+        </div> -->
+    </div>
+</div>
+
+
+<div class="modal fade" tabindex="-1" id="dettaglio_fatture">
+    <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3 class="modal-title">Dettagli fatture</h3>
+
+                    <!--begin::Close-->
+                    
+                        <div class="btn btn-icon btn-sm btn-active-light-primary ms-2" data-bs-dismiss="modal" aria-label="Close">
+                            <i class="fa-solid fa-xmark fs-4"></i>
+                        </div>
+                
+                    <!--end::Close-->
+                </div>
+
+                <div class="modal-body">
+                    <div id="risultato_elaborazione"></div>
+                    
+                              
+                            
+
+
+
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Chiudi</button>
+                    <!-- <button type="button" cs-action-toggle="update_password" id="update_password" class="btn btn-primary">
+                        <span class="indicator-label">Aggiorna Password</span>
+                        <span class="indicator-progress">Attendere... 
+                        <span class="spinner-border spinner-border-sm align-middle ms-2"></span></span>
+                    </button> -->
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<link href="assets/plugins/custom/datatables/datatables.bundle.css" rel="stylesheet" type="text/css"/>
+<script src="assets/plugins/custom/datatables/datatables.bundle.js"></script>
+<script src="https://cdn.datatables.net/plug-ins/2.3.2/sorting/datetime-moment.js"></script>
+<!-- <link href="assets/plugins/custom/cropper/cropper.bundle.css" rel="stylesheet" type="text/css" /> -->
+<!-- <script src="assets/plugins/custom/cropper/cropper.bundle.js"></script> -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.css" integrity="sha512-UtLOu9C7NuThQhuXXrGwx9Jb/z9zPQJctuAgNUBK3Z6kkSYT9wJ+2+dh6klS+TDBCV9kNPBbAxbVD+vCcfGPaA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+<script>
+let check_password, check_password_new
+let user_tables
+/**
+ * Attivo lordinamento per questo formato di data
+ */
+$.fn.dataTable.moment( 'DD/MM/YYYY - HH:mm' );
+$.fn.dataTable.moment( 'DD/MM/YYYY' );
+
+
+//Inizializzo i filtri della tabella
+const currentFilters = {
+    uid: undefined,
+    is_active: true,
+    // is_email_confirmed: true,
+    // role_names: undefined
+};
+
+let row_checked = null
+
+const TableManager = (function () {
+    let user_tables = null;
+
+    function init(currentFilters) {
+        function format(row) {
+            let html = '<div class="container-fluid px-4 py-0"><div class="row">';
+
+            if (row.tipi_chiamata) {
+                for (const tipo in row.tipi_chiamata) {
+                    const d = row.tipi_chiamata[tipo];
+                    html += `
+                        <div class="col-md-4 mb-3">
+                            <div class="border rounded p-3 bg-light">
+                                <h6 class="fw-bold mb-2 text-uppercase text-primary">${tipo}</h6>
+                                <p class="mb-1"><strong>Chiamate:</strong> ${d.numero_chiamate}</p>
+                                <p class="mb-1"><strong>Durata:</strong> ${d.durata_secondi_totale} sec</p>
+                                <p class="mb-1"><strong>Costo:</strong> € ${parseFloat(d.costo_euro_totale || 0).toFixed(3)}</p>
+                                <p class="mb-0"><strong>Costo con Markup:</strong> € ${parseFloat(d.costo_euro_totale_with_markup || 0).toFixed(3)}</p>
+                            </div>
+                        </div>
+                    `;
+                }
+            } else {
+                html += '<div class="col-12 text-muted">Nessun dettaglio disponibile.</div>';
+            }
+
+            html += '</div></div>';
+            return html;
+        }
+        user_tables = $("#users_tables").DataTable({
+            // "dom": "<'row '<'#toolbar.col-md-10 col-sm-12 mb-2'T><'#toolbar3.col-md-2 col-sm-12 text-right'B><'col-md-12 col-sm-12'<'#filters.form-row'>>r>t<'row mt-2'<'col-md-4 col-sm-12'i><'col-md-4 col-sm-12 text-center' l><'col-md-4 col-sm-12'p>>",
+            //Personalizzazione colonne
+            scrollX: false,  // Attiva lo scorrimento orizzontale per mostrare tutte le colonne
+            autoWidth: false,  // Disabilita l'autowidth per rispettare le larghezze definite
+            scrollCollapse: true,  // Migliora lo scorrimento
+            // scrollY: "500px",
+            // Configurazione per ottimizzare le prestazioni
+            deferRender: true,
+            processing: true,
+            stateSave: false,
+            // Resto della configurazione...
+            // dom:
+            //     `<"row "<"col-sm-12 col-md-4 d-flex align-items-center justify-content-center justify-content-md-start dt-toolbar"li>
+            //     <"#filter_container.col-sm-12 col-md-4 mb-1 d-flex align-items-center justify-content-center dt-toolbar">
+            //     <"col-sm-12 col-md-4 d-flex align-items-center justify-content-center justify-content-md-end"p>>
+            //     <"row"<"col-sm-12"t>>
+            //     <"row "<"col-sm-12 col-md-6 d-flex align-items-center justify-content-center justify-content-md-start dt-toolbar"li>
+            //     <"col-sm-12 col-md-6 d-flex align-items-center justify-content-center justify-content-md-end"p>>`,
+            dom:
+                `
+                <"row"
+                    <"#filter_container.col-12 d-flex align-items-center justify-content-start dt-toolbar mb-2 ">
+                >
+                <"row"<"col-sm-12"t>>
+                <"row"
+                    <"col-sm-12 col-md-6 d-flex align-items-center justify-content-center justify-content-md-start dt-toolbar"li>
+                    <"col-sm-12 col-md-6 d-flex align-items-center justify-content-center justify-content-md-end"p>
+                >`,
+            buttons: [
+                'copy', 'excel', 'pdf'
+                ],
+            pageLength: 7,
+            lengthMenu: [[7, 25, 50, 100, -1], [10, 25, 50, 100, "Tutti"]],
+            language: {
+                url: "assets/js/data_tables_it_IT.json",
+                paginate: {
+                    previous: "<i class='previous'></i>",
+                    next: "<i class='next'></i>",
+                },
+                select: {
+                    rows: {
+                        _: "", //"%d selezionate",
+                        0: "",
+                        1: "", //"1 selezionata"
+                    },
+                    columns: {
+                        _: "", //"%d colonne selezionate",
+                        0: "", //"Nessuna colonna selezionata",
+                        1: '', //"1 colonna selezionata"
+                    },
+                    cells: {
+                        _: '', //"%d celle selezionate",
+                        0: '', //"Nessuna cella selezionata",
+                        1: '', //"1 cella selezionata"
+                    }
+                    
+                },
+                search: "Cerca:",           
+                lengthMenu: "_MENU_",  
+                info: "da _START_ a _END_ di _TOTAL_", 
+            },
+            "columnDefs": [
+                { targets: 0, width: "1%",  title: `<div class="form-check form-check-sm form-check-custom form-check-solid">
+                                    <input class="form-check-input checkbox_multiple"  data-kt-check-target="#users_tables .checkbox_single" type="checkbox"  />
+                                </div>`, orderable: false, searchable: false, visible: true, className: "align-middle  px-3", responsivePriority: 1},
+                { targets: 1, width: "49%", title: `<i class="fa fa-building me-3 text-gray-400"></i>Nome`,orderable: true, searchable: true, visible: true, className: "align-middle text-start", responsivePriority: 1},         
+                { targets: 2, width: "12%", title: `<i class="fa fa-building me-3 text-gray-400"></i>N. Chiamate`,orderable: true, searchable: true, visible: true, className: "align-middle text-end pe-0", responsivePriority: 1},
+                { targets: 3, width: "12%", title: `<i class="fa fa-envelope me-3 text-gray-400"></i>Tot. Chiamate`, orderable: true, searchable: true, visible: true, className: "align-middle text-end pe-0", responsivePriority: 10001},
+                { targets: 4, width: "12%", title: `<i class="fa fa-phone me-3 text-gray-400"></i>Totale`, orderable: true, searchable: true, visible: true, className: "align-middle text-end pe-0", responsivePriority: 10001},
+                // { targets: 4, width: "26%",title: "Ruolo", orderable: true, searchable: true, visible: true, className: "align-middle text-start", responsivePriority: 1},
+                { targets: 5, width: "12%", title: `<i class="fa fa-phone me-3 text-gray-400"></i>Totale Markup`,orderable: true, searchable: true, visible: true, className: "align-middle text-end pe-0", responsivePriority: 1 },
+                { targets: 6, width: "2%", title: ``,orderable: false, searchable: false, visible: true, className: "align-middle px-8", responsivePriority: 1 },
+
+            ],
+            //Ordine Colonne
+            "columns": [
+                {   
+                    "data": "codice_contratto", 
+                    "render": function ( data, type, row, index ) {
+                        return `<div class="form-check form-check-sm form-check-custom form-check-solid">
+                                    <input class="form-check-input checkbox_single" type="checkbox" value="${data}" />
+                                </div>`
+                                
+                    }
+                },
+                {   
+                    "data": "cliente_finale", 
+                    "render": function ( data, type, row, index ) {
+                        return `${data} (${row['codice_contratto']})`    
+                    }
+                },
+                {   
+                    "data": "numero_chiamate", 
+                    "render": function ( data, type, row ) {
+                        // var x = row['active'];
+                        // var y = row['main_company']
+                        // var status = row['status']
+                        
+                        // if(status == 'ONLINE'){
+                        //     var online='<div class="badge mr-1 help" data-bs-toggle="tooltip" data-bs-dismiss="click" data-placement="top" title="ONLINE"><i class="fa fa-circle text-success"></i></div>';
+                        // }else{
+                        //     var online='<div class="badge mr-1 help " data-bs-toggle="tooltip" data-bs-dismiss="click" data-placement="top" title="OFFLINE"><i class="fa fa-circle text-danger"></i></div>';
+                        // }
+                    
+                        // if(x === 'TRUE'){
+                        //     var active='';
+                        // }
+                        // // else if (row['data_check'] === 'off')
+                        // else 
+                        // {
+                        //     var active='<div class="badge help todo-tasklist-badge badge badge-danger badge-roundless align-self-end ms-2" data-bs-toggle="tooltip" data-bs-dismiss="click" data-placement="top" title="DISABILITATO"><i class="fa-solid fa-user-xmark text-white"></i></div>'
+                        // }
+                        // if(y === 'on'){
+                        //     var type_user='';
+                        // }
+                        // // else if (row['data_check'] === 'off')
+                        // else 
+                        // {
+                        //     var type_user='<div class="badge help todo-tasklist-badge badge badge-info badge-roundless align-self-end" data-bs-toggle="tooltip" data-bs-dismiss="click" data-placement="top" title="ESTERNO"><i class="fa-solid fa-user-tag text-white"></i></div>'
+                        // }
+                        //return '<a href="gestione_utente.php?id='+row[4]+'"><button id="Modifica" data-bs-toggle="tooltip" data-bs-dismiss="click" data-placement="top" data-original-title="Modifica" title="Modifica" class="btn btn-success btn-circle mr-1"><i class="fa fa-cog"></i></button></a> '+data+ active;
+                        // return '<div class="link_in_tabella font-weight-bold d-flex align-items-center mr-auto " href="user_manager.php?manage_user=yes&uid='+row['uid']+'"> ' + online + '<div class="me-auto">'+data+'</div>' + type_user + active+'</div>';
+                        return data
+                    },
+                },
+                {   
+                    "data": "durata_secondi_totale",
+                    "render": function ( data, type, row ) {
+                        return `${data} sec.`;
+                    },
+                },
+                {   
+                    "data": "costo_euro_totale",
+                    "render": function ( data, type, row ) {
+                        // return remove_char(data, '');
+                        return `€ ${formatNumeroItaliano(data)}`;
+                    },
+                },
+                {   
+                    "data": "costo_euro_totale_with_markup",
+                    "render": function ( data, type, row ) {
+                        // return remove_char(data, '');
+                        return `€ ${formatNumeroItaliano(data)}`;
+                    },
+                },{
+                    data: null,
+                    defaultContent: `<button cs-action-toggle='modal' type="button" data-bs-toggle="tooltip" data-bs-dismiss="click" title="DETTAGLI"class="w-25px h-25px btn-icon btn btn-sm btn-primary float-right text-uppercase">
+                                        <i class="fa-solid fa-info"></i>
+                                    </button>`,
+                    className: 'details-control',
+                    orderable: false
+                },
+                // {   
+                //     "data": null, 
+                //     "render": function ( data, type, row ) {
+                //         var uid_rif = row['uid'];
+                //         //    return "<button class='text-white btn btn-block btn-secondary btn-xs' data-toggle='modal' data-link='dettagli.php?destinazione=utente&id_rif="+row[4]+"' data-id='" + row[4] +"' data-target='#ajax' >DETTAGLI</button>";
+                //         //    return "<a data-toggle='modal' data-link='dettagli.php?destinazione=utente&id_rif="+row[4]+"' data-id='" + row[4] +"' data-target='#ajax' ><i role='button' class='cursor-pointer fas  fa-search-plus' data-toggle='tooltip' title='Dettagli' ></i></a>";
+                //         return   `<div class="btn-group btn-group-sm">
+                //                         <button cs-action-toggle='edit' cs-action-data="${uid_rif}" id="edit" type="button" data-bs-toggle="tooltip" data-bs-dismiss="click" title="MODIFICA" class="w-25px h-25px btn-icon btn btn-sm btn-warning float-right text-uppercase">
+                //                             <i class="fas fa-pencil-alt text-light-warning"></i>
+                //                         </button>
+                //                         <button cs-action-toggle='modal' cs-action-data="${uid_rif}" id="change_user" type="button" data-bs-toggle="tooltip" data-bs-dismiss="click" title="IMPERSONA UTENTE"class="w-25px h-25px btn-icon btn btn-sm btn-primary float-right text-uppercase">
+                //                                 <i class="fas fa-user-gear"></i>
+                //                         </button>
+                //                     </div>`  ;
+                //     }  
+                // },
+            ],
+            //Ordina i record in modo crescente in base alla colonna 1
+            "order": [
+                [1, 'asc']
+            ],   
+            select: {
+                style: 'multi',
+                selector: 'td:first-child input[type="checkbox"]',
+                className: 'row-selected'
+            },
+
+            // ajax: function (data, callback, settings) {
+            //     getUsersList_datatables(currentFilters)
+            //         .then(companies => {
+            //             callback({ data: companies });
+            //             console.log(companies)
+            //         })
+            //         .catch(error => {
+            //             console.error('Errore DataTables:', error);
+            //             callback({ data: [] });
+            //         });
+            // },
+
+            ajax:{ 
+                url: "/api/clienti_traffico_voip/datatable/ajax",    
+                type: "GET",
+                dataSrc: 'data',
+                error: function (xhr, error, thrown) {
+                    console.error("❌ Errore AJAX:", xhr.responseText || thrown);
+                    
+                    Swal.fire({
+                        title: 'ERRORE CARICAMENTO DATI',
+                        text: 'Non ci sono dati disponibili per il periodo selezionato. Prova a cambiare Anno o Mese.',
+                        icon: 'warning',
+                        showConfirmButton: false,
+                        timer: 5000,
+                        timerProgressBar: true,
+                        customClass: { confirmButton: "btn btn-primary" }
+                    });
+                    user_tables.clear().draw();
+                    $('#users_tables_processing').hide();
+                    // Mostra errore personalizzato all'utente
+                    // alert("Errore nel caricamento dei dati. Riprova più tardi o contatta l'assistenza.");
+                }         
+            },
+            
+            "initComplete": function(settings, json){
+                
+            },
+
+            "drawCallback": function(settings) {
+                GestioneAzioni.init();
+            }
+        });
+
+        $('#users_tables tbody').on('click', 'td.details-control', function () {
+            var tr = $(this).closest('tr');
+            var row = user_tables.row(tr);
+
+            if (row.child.isShown()) {
+                row.child.hide();
+                tr.removeClass('shown');
+            } else {
+                row.child(format(row.data())).show();
+                tr.addClass('shown');
+            }
+        });
+
+        user_tables.on('draw', function () {
+            initTooltips();
+        });
+
+        // initTooltips();
+    }
+
+    function reload() {
+        if (user_tables) {
+            user_tables.ajax.reload();
+        }
+    }
+
+    function getTable() {
+        return user_tables;
+    }
+
+    function updateAjaxUrl(newUrl) {
+        if (user_tables) {
+            user_tables.ajax.url(newUrl).load(); // cambia l’URL e ricarica i dati
+        }
+    }
+
+    return {
+        init,
+        reload,
+        getTable,
+        updateAjaxUrl
+    };
+})();
+
+
+const GestioneAzioni = (function () {
+    //Gestione del modal password
+    function handleClick(e) {
+        const el = e.target.closest('[cs-action-toggle]');
+        if (!el) return;
+
+        const action = el.getAttribute('cs-action-toggle');
+        const id = el.getAttribute('cs-action-data');
+
+        //Verifico se il pulsante ha un tooltip ed è impostato per chiudersi al click
+        const hasTooltip = el.getAttribute('data-bs-toggle') === 'tooltip';
+        const hasDismissClick = el.getAttribute('data-bs-dismiss') === 'click';
+        if (hasTooltip && hasDismissClick) {
+            const tooltipInstance = bootstrap.Tooltip.getInstance(el);
+            tooltipInstance.hide();
+        }
+
+        switch (action) {
+            case 'reset_filter':
+                handleResetFilter(id, el);
+                break;
+            case 'apply_filter':
+                handleApplyFilter(id, el);
+                break;
+            case 'reload_tables':
+                handleReloadTables(id, el);
+                break;
+            case 'genera_fattura':
+                handleGeneraFattura(id, el);
+                break;
+            default:
+                console.warn(`⚠️ Azione non gestita: "${action}"`, el);
+        }
+    }
+
+    function init() {
+        // ✅ Usa delegazione eventi: un solo listener su document
+        document.removeEventListener('click', handleClick); // evita duplicazioni
+        document.addEventListener('click', handleClick);
+    }
+
+    //Ricarica il datatables
+    function handleReloadTables(id, el) {
+        TableManager.reload();
+        set_box_detail()
+    }
+
+    async function handleGeneraFattura(id, el) {
+        KTApp.showPageLoading();
+
+        data = await apiCall('/api/genera_extra_soglia', { method: 'POST' })
+
+        KTApp.hidePageLoading();
+        
+     
+        console.log(data)
+        dettaglio_fatture.open()
+        // const container = document.getElementById("risultato_elaborazione");
+
+
+        // Supponiamo che il JSON sia salvato in una variabile chiamata `response`
+        const response = data/* il tuo JSON qui */;
+
+        // Recupera il contenitore DOM dove inserire l’HTML
+        const outputDiv = document.getElementById('risultato_elaborazione');
+
+        // Inizializza il contenuto HTML
+        let html = `<div class="d-flex flex-stack">
+                        <div class="text-primary fw-semibold fs-4 me-2">Contratti processati:</div>                   
+                        <div class="text-primary fw-bold fs-2 ">${response.contratti_processati}</div>                                 
+                    </div>
+                    <div class="separator separator-dashed my-3"></div>
+                    `;
+
+        // Cicla sui risultati
+        response.risultati.forEach((gruppo, index) => {
+        const totaleContratti = gruppo.riepilogo?.totale_contratti ?? 0;
+
+        if (totaleContratti > 0) {
+            html += `<h4>Gruppo ${index + 1}</h4>`;
+            html += `<div class="d-flex flex-stack">
+                     <div class="text-primary fw-semibold fs-4 me-2">Totale contratti:</div> 
+                     <div class="text-primary fw-bold fs-2 ">${totaleContratti}</div>
+                     </div>
+                     <div class="separator separator-solid my-5"></div>
+                     
+                     `;
+
+            // Dati processati
+            gruppo.dati_processati.forEach(contratto => {
+            html += `
+                <div class="d-flex flex-stack">
+                    <div class="text-primary fw-semibold fs-4 me-2">Contratto:</div> 
+                    <div class="text-primary fw-bold fs-2 ">${contratto.nome_file}</div>
+                </div>
+                <div class="separator separator-dashed my-3"></div>
+                <div class="d-flex flex-stack">
+                    <div class="text-primary fw-semibold fs-4 me-2">Periodo:</div> 
+                    <div class="text-primary fw-bold fs-2 ">${contratto.mese}/${contratto.anno}</div>
+                </div>
+                <div class="separator separator-dashed my-3"></div>
+                <div class="d-flex flex-stack">
+                    <div class="text-primary fw-semibold fs-4 me-2">Totale chiamate:</div> 
+                    <div class="text-primary fw-bold fs-2 ">${contratto.totale_chiamate}</div>
+                </div>
+                <div class="separator separator-dashed my-3"></div>
+                <div class="d-flex flex-stack">
+                    <div class="text-primary fw-semibold fs-4 me-2">Durata totale:</div> 
+                    <div class="text-primary fw-bold fs-2 ">${contratto.durata_totale_minuti.toFixed(2)} min</div>
+                </div>
+                <div class="separator separator-dashed my-3"></div>
+                <div class="d-flex flex-stack">    
+                    <div class="text-primary fw-semibold fs-4 me-2">Costo totale:</div> 
+                    <div class="text-primary fw-bold fs-2 "> € ${contratto.costo_cliente_totale_euro.toFixed(3).replace('.', ',')}</div>
+                </div>
+                <div class="separator separator-dashed my-3"></div>
+                <div class="d-flex flex-stack">
+                    <div class="text-primary fw-semibold fs-4 me-2">Contratto:</div> 
+                    <div class="text-primary fw-bold fs-2 ">${contratto.costo_cliente_totale_euro_by_category}</div>
+                </div>
+                <div class="separator separator-dashed my-3"></div>
+            `;
+            });
+
+            // Risposte API
+            if (gruppo.risposte_api.length > 0) {
+            html += `
+            <h5>Risposte API:</h5><ul>`;
+            gruppo.risposte_api.forEach(api => {
+                html += `
+                <li>
+                    <strong>Contratto:</strong> ${api.nome_file} | 
+                    <strong>Odoo ID:</strong> ${api.odoo_id} | 
+                    <strong>Messaggio:</strong> ${api.response_data.message}
+                    <strong>Cliente:</strong> ${api.response_data.partner_name}
+                </li>
+                `;
+            });
+            html += `</ul>`;
+            }
+
+            html += `
+                    
+                    </div>
+                    <div class="separator separator-dashed my-3"></div>
+                    `;
+        }
+        });
+
+        // Inserisce tutto nel DOM
+        outputDiv.innerHTML = html;
+
+
+
+
+
+
+
+        // container.innerHTML = "";
+        test = `<div class="d-flex flex-stack">
+                    <div lass="text-primary fw-semibold fs-6 me-2">Avg. Client Rating</div>                   
+                    <div lass="text-primary fw-bold fs-4 ">Avg. Client Rating</div>                                 
+                </div>
+                <div class="separator separator-dashed my-3"></div>`
+
+        // })
+    }
+
+    function handleResetFilter(id, el) {
+        let oggi = new Date();
+        let mese_now = String(oggi.getMonth() + 1).padStart(2, '0'); // "01" - "12"
+        let anno_now = oggi.getFullYear(); // es. 2025
+
+        // MonthSelectManager.populateSelect("mese", mese_now);
+        // YearSelectManager.populateSelect("anno", anno_now);
+        
+        CSSelect2Loader.setValueIfExists('#mese', mese_now);
+        CSSelect2Loader.setValueIfExists('#anno', anno_now);
+
+        link = '/api/clienti_traffico_voip/datatable/ajax'
+        mese = mese_now
+        anno = anno_now
+
+        if(mese){
+            data_link = `${anno}_${mese}`
+        }else{
+            data_link = `${anno}`
+        }       
+        const newUrl = `/api/clienti_traffico_voip/datatable/ajax/${data_link}`;
+        TableManager.updateAjaxUrl(newUrl);
+        // alert(data_link)
+        set_box_detail(data_link) 
+    }
+
+    function handleApplyFilter(id, el) {
+        link = '/api/clienti_traffico_voip/datatable/ajax'
+ 
+        mese = $('#mese').val()
+        anno = $('#anno').val()
+        let test = CSSelect2Loader.getSelected('#mese');
+        if(mese){
+            data_link = `${anno}_${mese}`
+        }else{
+            data_link = `${anno}`
+        }
+        const newUrl = `/api/clienti_traffico_voip/datatable/ajax/${data_link}`;
+        TableManager.updateAjaxUrl(newUrl);
+
+        set_box_detail(data_link) 
+
+        // resetFormElements('table_filter')
+        // const resetButton = document.querySelector('button[type="reset"]');
+        // const selectRole = $('#role_select');
+        // const userStatus = document.getElementById('user_status');
+        // const emailStatus = document.getElementById('email_status');
+
+        // if (resetButton) {
+        //     // Reset select2
+        //     if (selectRole.length) {
+        //         selectRole.val(null).trigger('change'); // svuota selezione
+        //     }
+
+        //     // Reset checkbox
+        //     if (userStatus) {
+        //         userStatus.checked = true;
+        //     }
+        //     if (emailStatus) {
+        //         emailStatus.checked = true;
+        //     }
+        //     // (Opzionale) reset variabili di filtro
+        //     if (typeof currentFilters !== 'undefined') {
+        //         currentFilters.is_active = true;
+        //         currentFilters.is_email_confirmed = true;
+        //         currentFilters.role_names = null;
+        //         console.log('🔁 Filtro resettato:', currentFilters);
+        //     }
+
+        //     // (Opzionale) ricarica tabella
+        //     if (typeof TableManager !== 'undefined') {
+        //         TableManager.reload();
+        //     }
+        // }
+    }
+
+    return {
+        init
+    };
+})();
+
+//Carica tutti i dati e li prepara per un datatables
+async function getUsersList_datatables(filters = {}) {
+    const data = await apiCall('/api/clienti_traffico_voip/datatable/ajax', { method: 'GET' });
+
+    const companies = Object.keys(data)
+        .filter(k => !isNaN(k)) // Solo chiavi numeriche
+        .map(k => {
+            const company = data[k];
+            return {
+                ...company,
+                // name_surname: company.name //[company.name].filter(Boolean).join(' ')
+            };
+        });
+    // Applica i filtri
+    return companies.filter(company => {
+        if (filters.uid !== undefined && company.uid !== filters.uid) return false;
+        if (filters.is_active !== undefined && company.is_active !== filters.is_active) return false;
+        // if (filters.is_admin !== undefined && company.is_admin !== filters.is_admin) return false;
+        // if (filters.is_email_confirmed !== undefined && comcompanypanies.is_email_confirmed !== filters.is_email_confirmed) return false;
+        // if (filters.role_names && filters.role_names.length > 0 && !filters.role_names.some(r => company.role_names.includes(r))) return false;
+        return true;
+    });
+}
+
+//Gestione del search in datatables
+function CSTableSearchManager(inputSelector, datatableInstance) {
+    let inputElement = document.querySelector(inputSelector);
+
+    return {
+        init: function () {
+            if (!inputElement || !datatableInstance) return;
+
+            inputElement.addEventListener('keyup', function (e) {
+                datatableInstance.search(e.target.value).draw();
+            });
+        },
+        setPlaceholder: function (text) {
+            if (inputElement) {
+                inputElement.placeholder = text;
+            }
+        },
+        clear: function () {
+            if (inputElement) {
+                inputElement.value = '';
+                datatableInstance.search('').draw();
+            }
+        }
+    };
+}
+
+
+//Filtra la select dei ruoli
+const RoleSelectFilter = (function () {
+    const selector = '#role_select';
+
+    const init = function () {
+        $(selector).on('change', function (e) {
+            const selected = $(this).select2('data');
+
+            // Estrai solo gli ID selezionati
+            const selectedRoles = selected.map(item => item.id);
+
+            // Salva nel tuo oggetto filtro
+            currentFilters.role_names = selectedRoles;
+
+            console.log(currentFilters);
+            TableManager.reload();
+        });
+    };
+
+    return {
+        init: init
+    };
+})();
+
+
+//Gestisce i checkbox
+const CheckboxFilterHandler = (function () {
+    const checkboxMap = {
+        'user_status': 'is_active',
+        'email_status': 'is_email_confirmed'
+    };
+
+    function handleChange(e) {
+        const checkboxId = e.target.id;
+        const filterKey = checkboxMap[checkboxId];
+        const isChecked = e.target.checked;
+
+        if (filterKey && currentFilters.hasOwnProperty(filterKey)) {
+            currentFilters[filterKey] = isChecked;
+            // console.log(`🔁 currentFilters aggiornato:`, currentFilters);
+            TableManager.reload();
+        }
+    }
+
+    return {
+        init: function () {
+            for (const id in checkboxMap) {
+                const checkbox = document.getElementById(id);
+                if (checkbox) {
+                    checkbox.addEventListener('change', handleChange);
+                }
+            }
+        }
+    };
+})();
+
+
+
+
+
+
+
+
+// Controlla tutti i check e abilita l'eliminazione     
+const CheckboxSelectionHandler = (function () {
+    const singleSelector = '.checkbox_single';
+    const multiSelector = '.checkbox_multiple';
+    let selectedValues = [];
+    let lastCount = 0;
+
+    function getCheckedValues() {
+        const checkboxes = document.querySelectorAll(`${singleSelector}:checked`);
+        return Array.from(checkboxes).map(cb => cb.value);
+    }
+
+    function handleSelectionChange() {
+        selectedValues = getCheckedValues();
+        const count = selectedValues.length;
+
+        console.log(`🔢 Selezionati: ${count}`, selectedValues);
+        document.querySelector('#row_checked_label').innerHTML  = count;
+        
+
+        if (count === 1 && lastCount === 0) {
+            onSingleSelect(selectedValues[0]);
+        } else if (count === 0 && lastCount > 0) {
+            onZeroSelected();
+        } else if (count > 0 && lastCount === 0) {
+            // caso aggiuntivo per .checkbox_multiple → da 0 a molti
+            onSomeSelected(selectedValues);
+        }
+
+        lastCount = count;
+    }
+
+    function onSingleSelect(value) {
+        ToggleVisibility.toggle('#toolbar_edit', '#toolbar_delete')
+    }
+
+    function onZeroSelected() {
+        ToggleVisibility.toggle('#toolbar_edit', '#toolbar_delete')
+        const multiCheckbox = document.querySelector('.checkbox_multiple');
+        if (multiCheckbox) {
+            multiCheckbox.checked = false;
+        }
+    }
+
+    function onSomeSelected(values) {
+        ToggleVisibility.toggle('#toolbar_edit', '#toolbar_delete')
+    }
+
+    function selectAllVisible(table, isChecked) {
+        const nodes = table.rows({ search: 'applied' }).nodes().toArray();
+
+        nodes.forEach(row => {
+            const cb = row.querySelector(singleSelector);
+            if (cb) {
+                cb.checked = isChecked;
+            }
+        });
+
+        // Dopo aver aggiornato tutti, chiama handleSelectionChange
+        handleSelectionChange();
+    }
+
+    function init(table) {
+        document.addEventListener('change', function (e) {
+            if (e.target.matches(singleSelector)) {
+                handleSelectionChange();
+            }
+        });
+
+        const multiCheckbox = document.querySelector(multiSelector);
+        if (multiCheckbox) {
+            multiCheckbox.addEventListener('change', function (e) {
+                selectAllVisible(table, e.target.checked);
+            });
+        }
+    }
+
+    return {
+        init
+    };
+})();
+
+
+
+//Carica tutti i dati e li prepara per un datatables
+async function set_box_detail(periodo) {
+    
+    if(periodo == undefined){
+        data = await apiCall('/api/clienti_traffico_voip/datatable/ajax', { method: 'GET' });
+        meseAnno = moment().format('MMMM YYYY');
+    }else{
+        data = await apiCall(`/api/clienti_traffico_voip/datatable/ajax/${periodo}`, { method: 'GET' });
+        anno_mese = periodo.split("_")
+        anno = anno_mese[0]
+        mese = anno_mese[1]
+        if(mese){
+            data_mese_anno = moment(`${anno}-${mese}`, "YYYY-MM").locale('it');
+            meseAnno = data_mese_anno.format('MMMM YYYY');
+        }else{
+            data_mese_anno = moment(`${anno}`, "YYYY").locale('it');
+            meseAnno = data_mese_anno.format('YYYY');
+        }
+        
+    }
+    
+    if(data && data['status'] == 'success'){
+        data_riferimento = document.getElementById("data_riferimento");
+        moment.locale('it');
+        
+        const capitalized = meseAnno.charAt(0).toUpperCase() + meseAnno.slice(1);
+        data_riferimento.innerHTML = capitalized
+        
+        contratti_totali = data['statistics']['total_contracts']
+        costi_totali = data['statistics']['total_cost']
+        costi_totali_con_markup = data['statistics']['total_cost_with_markup']
+        
+        contratti_totali_count = new countUp.CountUp("contratti_totali", contratti_totali, {decimalPlaces: 0});
+        costi_totali_count = new countUp.CountUp("costi_totali", costi_totali, {separator: '.', decimal:',', decimalPlaces: 3, prefix: '€ '});
+        costi_totali_con_markup_count = new countUp.CountUp("costi_totali_con_markup", costi_totali_con_markup, {separator: '.', decimal:',', decimalPlaces: 3, prefix: '€ '});
+
+        contratti_totali_count.start();
+        costi_totali_count.start();
+        costi_totali_con_markup_count.start();
+
+    }else{
+        data_riferimento = document.getElementById("data_riferimento");
+        data_riferimento.innerHTML = ''
+
+        contratti_totali_count = new countUp.CountUp("contratti_totali", 0, {decimalPlaces: 0});
+        costi_totali_count = new countUp.CountUp("costi_totali", 0, {separator: '.', decimal:',', decimalPlaces: 3, prefix: '€ '});
+        costi_totali_con_markup_count = new countUp.CountUp("costi_totali_con_markup", 0, {separator: '.', decimal:',', decimalPlaces: 3, prefix: '€ '});
+        
+        contratti_totali_count.start();
+        costi_totali_count.start();
+        costi_totali_con_markup_count.start();
+
+    }
+}
+
+const MonthSelectManager = (function () {
+    const mesi = [
+        "Gennaio", "Febbraio", "Marzo", "Aprile", "Maggio", "Giugno",
+        "Luglio", "Agosto", "Settembre", "Ottobre", "Novembre", "Dicembre"
+    ];
+
+    function populateSelect(selectId, selectedValue = null) {
+        const select = document.getElementById(selectId);
+        if (!select) return;
+
+        select.innerHTML = ''; // Svuota prima
+
+        mesi.forEach((mese, index) => {
+            const value = String(index + 1).padStart(2, '0');
+            const option = document.createElement("option");
+            option.value = value;
+            option.textContent = mese;
+            if (selectedValue && selectedValue === value) {
+                option.selected = true;
+            }
+            select.appendChild(option);
+        });
+    }
+
+    return {
+        populateSelect
+    };
+})();
+
+
+const YearSelectManager = (function () {
+    function populateSelect(selectId, selectedValue = null, numberOfYears = 10) {
+        const select = document.getElementById(selectId);
+        if (!select) return;
+
+        select.innerHTML = ''; // Pulisce la select
+
+        const currentYear = new Date().getFullYear();
+        for (let i = 0; i < numberOfYears; i++) {
+            const year = currentYear - i;
+            const option = document.createElement("option");
+            option.value = year;
+            option.textContent = year;
+            if (selectedValue && parseInt(selectedValue) === year) {
+                option.selected = true;
+            }
+            select.appendChild(option);
+        }
+    }
+
+    return {
+        populateSelect
+    };
+})();
+
+
+//Inizializza tutto al completo caricamento del DOM
+KTUtil.onDOMContentLoaded(function () {
+    //Inizializzo i tooltip
+    initTooltips();
+
+    //Inizianizzo la tabella
+    TableManager.init(currentFilters);
+    user_tables = TableManager.getTable();
+
+    //Inizializzo la ricerca
+    let searchManager = CSTableSearchManager('[data-kt-docs-table-filter="search"]', user_tables);
+    searchManager.setPlaceholder('Cerca...');
+    searchManager.init();
+    
+    let oggi = new Date();
+    let mese_now = String(oggi.getMonth() + 1).padStart(2, '0'); // "01" - "12"
+    let anno_now = oggi.getFullYear(); // es. 2025
+
+    MonthSelectManager.populateSelect("mese", mese_now);
+    YearSelectManager.populateSelect("anno", anno_now);
+    
+    dettaglio_fatture = CSModalManager('#dettaglio_fatture')
+    dettaglio_fatture.init();
+
+    CSSelect2Loader.init(
+        '#mese',
+        null,
+        {},
+        mese_now, // nessun valore attivo iniziale
+        null, 
+        {
+            allowClear: 'true',
+            placeholder: 'Seleziona il mese',
+            closeOnSelect: true,
+        },true
+    );
+
+    CSSelect2Loader.init(
+        '#anno',
+        null,
+        {},
+        anno_now, // nessun valore attivo iniziale
+        null, 
+        {
+            allowClear: 'true',
+            placeholder: 'Seleziona l\'anno',
+            closeOnSelect: true,
+        },true
+    );
+
+    
+    //Inizializzo i filtri select
+    // RoleSelectFilter.init();
+    // CheckboxFilterHandler.init();
+
+    set_box_detail()
+    
+    // DatePickerManager.initMonthPicker('data_picker', function (mese, anno, formattato) {
+    //     console.log("🗓️ Mese selezionato:", formattato); // es: "07/2025"
+    // });
+
+    DatePickerManager.init('data_picker', function (start, end) {
+        ;
+    });
+
+});
+
+
+</script>
+{% endblock %}
