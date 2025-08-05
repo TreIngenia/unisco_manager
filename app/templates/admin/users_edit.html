@@ -28,130 +28,7 @@
 {% block content %}
 <div id="kt_app_content" class="app-content flex-column-fluid">
     <div id="kt_app_content_container" class="app-container container-fluid">
-        <div id="user_list" class="card shadow-sm mb-10">
-            <!-- <div class="card-header">
-                <h3 class="card-title">Title</h3>
-                <div class="card-toolbar">
-                    <button type="button" class="btn btn-sm btn-light">
-                        Action
-                    </button>
-                </div>
-            </div> -->
-            <div class="card-body">
-                <div class="d-flex flex-stack mb-2">
-                    <!--begin::Search-->
-                    <div class="d-flex align-items-center position-relative my-1">
-                        <i class="ki-duotone ki-magnifier fs-1 position-absolute ms-6"><span class="path1"></span><span class="path2"></span></i>
-                        <input type="text" data-kt-docs-table-filter="search" class="form-control form-control-sm form-control-solid w-250px ps-15" placeholder="Search Customers"/>
-                    </div>
-                    <!--end::Search-->
-
-                    
-                    <div id="toolbar_edit" class="d-flex justify-content-end" data-kt-docs-table-toolbar="base">
-                        <button type="button" cs-action-toggle="reload_tables" class="btn btn-icon btn-sm btn-primary me-2" data-bs-toggle="tooltip" data-bs-dismiss="click" title="Ricarica tabella">
-                            <i class="fa-solid fa-rotate"></i>
-                        </button>
-                        <button type="button" class="btn btn-sm btn-light-primary text-uppercase me-2" data-kt-menu-trigger="click" data-kt-menu-placement="bottom-start" data-kt-menu-offset="0,5">
-                            <i class="fa-solid fa-filter"></i> Filtri
-                            <i class="ki-duotone ki-down fs-3 rotate-180 ms-3 me-0"></i>
-                        </button>
-
-                        <div class="menu menu-sub menu-sub-dropdown w-250px w-md-300px" data-kt-menu="true" id="kt_menu_select2">
-                            <form id="table_filter">
-                                <div class="px-7 py-5">
-                                    <div class="fs-5 text-gray-900 fw-bold">Opzione filtri</div>
-                                </div>
-                                <div class="separator border-gray-200"></div>
-                                <div class="px-7 py-5">
-                                    <div class="mb-10">
-                                        <label class="form-label fw-semibold">Ruolo:</label>
-                                        <div>
-                                            <select id="role_select" data-dropdown-parent="#kt_menu_select2" class="form-select form-select-solid" data-control="select2" data-close-on-select="false" data-placeholder="Seleziona ruolo" data-allow-clear="false" multiple="multiple">
-                                            <!-- <select class="form-select form-select-solid" multiple="multiple" data-control="select2" data-close-on-select="false" data-placeholder="Seleziona ruolo"  data-allow-clear="true"> -->
-                                                <option value="admin">Amministratore</option>
-                                                <option value="user">Utente</option>
-                                                <option value="moderator">Moderatore</option>
-                                                <option value="guest">Ospite</option>
-                                            </select>
-                                        </div>
-                                    </div>
-                                    <div class="mb-10">
-                                        <label class="form-label fw-semibold">Stato:</label>
-                                        <div class="d-line gy-5">
-                                            <label class="form-check form-check-sm form-check-custom form-check-solid me-5 mb-5">
-                                                <input id="user_status" class="form-check-input" type="checkbox" value="true" checked="checked"/>
-                                                <span class="form-check-label">Attivo</span>
-                                            </label>
-
-                                            <label class="form-check form-check-sm form-check-custom form-check-solid">
-                                                <input id="email_status" class="form-check-input" type="checkbox" value="true" checked="checked"/>
-                                                <span class="form-check-label">E-Mail Confermata</span>
-                                            </label>
-                                        </div>
-                                    </div>
-                                    <!-- <div class="mb-10">
-                                        <label class="form-label fw-semibold">Notifications:</label>
-
-                                        <div class="form-check form-switch form-switch-sm form-check-custom form-check-solid">
-                                            <input class="form-check-input" type="checkbox" value="" name="notifications" checked />
-                                            <label class="form-check-label">
-                                                Enabled
-                                            </label>
-                                        </div>
-                                    </div> -->
-
-                                    <div class="d-flex justify-content-end">
-                                        <button cs-action-toggle="reset_filter" type="reset" class="btn btn-sm btn-light btn-active-light-primary me-2" data-kt-menu-dismiss="false">Reseta</button>
-                                        <button type="reset" class="btn btn-sm btn-primary"  data-kt-menu-dismiss="true">Chiudi</button>
-                                    </div>
-                                </div>
-                            </form>
-                        </div>
-                        <button type="button" cs-action-toggle="add-user" class="btn btn-sm btn-primary text-uppercase" #data-bs-toggle="tooltip" #data-bs-dismiss="click" #title="Coming Soon">
-                            <i class="fa-solid fa-plus"></i>
-                            Aggiungi
-                        </button>
-                        
-                    </div>
-
-                    <div id="toolbar_delete" class="d-flex justify-content-end d-none align-middle" data-kt-docs-table-toolbar="base">
-                        <div>Voci selezionate <span id="row_checked_label" class="ms-2 m-5 fs-5"></span>
-                            <button type="button" class="btn btn-sm btn-danger" data-bs-toggle="tooltip" data-bs-dismiss="click" title="Elimina i record selezionati">
-                                <i class="ki-duotone ki-plus fs-2"></i>
-                                Elimina
-                            </button>
-                        </div>
-                    </div>
-                    <!--end::Toolbar-->
-
-                    <!--begin::Group actions-->
-                    <div class="d-flex justify-content-end align-items-center d-none" data-kt-docs-table-toolbar="selected">
-                        <div class="fw-bold me-5">
-                            <span class="me-2" data-kt-docs-table-select="selected_count"></span> Selected
-                        </div>
-
-                        <button type="button" class="btn btn-danger" data-bs-toggle="tooltip" data-bs-dismiss="click" title="Coming Soon">
-                            Selection Action
-                        </button>
-                    </div>
-                    <!--end::Group actions-->
-                </div>
-                <div class="table-responsive">
-                    <table id="users_tables" class="table-responsive table table-row-dashed table-row-gray-300 #table-row-bordered #table-rounded  #border gy-5 gs-5 align-middle table-hover #gy-5 #gs-7">
-                            <thead><tr></tr></thead>
-                            <tbody></tbody>
-                    </table>
-                </div>
-            </div>
-            <!-- <div class="card-footer">
-                Footer
-            </div> -->
-        </div>
-
-<!---------------------- EDIT ------------------------------------------------------------------------------------------>
-
-
-        <div id="user_edit" class="row d-none">
+        <div id="user_edit" class="row">
             <div class="col-3">
                 <div class="card shadow-sm h-100">
                     <!-- <div class="card-header">
@@ -194,7 +71,7 @@
                                     </span>
                                 </div>
                                 
-                                <a rif="name_surname" href="#" class="d-flex text-gray-900 text-hover-primary fs-2 fw-bold me-1 mt-4">Claudio Gregori</a>
+                                <a rif="name_surname" href="#" class="d-flex text-gray-900 text-hover-primary fs-2 fw-bold me-1 mt-4">{{uid}}</a>
                                 <span rif="role" class="badge badge-light-primary fw-bold fs-8 px-3 py-1 text-uppercase">Utente</span>
 
                                 <div class="d-flex flex-column fw-semibold fs-6 mt-8 mb-4 align-items-center text-gray-600">
@@ -208,7 +85,7 @@
                                     </a>
                                     <a rif="email" href="mailto:claudio.sgroi+24@gmail.com" class="d-flex align-items-center text-gray-600 text-hover-primary mb-2">
                                         <i class="ki-duotone ki-sms fs-4 me-1"><span class="path1"></span><span class="path2"></span></i>                                
-                                        <span>claudio.sgroi+24@gmail.com</span>
+                                        <span></span>
                                     </a>        
                                 </div>          
                             </div>
@@ -221,7 +98,6 @@
                                         <img src="archive/qrcode/QR_CODE_000017.png" alt="image" class="border border-4 border-gray-300">
                                     </div>
                                 </div>
-                                
                                 <a rif="qrcode_code" href="#" class="d-flex text-gray-600 text-hover-primary fs-2 fw-bold me-1">000017[Wo1FlMVWTSXwbFln9vKq]</a>
                                 <!--
                                 <span rif="role" class="badge badge-light-primary fw-bold fs-8 px-3 py-1 text-uppercase"></span>
@@ -242,21 +118,17 @@
                                 </div>        
                                 -->  
                                 <div rif="qrcode_button" class="f-flex d-md-flex justify-content-end align-items-center mt-10">
-                                    <div type="button-container" class="gap-0 gap-xxl-2 d-grid d-xxl-flex align-items-center text-right mt-md-0 mt-5">
-                                        
-                                    <button type="button" id="genera_qrcode" href="" target="_blank" class="btn    btn-primary btn-sm text-uppercase" data-kt-indicator="off">  
-                                        <span class="indicator-label align-middle">
-                                            <i class="fa-regular fa-id-badge  me-2 fs-3 align-middle "></i>
-                                            <span class="align-middle mt-1">Genera tesserino</span>
-                                            
-                                        </span>
-                                        <span class="indicator-progress">
-                                            <span class="align-middle mt-1">Attendi...</span> <i class="fa-solid fa-circle-notch fa-spin fs-4 align-middle ms-2"></i>
-                                        </span>
-                                    </button>
-                                    
-                                
-                                
+                                    <div type="button-container" class="gap-0 gap-xxl-2 d-grid d-xxl-flex align-items-center text-right mt-md-0 mt-5">    
+                                        <button type="button" id="genera_qrcode" href="" target="_blank" class="btn    btn-primary btn-sm text-uppercase" data-kt-indicator="off">  
+                                            <span class="indicator-label align-middle">
+                                                <i class="fa-regular fa-id-badge  me-2 fs-3 align-middle "></i>
+                                                <span class="align-middle mt-1">Genera tesserino</span>
+                                                
+                                            </span>
+                                            <span class="indicator-progress">
+                                                <span class="align-middle mt-1">Attendi...</span> <i class="fa-solid fa-circle-notch fa-spin fs-4 align-middle ms-2"></i>
+                                            </span>
+                                        </button>
                                     </div>
                                 </div>
                             </div>
@@ -323,13 +195,13 @@
                                 <div class="col-4 mb-10">
                                     <div class="fv-row">
                                         <label for="exampleFormControlInput1" class="required form-label">Nome</label>
-                                        <input type="text" id="edit-first-name" name="first_name" value="" class="form-control form-control-solid" placeholder="Nome"/>    
+                                        <input type="text" id="edit-first-name" name="first_name" value="{{test.first_name}}" class="form-control form-control-solid" placeholder="Nome"/>    
                                     </div>
                                 </div>
                                 <div class="col-4 mb-10">
                                     <div class="fv-row">
                                         <label for="exampleFormControlInput1" class="required form-label">Cognome</label>
-                                        <input type="text" id="edit-last-name" name="last_name" value="" class="form-control form-control-solid" placeholder="Cognome"/>    
+                                        <input type="text" id="edit-last-name" name="last_name" value="{{test.last_name}}" class="form-control form-control-solid" placeholder="Cognome"/>    
                                     </div>
                                 </div>
                                 <div class="col-4 mb-10">
@@ -413,6 +285,7 @@
                             <button cs-action-toggle="save_form" type="button" class="btn btn-sm btn-primary text-uppercase" ><i class="fa-solid fa-floppy-disk me-2 fs-3"></i>Salva</button>
                             <button cs-action-toggle="reset_form" type="button" class="btn btn-sm btn-warning text-uppercase"><i class="fa-solid fa-rectangle-xmark me-2 fs-3"></i>Resetta</button>
                         </div>
+                        <pre>{{ test.first_name | pprint  }}</pre>
                     </div>
                 </div>
             </div>
@@ -667,6 +540,7 @@
 {% endblock %}
 
 {% block scripts %}
+
 <link href="assets/plugins/custom/datatables/datatables.bundle.css" rel="stylesheet" type="text/css"/>
 <script src="assets/plugins/custom/datatables/datatables.bundle.js"></script>
 <script src="https://cdn.datatables.net/plug-ins/2.3.2/sorting/datetime-moment.js"></script>
@@ -674,6 +548,7 @@
 <!-- <script src="assets/plugins/custom/cropper/cropper.bundle.js"></script> -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.js"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.css" integrity="sha512-UtLOu9C7NuThQhuXXrGwx9Jb/z9zPQJctuAgNUBK3Z6kkSYT9wJ+2+dh6klS+TDBCV9kNPBbAxbVD+vCcfGPaA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+<script src="assets/treingenia/js/scripts.js"></script>
 <script>
 let check_password, check_password_new
 /**
@@ -1406,7 +1281,6 @@ const GestioneAzioni = (function () {
 
 
     function handleEdit(id, el) {
-        sessionStorage.setItem('uid', id);
         const pulsate_elimina = document.querySelector('[cs-action-toggle="delete_form"]');
         if (pulsate_elimina) {
             const btnGroup = pulsate_elimina.closest('.btn_group');
@@ -1681,7 +1555,6 @@ const GestioneAzioni = (function () {
     }
 
     function handleReturnList(id, el) {
-        sessionStorage.removeItem('uid');
         resetFormElements('profile-form')
         ToggleVisibility.toggle('#user_list', '#user_edit');
         UserTableManager.reload();
@@ -2275,126 +2148,7 @@ KTUtil.onDOMContentLoaded(function () {
         },true
     );
 
-    if(sessionStorage.getItem('uid')){
-        id = sessionStorage.getItem('uid')
-            //sessionStorage.setItem('uid', id);
-        const pulsate_elimina = document.querySelector('[cs-action-toggle="delete_form"]');
-        if (pulsate_elimina) {
-            const btnGroup = pulsate_elimina.closest('.btn_group');
-            if (btnGroup) {
-                btnGroup.classList.remove('d-none');
-            }
-            // pulsate_elimina.classList.remove('d-none');  
-        }
-        const checkbox_email = document.querySelector('input[name="is_email_confirmed"]');
-        if (checkbox_email) {
-            const colContainer = checkbox_email.closest('.col-2.mb-10');
-            if (colContainer) {
-                colContainer.classList.remove('d-none');   // 🔥 Rimuove l'intero blocco
-            }
-        }
-        const uid = document.querySelector('input[name="uid"]');
-        if (uid) {
-            const colContainer = uid.closest('.col-4.mb-10');
-            if (colContainer) {
-                colContainer.classList.remove('d-none');   // 🔥 Rimuove l'intero blocco
-            }
-        }
-        const password = document.querySelector('#edit-password');
-        if (password) {
-            const colContainer = password.closest('.col-4.mb-10');
-            if (colContainer) {
-                colContainer.classList.add('d-none');   // 🔥 Rimuove l'intero blocco
-            }
-        }
-
-        const password_button = document.querySelector('[cs-action-toggle="modal_password"]');
-        if (password_button) {
-            const colContainer = password_button.closest('.col-2.mb-10');
-            if (colContainer) {
-                colContainer.classList.remove('d-none');   // 🔥 Rimuove l'intero blocco
-            }
-        }
-        ToggleVisibility.toggle('#user_list', '#user_edit');
-        CSContentCopier.bindLiveCopy('#edit-email', '#edit-username');
-        FormValidatorManager.init('profile-form', {
-            'email': {
-                validators: {
-                    notEmpty: { message: 'Email richiesta' },
-                    emailAddress: { message: 'Email non valida' }
-                }
-            },
-            'first_name': {
-                validators: {
-                    notEmpty: { message: 'Nome richiesto' },
-                    // emailAddress: { message: 'Email non valida' }
-                }
-            },
-            'last_name': {
-                validators: {
-                    notEmpty: { message: 'Cognome richiesto' },
-                    // emailAddress: { message: 'Email non valida' }
-                }
-            },
-            'role_select_edit': {
-                validators: {
-                    callback: {
-                        message: 'Selezionare almeno un ruolo',
-                        callback: function (input) {
-                            console.log(input)
-                            // Get the selected options
-                            const colorField = jQuery(document.getElementById('role_select_edit'));
-                            const options = colorField.select2('data');
-                            return options !== null && options.length >= 1 ;
-                            // return options !== null && options.length >= 2 && options.length <= 4;
-                        },
-                    },
-                }
-            },
-            'company_select_edit': {
-                validators: {
-                    notEmpty: { message: 'Selezionare una società' },
-                    // callback: {
-                    //     message: 'Selezionare una società',
-                    //     callback: function (input) {
-                    //         // Get the selected options
-                    //         console.log(input)
-                    //         const options = colorField.select2('data');
-                    //         return options !== null && options.length >= 1 ;
-                    //         // return options !== null && options.length >= 2 && options.length <= 4;
-                    //     },
-                    // },
-                }
-            },
-        },["role_select_edit","company_select_edit"]);
-       
-
-        if(id){
-            const myfilter = { uid: id };
-            getUsersNow(myfilter).then(users => {
-                const user = users[0];
-                const values = {
-                    first_name: user.first_name,
-                    last_name: user.last_name,
-                    phone: user.phone,
-                    email: user.email,
-                    username: user.username,
-                    uid: user.uid,
-                    is_email_confirmed: user.is_email_confirmed,
-                    is_active: user.is_active,
-                    avatar_url: user.avatar_url
-                };
-                console.log(user.avatar_url)
-                populateFormFields(values);
-                setDataInSelect(user.role_names, '#role_select_edit');
-                // setDataInSelect([user.company_uid], '#company_select_edit');
-                CSSelect2Loader.setValueIfExists('#company_select_edit', [user.company_uid]);
-                setImageInputPreview('avatar_image', user.avatar_url)
-            });
-        }else{
-            setImageInputPreview('avatar_image', null)
-        }
-    }
+    
     
 
     //     $('#image_editor').on('shown.bs.modal', function () {

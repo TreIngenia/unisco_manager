@@ -9,6 +9,7 @@ import hashlib
 import logging
 from pathlib import Path
 from app.utils.env_manager import *
+import copy
 
 # json_file_name = f"cdr_data_{datetime.now().strftime('%Y_%m')}.json"
 # processed_files = f"processed_files_{datetime.now().strftime('%Y_%m')}.json"
@@ -2036,10 +2037,13 @@ class JSONFileManager:
             input_data = json.loads(json_string)
             
             if flat_format:
-                return self.transform_from_dict_flat(input_data)
+                result =  self.transform_from_dict_flat(input_data)
             else:
-                return self.transform_from_dict(input_data)
+                result =  self.transform_from_dict(input_data)
                 
+            result["data"] = self.aggrega_per_cliente(result["data"]) 
+
+            return result
         except json.JSONDecodeError as e:
             self.logger.error(f"Errore nel parsing JSON: {str(e)}")
             raise ValueError(f"JSON non valido: {str(e)}")
@@ -2286,7 +2290,8 @@ class JSONFileManager:
                 result = self.transform_from_dict_flat(unified_input_data)
             else:
                 result = self.transform_from_dict(unified_input_data)
-            
+                # result["data"] = self.aggrega_per_cliente(result["data"]) # Aggiunto questo
+
             # Aggiorna le statistiche di trasformazione
             self._last_transformation_stats.update({
                 "files_processed": total_files_processed,
@@ -2304,6 +2309,46 @@ class JSONFileManager:
         except Exception as e:
             self.logger.error(f"Errore durante l'unione dei file: {str(e)}")
             raise
+    
+    def aggrega_per_cliente(self, data):
+        clienti = {}
+
+        for contratto in data:
+            cliente = contratto.get("cliente_finale", "N.D.")
+            if cliente not in clienti:
+                # Clona struttura base
+                clienti[cliente] = {
+                    "cliente_finale": cliente,
+                    "costo_euro_totale": 0.0,
+                    "costo_euro_totale_with_markup": 0.0,
+                    "durata_secondi_totale": 0,
+                    "numero_chiamate": 0,
+                    "tipi_chiamata": defaultdict(lambda: {
+                        "costo_euro_totale": 0.0,
+                        "costo_euro_totale_with_markup": 0.0,
+                        "durata_secondi_totale": 0,
+                        "numero_chiamate": 0
+                    })
+                }
+
+            c = clienti[cliente]
+            c["costo_euro_totale"] += contratto.get("costo_euro_totale", 0.0)
+            c["costo_euro_totale_with_markup"] += contratto.get("costo_euro_totale_with_markup", 0.0)
+            c["durata_secondi_totale"] += contratto.get("durata_secondi_totale", 0)
+            c["numero_chiamate"] += contratto.get("numero_chiamate", 0)
+
+            for tipo, valori in contratto.get("tipi_chiamata", {}).items():
+                t = c["tipi_chiamata"][tipo]
+                t["costo_euro_totale"] += valori.get("costo_euro_totale", 0.0)
+                t["costo_euro_totale_with_markup"] += valori.get("costo_euro_totale_with_markup", 0.0)
+                t["durata_secondi_totale"] += valori.get("durata_secondi_totale", 0)
+                t["numero_chiamate"] += valori.get("numero_chiamate", 0)
+
+        # Converti defaultdict in dizionario normale
+        for c in clienti.values():
+            c["tipi_chiamata"] = dict(c["tipi_chiamata"])
+
+        return list(clienti.values())
 
     def transform_and_save_multiple(self, input_files: List[Union[str, Path]], 
                                 output_file: Union[str, Path],

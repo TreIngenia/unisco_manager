@@ -735,7 +735,8 @@ def register_api_voip_cdr_routes(api_voip_cdr):
         try:
              # Inserisce il traffico voip extra soglia nel contratto corrente del cliente su ODOO
             from app.voip_cdr.fatturazione import processa_contratti_attivi
-            result = processa_contratti_attivi()
+            periodo = request.get_json()
+            result = processa_contratti_attivi(periodo)
             
             if isinstance(result, (dict, list)):
                 # print(json.dumps(result, indent=4, ensure_ascii=False))
@@ -750,6 +751,81 @@ def register_api_voip_cdr_routes(api_voip_cdr):
             #     'last_updated': contracts_data.get('metadata', {}).get('last_updated'),
             #     'data': contracts_data
             # })
+            
+        except Exception as e:
+            logger.error(f"Errore lettura configurazione: {e}")
+            return jsonify({
+                'success': False,
+                'message': f'Errore lettura configurazione: {str(e)}'
+            }), 500
+        
+    # Aggiunge il traffico voip extra soglia sugli abbonamenti di ODOO
+    @api_voip_cdr.route('aggiorna_dati_ftp', methods=['POST'])
+    @unified_api_admin_required
+    def aggiorna_dati_ftp():
+        """
+        API per scaricare dall'ftp tutti i CDR aggiornati
+        
+        Returns:
+            JSON con configurazione contratti corrente
+        """
+        try:
+            from app.voip_cdr.ftp_downloader import FTPDownloader
+            downloader = FTPDownloader()
+
+            data = request.get_json()
+            pattern = data.get('pattern')
+            test_ftp = data.get('test_ftp', False)
+
+            if(not pattern):
+                pattern_to_use = SPECIFIC_FILENAME
+            else:
+                pattern_to_use = pattern   
+
+            if(not test_ftp):
+                test_ftp_to_use = FTP_TEST
+            else:
+                test_ftp_to_use = test_ftp   
+
+            # ✅ Chiama il metodo sull'istanza
+            ftp_response = downloader.process_files(pattern_to_use, test_ftp_to_use) #'RIV_20943_%Y-%m*.CDR', False
+
+            logger.info(f"Risultato: {ftp_response} ")
+
+            if(ftp_response['success'] == True):      
+                # Elenco di file scaricati dall'ftp
+                files = ftp_response['files']
+                # files = ['RIV_15232_MESE_1_2025-02-03-13.19.21.CDR']
+
+                # Carico le classi necessarie
+                from app.voip_cdr.cdr_processor import CDRProcessor, CDRAggregator, CDRContractsGenerator, JSONFileManager, JSONAggregator
+
+                # Converte ogni CDR scaricato in un json inserendo già i prezzi con markup secondo la tabella nel json categorie 
+                processor = CDRProcessor(files[1])
+                json_to_cdr = json.loads(processor.process_files(files, riprocessa=True))
+                json_file = json_to_cdr['nome_file']
+            
+                # Genera il json dei contatti attivi estrapolandoli dal CDR
+                generator = CDRContractsGenerator(json_file)
+                generator.save_contracts_json()
+                print(json_file)
+
+                # Unisce tutti i json appena elaborati in un unico json, aggrega le chiamate per ogni singolo Cliente(contratto), 
+                # genera un record di costo totale per ogni categoria oltre ad un record costo globale che somma tutte le categorie. 
+                aggregator = CDRAggregator()
+                aggregate_json = aggregator.aggregate_cdr_data(json_file)
+                print (aggregate_json)
+
+                # Genera un file json per ogni Cliente (contratto) con tutti idati presenti nel json globale.
+                aggregate_json_file = aggregate_json['file_name']
+                detailed_json = aggregator.split_aggregate_to_contracts(aggregate_json_file)
+                return detailed_json
+            else:
+                logger.error(f"Errore lettura configurazione: {ftp_response}")
+                return jsonify({
+                'success': False,
+                'message': f'Errore lettura configurazione: {str(ftp_response)}'
+            }), 500
             
         except Exception as e:
             logger.error(f"Errore lettura configurazione: {e}")

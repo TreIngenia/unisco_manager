@@ -10,4 +10,4 @@ static
 .venv
 .env
 config.py
-.log
+*.log

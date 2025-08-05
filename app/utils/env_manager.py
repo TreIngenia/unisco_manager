@@ -38,7 +38,6 @@ def load_env_variables():
 
         'DOWNLOAD_ALL_FILES': os.getenv('DOWNLOAD_ALL_FILES'),
         'SPECIFIC_FILENAME': os.getenv('SPECIFIC_FILENAME'),
-        'AVATAR_FOLDER': os.getenv('AVATAR_FOLDER'),
 
 }
 

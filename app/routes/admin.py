@@ -103,6 +103,67 @@ def register_admin_routes(admin_bp):
                                 'search': search
                             })
     
+    @admin_bp.route('/users_test/<uid>')
+    @admin_required
+    # @moderator_required
+    def manage_users_test(uid):
+        """Gestione utenti"""
+        
+        # Filtri
+        role_filter = request.args.get('role')
+        status_filter = request.args.get('status')
+        search = request.args.get('search', '')
+        
+        # Query base
+        query = User.query
+        
+        # Applica filtri
+        if uid:
+            query = query.filter(User.uid.ilike(f'{uid}'))
+            compiled = str(query.statement.compile(compile_kwargs={"literal_binds": True}))
+            print(f"\nDEBUG QUERY SQL:\n{compiled}\n")
+        
+        # if role_filter:
+        #     role = Role.query.filter_by(name=role_filter).first()
+        #     if role:
+        #         query = query.filter(User.roles.contains(role))
+        
+        # if status_filter == 'active':
+        #     query = query.filter_by(is_active=True)
+        # elif status_filter == 'inactive':
+        #     query = query.filter_by(is_active=False)
+        # elif status_filter == 'confirmed':
+        #     query = query.filter_by(is_email_confirmed=True)
+        # elif status_filter == 'unconfirmed':
+        #     query = query.filter_by(is_email_confirmed=False)
+        
+        # Paginazione
+        users = query.all()
+        user = query.first()
+        print(user.to_dict())
+        for user in query.all():
+            print(user.to_dict())
+            
+        roles = Role.query.filter_by(is_active=True).all()
+        
+        # AGGIUNGI QUESTE STATISTICHE
+        stats = {
+            'total_users': User.query.count(),
+            'active_users': User.query.filter_by(is_active=True).count(),
+            'confirmed_users': User.query.filter_by(is_email_confirmed=True).count(),
+            'pending_confirmation': User.query.filter_by(is_email_confirmed=False).count()
+        }
+        
+        return render_template('admin/users_edit.html', 
+                            users=users, 
+                            roles=roles,
+                            stats=stats,  # ← ASSICURATI CHE SIA QUI
+                            current_filters={
+                                'role': role_filter,
+                                'status': status_filter,
+                                'search': search
+                            },uid=uid,test=user.to_dict())
+    
     @admin_bp.route('/users/<string:user_uid>')
     @moderator_required
     def user_detail(user_uid):

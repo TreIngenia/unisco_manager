@@ -58,21 +58,36 @@ def create_app(config_name=None):
     # Registrazione funzioni menu per templates
     @app.context_processor
     def inject_menu():
-        from app.utils.menu import get_menu, get_menu_stats,get_breadcrumb
-        return dict(
-            get_menu=get_menu,
-            menu_stats=get_menu_stats,
-            get_breadcrumb=get_breadcrumb
+        from app.utils.menu import (
+            get_menu, get_menu_stats, get_breadcrumb, find_menu_item
         )
-    
-    @app.context_processor
-    def inject_menu():
         from app.utils.custom_menu import get_predefined_menu, get_custom_menu, get_children_menu
+
         return dict(
             get_predefined_menu=get_predefined_menu,
             get_custom_menu=get_custom_menu,
-            get_children_menu=get_children_menu
+            get_children_menu=get_children_menu,
+            get_menu=get_menu,
+            menu_stats=get_menu_stats,
+            get_breadcrumb=get_breadcrumb,
+            get_menu_item=find_menu_item  # <--- AGGIUNGI QUESTO
         )
+    
+    # # Registrazione funzioni menu per templates
+    # @app.context_processor
+    # def inject_menu():
+    #     from app.utils.menu import get_menu, get_menu_stats,get_breadcrumb
+    #     from app.utils.custom_menu import get_predefined_menu, get_custom_menu, get_children_menu
+    #     return dict(
+    #         get_predefined_menu=get_predefined_menu,
+    #         get_custom_menu=get_custom_menu,
+    #         get_children_menu=get_children_menu,
+    #         get_menu=get_menu,
+    #         menu_stats=get_menu_stats,
+    #         get_breadcrumb=get_breadcrumb,
+    #         get_menu_item='find_menu_item'  # <--- AGGIUNGI QUESTO
+
+    #     )
     
     @app.context_processor
     def inject_datetime():

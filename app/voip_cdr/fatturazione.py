@@ -20,13 +20,13 @@ from app.utils.env_manager import *
 #     print("⚠️ python-dotenv non installato - usando solo variabili d'ambiente del sistema")
  
 
-def processa_contratti_attivi():
+def processa_contratti_attivi(periodo):
     # Struttura per raccogliere tutti i risultati
     risultati_unificati = []
     
     from app.voip_cdr.contratti import ElaborazioneContrattiStandalone
     elaboratore_instance = ElaborazioneContrattiStandalone()
-    contract_file = Path(ARCHIVE_DIRECTORY) / CONTACTS_FOLDER / CONTACT_FILE
+    contract_file = Path(ARCHIVE_DIRECTORY)  / CONTACTS_FOLDER / CONTACT_FILE
     elaboratore_instance.load_contracts_from_file(contract_file)
     result = elaboratore_instance.elabora_tutti_contratti_standalone()
     result = [c for c in result['results'] if c.get('status') == 'processed']
@@ -35,7 +35,10 @@ def processa_contratti_attivi():
     
     # Periodo corrente
     oggi = datetime.now()
-    periodi_corrente = [{'anno': str(oggi.year), 'mese': str(oggi.month).zfill(2)}]
+    if(not periodo):
+        periodi_corrente = [{'anno': str(oggi.year), 'mese': str(oggi.month).zfill(2)}]
+    else:
+        periodi_corrente = periodo
     
     # Converte stringa JSON se necessario
     if isinstance(json_data, str):

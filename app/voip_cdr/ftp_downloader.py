@@ -698,15 +698,17 @@ class FTPDownloader:
         except Exception as e:
             logger.error(f"Errore pulizia directory: {e}")
     
-    def process_files(self):
+    def process_files(self,get_template=None,get_test=None):
         """
         Metodo di compatibilità temporaneo
         Sostituirà il vecchio processor.process_files()
         """
         
         # logger.info(f"🔄 Avvio processo download e conversione...")
-        get_template = SPECIFIC_FILENAME
-        get_test = FTP_TEST
+        if(not get_template):
+            get_template = SPECIFIC_FILENAME
+        if(not get_test):    
+            get_test = FTP_TEST
         
         # logger.info(f"📂 Template e modalità test: {get_template}, {get_test}")
         
@@ -912,24 +914,11 @@ def main():
     downloader = FTPDownloader()
     
     # ✅ Chiama il metodo sull'istanza
-    ftp_response = downloader.process_files()
+    ftp_response = downloader.process_files('RIV_20943_%Y-07*.CDR', FTP_TEST) #'RIV_20943_%Y-%m*.CDR', False
 
     logger.info(f"Risultato: {ftp_response} ")
 
-    if(ftp_response['success'] == True):
-        # from app.voip_cdr.manager import complete_cdr_conversion, complete_cdr_conversion_giornalieri
-        # from app.voip_cdr.contratti import CDRContractsExtractor
-        
-     
-        # conversion_result = complete_cdr_conversion_giornalieri(files, 'latin-1')
-
-        # cdr_file = files #[filename.replace('.CDR', '.json') for filename in files]
-        # estrattore = CDRContractsExtractor()
-        
-        # force_redownload = False
-        # contracts_data = estrattore.extract_contracts_from_files(cdr_file, force_redownload)
-        # save_result = estrattore.save_contracts_config(contracts_data)
-        
+    if(ftp_response['success'] == True):      
         # Elenco di file scaricati dall'ftp
         files = ftp_response['files']
         # files = ['RIV_15232_MESE_1_2025-02-03-13.19.21.CDR']
