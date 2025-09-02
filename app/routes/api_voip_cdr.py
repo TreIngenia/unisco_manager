@@ -774,6 +774,7 @@ def register_api_voip_cdr_routes(api_voip_cdr):
             downloader = FTPDownloader()
 
             data = request.get_json()
+            
             pattern = data.get('pattern')
             test_ftp = data.get('test_ftp', False)
 
@@ -801,7 +802,7 @@ def register_api_voip_cdr_routes(api_voip_cdr):
                 from app.voip_cdr.cdr_processor import CDRProcessor, CDRAggregator, CDRContractsGenerator, JSONFileManager, JSONAggregator
 
                 # Converte ogni CDR scaricato in un json inserendo già i prezzi con markup secondo la tabella nel json categorie 
-                processor = CDRProcessor(files[1])
+                processor = CDRProcessor(files[0])
                 json_to_cdr = json.loads(processor.process_files(files, riprocessa=True))
                 json_file = json_to_cdr['nome_file']
             

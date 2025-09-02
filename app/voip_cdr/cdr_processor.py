@@ -74,9 +74,73 @@ class CDRProcessor:
         
         return logger
 
+    # def extract_year_month_from_cdr(self, file_path):
+    #     """
+    #     Legge la prima riga di un file CDR, estrae la data e restituisce anno_mese.
+        
+    #     Args:
+    #         file_path (str): Percorso del file CDR da analizzare
+            
+    #     Returns:
+    #         str: Anno e mese nel formato "YYYY_MM" (es: "2025_07")
+    #         None: Se si verifica un errore o il formato non è valido
+            
+    #     Raises:
+    #         FileNotFoundError: Se il file non esiste
+    #         ValueError: Se il formato della data non è corretto
+    #     """
+    #     try:
+    #         # Apre il file e legge solo la prima riga
+    #         with open(file_path, 'r', encoding='latin1') as file:
+    #             first_line = file.readline().strip()
+            
+    #         # Controlla che la riga non sia vuota
+    #         if not first_line:
+    #             raise ValueError("Il file è vuoto o la prima riga è vuota")
+            
+    #         # Divide la riga per il delimitatore ";"
+    #         fields = first_line.split(';')
+            
+    #         # Controlla che ci sia almeno un campo
+    #         if not fields or not fields[0]:
+    #             raise ValueError("Primo campo della riga vuoto")
+            
+    #         # Estrae la data (primo campo)
+    #         date_string = fields[0]
+            
+    #         # Verifica il formato della data: YYYY-MM-DD-HH.MM.SS
+    #         date_parts = date_string.split('-')
+            
+    #         if len(date_parts) < 3:
+    #             raise ValueError(f"Formato data non valido: {date_string}")
+            
+    #         # Estrae anno e mese
+    #         year = date_parts[0]
+    #         month = date_parts[1]
+            
+    #         # Verifica che anno e mese siano numerici e validi
+    #         if not (year.isdigit() and month.isdigit()):
+    #             raise ValueError(f"Anno o mese non numerici: {year}-{month}")
+            
+    #         if len(year) != 4 or len(month) != 2:
+    #             raise ValueError(f"Formato anno/mese non valido: {year}-{month}")
+            
+    #         # Restituisce nel formato richiesto
+    #         return f"{year}_{month}"
+            
+    #     except FileNotFoundError:
+    #         print(f"Errore: File '{file_path}' non trovato")
+    #         return None
+    #     except ValueError as e:
+    #         print(f"Errore formato: {e}")
+    #         return None
+    #     except Exception as e:
+    #         print(f"Errore imprevisto: {e}")
+    #         return None
+        
     def extract_year_month_from_cdr(self, file_path):
         """
-        Legge la prima riga di un file CDR, estrae la data e restituisce anno_mese.
+        Legge l'ultima riga di un file CDR, estrae la data e restituisce anno_mese.
         
         Args:
             file_path (str): Percorso del file CDR da analizzare
@@ -90,21 +154,33 @@ class CDRProcessor:
             ValueError: Se il formato della data non è corretto
         """
         try:
-            # Apre il file e legge solo la prima riga
+            # Apre il file e legge tutte le righe
             with open(file_path, 'r', encoding='latin1') as file:
-                first_line = file.readline().strip()
-            
-            # Controlla che la riga non sia vuota
-            if not first_line:
-                raise ValueError("Il file è vuoto o la prima riga è vuota")
-            
+                lines = file.readlines()
+                
+            # Controlla che il file non sia vuoto
+            if not lines:
+                raise ValueError("Il file è vuoto")
+                
+            # Trova l'ultima riga non vuota
+            last_line = None
+            for line in reversed(lines):
+                line = line.strip()
+                if line:  # Se la riga non è vuota
+                    last_line = line
+                    break
+                    
+            # Controlla che sia stata trovata una riga valida
+            if not last_line:
+                raise ValueError("Nessuna riga valida trovata nel file")
+                
             # Divide la riga per il delimitatore ";"
-            fields = first_line.split(';')
+            fields = last_line.split(';')
             
             # Controlla che ci sia almeno un campo
             if not fields or not fields[0]:
                 raise ValueError("Primo campo della riga vuoto")
-            
+                
             # Estrae la data (primo campo)
             date_string = fields[0]
             
@@ -113,7 +189,7 @@ class CDRProcessor:
             
             if len(date_parts) < 3:
                 raise ValueError(f"Formato data non valido: {date_string}")
-            
+                
             # Estrae anno e mese
             year = date_parts[0]
             month = date_parts[1]
@@ -121,10 +197,10 @@ class CDRProcessor:
             # Verifica che anno e mese siano numerici e validi
             if not (year.isdigit() and month.isdigit()):
                 raise ValueError(f"Anno o mese non numerici: {year}-{month}")
-            
+                
             if len(year) != 4 or len(month) != 2:
                 raise ValueError(f"Formato anno/mese non valido: {year}-{month}")
-            
+                
             # Restituisce nel formato richiesto
             return f"{year}_{month}"
             
@@ -136,7 +212,7 @@ class CDRProcessor:
             return None
         except Exception as e:
             print(f"Errore imprevisto: {e}")
-            return None
+            return None    
             
     def _get_file_hash(self, file_path: str) -> str:
         """
@@ -2041,7 +2117,7 @@ class JSONFileManager:
             else:
                 result =  self.transform_from_dict(input_data)
                 
-            result["data"] = self.aggrega_per_cliente(result["data"]) 
+            # result["data"] = self.aggrega_per_cliente(result["data"]) 
 
             return result
         except json.JSONDecodeError as e:
@@ -2505,37 +2581,178 @@ class JSONAggregator:
             if f.endswith('.json') and os.path.isfile(os.path.join(folder_path, f))
         ]
     
+    # def _process_single_file(self, file_path: str, filename: str) -> bool:
+    #     """
+    #     Processa un singolo file JSON.
+        
+    #     Args:
+    #         file_path (str): Percorso completo del file
+    #         filename (str): Nome del file
+            
+    #     Returns:
+    #         bool: True se il file è stato processato con successo, False altrimenti
+    #     """
+    #     try:
+    #         with open(file_path, 'r', encoding='utf-8') as file:
+    #             data = json.load(file)
+    #             self.logger.info(f"Processando file: {filename}")
+                
+    #             # Aggrega i contratti
+    #             self._aggregate_contracts(data)
+                
+    #             # Aggrega le statistiche
+    #             self._aggregate_statistics(data)
+                
+    #             return True
+                
+    #     except json.JSONDecodeError as e:
+    #         self.logger.error(f"Errore nel parsing del file {filename}: {e}")
+    #         return False
+    #     except Exception as e:
+    #         self.logger.error(f"Errore nel processamento del file {filename}: {e}")
+    #         return False
+    
     def _process_single_file(self, file_path: str, filename: str) -> bool:
         """
-        Processa un singolo file JSON.
-        
-        Args:
-            file_path (str): Percorso completo del file
-            filename (str): Nome del file
-            
-        Returns:
-            bool: True se il file è stato processato con successo, False altrimenti
+        Processa un singolo file JSON e aggrega i dati correttamente.
         """
         try:
-            with open(file_path, 'r', encoding='utf-8') as file:
-                data = json.load(file)
-                self.logger.info(f"Processando file: {filename}")
+            with open(file_path, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+            
+            if 'contracts' not in data:
+                self.logger.warning(f"File {filename} non ha la struttura corretta")
+                return False
+            
+            # Processa ogni contratto nel file
+            file_contracts = data.get('contracts', {})
+            
+            for contract_id, contract_data in file_contracts.items():
+                if contract_id not in self.aggregated_data['contracts']:
+                    # Nuovo contratto - inizializza la struttura
+                    self.aggregated_data['contracts'][contract_id] = {
+                        'aggregated_records': [],
+                        'lista_chiamate': [],
+                        'contract_info': {}
+                    }
                 
-                # Aggrega i contratti
-                self._aggregate_contracts(data)
-                
-                # Aggrega le statistiche
-                self._aggregate_statistics(data)
-                
-                return True
-                
-        except json.JSONDecodeError as e:
-            self.logger.error(f"Errore nel parsing del file {filename}: {e}")
-            return False
+                # Merge dei dati del contratto
+                self._merge_contract_data(contract_id, contract_data)
+            
+            # Aggiorna le statistiche globali
+            file_stats = data.get('statistics', {})
+            self._update_global_statistics(file_stats)
+            
+            return True
+            
         except Exception as e:
-            self.logger.error(f"Errore nel processamento del file {filename}: {e}")
+            self.logger.error(f"Errore nel processing del file {filename}: {e}")
             return False
-    
+
+    def _merge_contract_data(self, contract_id: str, new_contract_data: Dict[str, Any]) -> None:
+        """
+        Mergia i dati di un contratto nell'aggregazione corrente.
+        """
+        existing_contract = self.aggregated_data['contracts'][contract_id]
+        
+        # Merge aggregated_records per tipo di chiamata
+        new_aggregated = new_contract_data.get("aggregated_records", [])
+        existing_aggregated = existing_contract.get("aggregated_records", [])
+        
+        aggregated_by_type = {}
+        totale_generale_data = None
+        
+        # Processa record esistenti
+        for record in existing_aggregated:
+            if record.get("aggregation_type") == "totale_generale":
+                totale_generale_data = record.copy()
+            else:
+                tipo_chiamata = record.get("tipo_chiamata")
+                if tipo_chiamata:
+                    aggregated_by_type[tipo_chiamata] = record.copy()
+        
+        # Processa nuovi record sommando i valori
+        for record in new_aggregated:
+            if record.get("aggregation_type") == "totale_generale":
+                if totale_generale_data:
+                    # Somma i valori del totale generale
+                    totale_generale_data["durata_secondi_generale"] += record.get("durata_secondi_generale", 0)
+                    totale_generale_data["costo_euro_generale"] = round(
+                        totale_generale_data.get("costo_euro_generale", 0.0) + record.get("costo_euro_generale", 0.0), 3
+                    )
+                    totale_generale_data["costo_euro_generale_with_markup"] = round(
+                        totale_generale_data.get("costo_euro_generale_with_markup", 0.0) + record.get("costo_euro_generale_with_markup", 0.0), 3
+                    )
+                    totale_generale_data["numero_chiamate_totali"] += record.get("numero_chiamate_totali", 0)
+                else:
+                    totale_generale_data = record.copy()
+            else:
+                tipo_chiamata = record.get("tipo_chiamata")
+                if tipo_chiamata:
+                    if tipo_chiamata in aggregated_by_type:
+                        # Somma i valori per tipo di chiamata
+                        existing_record = aggregated_by_type[tipo_chiamata]
+                        existing_record["durata_secondi_totale"] += record.get("durata_secondi_totale", 0)
+                        existing_record["costo_euro_totale"] = round(
+                            existing_record.get("costo_euro_totale", 0.0) + record.get("costo_euro_totale", 0.0), 3
+                        )
+                        existing_record["costo_euro_totale_with_markup"] = round(
+                            existing_record.get("costo_euro_totale_with_markup", 0.0) + record.get("costo_euro_totale_with_markup", 0.0), 3
+                        )
+                        existing_record["numero_chiamate"] += record.get("numero_chiamate", 0)
+                    else:
+                        aggregated_by_type[tipo_chiamata] = record.copy()
+        
+        # Ricostruisce la lista aggregated_records
+        merged_aggregated = list(aggregated_by_type.values())
+        if totale_generale_data:
+            merged_aggregated.append(totale_generale_data)
+        
+        existing_contract["aggregated_records"] = merged_aggregated
+        
+        # Merge lista_chiamate
+        existing_chiamate = existing_contract.get("lista_chiamate", [])
+        new_chiamate = new_contract_data.get("lista_chiamate", [])
+        existing_contract["lista_chiamate"] = existing_chiamate + new_chiamate
+        
+        # Merge contract_info
+        existing_info = existing_contract.get("contract_info", {})
+        new_info = new_contract_data.get("contract_info", {})
+        
+        for key, value in new_info.items():
+            if key not in existing_info:
+                existing_info[key] = value
+        
+        # Aggiorna i totali del contratto con i valori del totale generale
+        if totale_generale_data:
+            existing_info.update({
+                "durata_totale_secondi": totale_generale_data.get("durata_secondi_generale", 0),
+                "costo_totale_euro": totale_generale_data.get("costo_euro_generale", 0.0),
+                "costo_totale_euro_with_markup": totale_generale_data.get("costo_euro_generale_with_markup", 0.0),
+                "numero_chiamate_totali": totale_generale_data.get("numero_chiamate_totali", 0),
+                "numero_tipi_chiamata": len(aggregated_by_type)
+            })
+        
+        existing_contract["contract_info"] = existing_info
+
+    def _update_global_statistics(self, file_stats: Dict[str, Any]) -> None:
+        """
+        Aggiorna le statistiche globali con i dati di un file.
+        """
+        global_stats = self.aggregated_data['statistics']
+        
+        # Somma i valori numerici
+        global_stats['total_input_records'] += file_stats.get('total_input_records', 0)
+        global_stats['total_duration'] += file_stats.get('total_duration', 0)
+        global_stats['total_cost'] = round(
+            global_stats.get('total_cost', 0.0) + file_stats.get('total_cost', 0.0), 3
+        )
+        
+        # Unisce i tipi di chiamata
+        existing_call_types = set(global_stats.get('call_types_found', []))
+        new_call_types = set(file_stats.get('call_types_found', []))
+        global_stats['call_types_found'] = list(existing_call_types.union(new_call_types))
+                
     def _aggregate_contracts(self, data: Dict[str, Any]) -> None:
         """
         Aggrega i dati dei contratti.
